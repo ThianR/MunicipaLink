@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MunicipalConnect PY</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+4pskSeT3E8G3Epr6s3HoVgfQEQ7WZz8A5pIe7wYw=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="branding">
+      <h1>MunicipalConnect PY</h1>
+      <p>Gestión ciudadana inteligente para municipalidades del Paraguay</p>
+    </div>
+    <div class="session-controls">
+      <div id="sessionInfo" class="session-info"></div>
+      <button id="loginBtn" class="btn primary">Iniciar sesión</button>
+      <button id="logoutBtn" class="btn" hidden>Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="map-panel">
+      <div class="panel-header">
+        <h2>Mapa de municipalidades</h2>
+        <div class="map-actions">
+          <button id="geolocateBtn" class="btn secondary">📍 Detectar mi ubicación</button>
+          <select id="municipalitySelect" class="select-input">
+            <option value="">Selecciona una municipalidad…</option>
+          </select>
+        </div>
+      </div>
+      <div id="map" class="map"></div>
+      <div id="selectedMunicipality" class="selected-municipality" hidden></div>
+    </section>
+
+    <section class="requests-panel">
+      <div class="panel-header">
+        <h2>Solicitudes ciudadanas</h2>
+        <div class="request-actions">
+          <button id="newRequestBtn" class="btn primary" hidden>➕ Nueva solicitud</button>
+          <div id="requestCounters" class="request-counters"></div>
+        </div>
+      </div>
+      <div id="requestList" class="request-list empty-state">
+        <p>Selecciona una municipalidad para ver las solicitudes.</p>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div class="panel" id="guestPanel">
+        <h3>Explorar como invitado</h3>
+        <p>Visualiza las municipalidades del Paraguay y conoce sus solicitudes sin necesidad de iniciar sesión.</p>
+        <button id="viewAllMunicipalitiesBtn" class="btn secondary">Ver listado completo</button>
+      </div>
+      <div class="panel" id="municipalPanel" hidden>
+        <h3>Panel municipal</h3>
+        <div id="municipalInfo"></div>
+        <div id="municipalTools"></div>
+      </div>
+      <div class="panel" id="adminPanel" hidden>
+        <h3>Administración</h3>
+        <div id="adminTools"></div>
+      </div>
+    </aside>
+  </main>
+
+  <dialog id="authDialog" class="modal">
+    <form method="dialog" class="modal-content">
+      <header>
+        <h2>Iniciar sesión</h2>
+      </header>
+      <section>
+        <p>Selecciona un proveedor para autenticarte o continúa como invitado.</p>
+        <div class="auth-providers">
+          <button type="button" data-provider="gmail" class="btn provider gmail">Gmail</button>
+          <button type="button" data-provider="outlook" class="btn provider outlook">Outlook</button>
+          <button type="button" data-provider="icloud" class="btn provider icloud">iCloud</button>
+          <button type="button" data-provider="email" class="btn provider neutral">Correo electrónico</button>
+        </div>
+        <div class="input-group">
+          <label for="authName">Nombre completo</label>
+          <input type="text" id="authName" required placeholder="Ingresa tu nombre">
+        </div>
+        <div class="input-group">
+          <label for="authEmail">Correo electrónico</label>
+          <input type="email" id="authEmail" required placeholder="correo@ejemplo.com">
+        </div>
+        <div class="input-group">
+          <label for="authRole">Rol</label>
+          <select id="authRole" required>
+            <option value="citizen">Ciudadano</option>
+            <option value="municipal">Funcionario municipal</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="input-group" id="municipalAssignment" hidden>
+          <label for="assignedMunicipality">Municipalidad asignada</label>
+          <select id="assignedMunicipality"></select>
+        </div>
+      </section>
+      <footer class="modal-footer">
+        <button value="cancel" class="btn">Cancelar</button>
+        <button id="authSubmit" value="confirm" class="btn primary">Continuar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="requestDialog" class="modal">
+    <form method="dialog" class="modal-content" id="requestForm">
+      <header>
+        <h2>Nueva solicitud ciudadana</h2>
+      </header>
+      <section>
+        <div class="input-group">
+          <label for="requestMunicipality">Municipalidad</label>
+          <input type="text" id="requestMunicipality" readonly>
+        </div>
+        <div class="input-group">
+          <label for="requestType">Tipo de solicitud</label>
+          <select id="requestType" required>
+            <option value="">Selecciona una opción…</option>
+            <option value="reparacion">Reparación</option>
+            <option value="mantenimiento">Mantenimiento</option>
+            <option value="creacion">Creación</option>
+            <option value="alerta">Alerta</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="requestDescription">Descripción</label>
+          <textarea id="requestDescription" rows="4" required placeholder="Describe la situación"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="requestImages">Adjuntar imágenes (máx. 25MB c/u)</label>
+          <input type="file" id="requestImages" accept="image/*" multiple>
+        </div>
+        <div id="requestImagePreview" class="image-preview"></div>
+        <p class="form-hint">La solicitud se registrará con fecha y estado Pendiente.</p>
+      </section>
+      <footer class="modal-footer">
+        <button value="cancel" class="btn">Cancelar</button>
+        <button id="requestSubmit" value="confirm" class="btn primary">Enviar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="municipalResponseDialog" class="modal">
+    <form method="dialog" class="modal-content" id="municipalResponseForm">
+      <header>
+        <h2>Seguimiento de solicitud</h2>
+      </header>
+      <section>
+        <input type="hidden" id="responseRequestId">
+        <div class="input-group">
+          <label for="responseStatus">Actualizar estado</label>
+          <select id="responseStatus" required>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_progreso">En progreso</option>
+            <option value="completado">Completado</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="responseMessage">Respuesta para el ciudadano</label>
+          <textarea id="responseMessage" rows="4" required placeholder="Detalle la acción realizada"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="responseImages">Adjuntar evidencia</label>
+          <input type="file" id="responseImages" accept="image/*" multiple>
+        </div>
+        <div id="responseImagePreview" class="image-preview"></div>
+      </section>
+      <footer class="modal-footer">
+        <button value="cancel" class="btn">Cancelar</button>
+        <button id="responseSubmit" value="confirm" class="btn primary">Guardar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="municipalityDialog" class="modal">
+    <form method="dialog" class="modal-content">
+      <header>
+        <h2>Municipalidades del Paraguay</h2>
+      </header>
+      <section>
+        <div class="input-group">
+          <label for="municipalitySearch">Buscar</label>
+          <input type="search" id="municipalitySearch" placeholder="Escribe el nombre de la municipalidad">
+        </div>
+        <ul id="municipalityList" class="municipality-list"></ul>
+      </section>
+      <footer class="modal-footer">
+        <button value="cancel" class="btn">Cerrar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <template id="requestTemplate">
+    <article class="request-card">
+      <div class="request-card-header">
+        <div class="request-icon" data-type></div>
+        <div>
+          <h4 data-title></h4>
+          <p class="request-meta" data-meta></p>
+        </div>
+        <span class="request-status" data-status></span>
+      </div>
+      <p data-description></p>
+      <div class="image-preview" data-images></div>
+      <details data-responses hidden>
+        <summary>Seguimiento municipal</summary>
+        <ul class="responses" data-response-list></ul>
+      </details>
+      <div class="request-actions" data-actions hidden></div>
+    </article>
+  </template>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j7kB0C7L1Q6ttuPAoBs+K6TfXYD2vA5p3p3pLFw=" crossorigin=""></script>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
