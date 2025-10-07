@@ -1,911 +1,760 @@
-const STORAGE_KEYS = {
-  requests: 'municipalink_requests',
-  users: 'municipalink_users',
-  session: 'municipalink_session'
-};
-
-const REQUEST_TYPES = {
+const TYPE_INFO = {
   reparacion: {
     label: 'Reparación',
-    color: '#f97316',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21l1.5-4.5L17.25 3.75a2.12 2.12 0 013 3L7.5 19.5 3 21z"/></svg>'
+    icon: '🛠️'
   },
   mantenimiento: {
     label: 'Mantenimiento',
-    color: '#2563eb',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.75a3 3 0 013 3v9.75H9V9.75a3 3 0 013-3zm0 0V3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 21h9"/></svg>'
+    icon: '🧰'
   },
   creacion: {
     label: 'Creación',
-    color: '#4ade80',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v15"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.5 12h15"/></svg>'
+    icon: '➕'
   },
   alerta: {
     label: 'Alerta',
-    color: '#dc2626',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v4.5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 17.25h.008v.008H12z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.29 3.86L1.82 18a1.5 1.5 0 001.29 2.25h17.78A1.5 1.5 0 0022.18 18L13.71 3.86a1.5 1.5 0 00-2.42 0z"/></svg>'
+    icon: '⚠️'
   }
 };
 
-const STATUS_LABELS = {
+const STATUS_INFO = {
   pendiente: 'Pendiente',
   en_progreso: 'En progreso',
   completado: 'Completado'
 };
 
-const map = L.map('map', { zoomControl: false }).setView([-23.35, -58.4], 7);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-L.control.zoom({ position: 'topright' }).addTo(map);
+const STORAGE_KEYS = {
+  SESSION: 'municipalink:session',
+  REQUESTS: 'municipalink:requests'
+};
 
-const municipalityLayer = L.layerGroup().addTo(map);
-const requestLayer = L.layerGroup().addTo(map);
+const createId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
 
 const state = {
   municipalities: [],
   selectedMunicipality: null,
-  requests: loadFromStorage(STORAGE_KEYS.requests),
-  users: loadFromStorage(STORAGE_KEYS.users),
-  currentUser: null
+  requests: loadRequests(),
+  filter: 'todos',
+  session: loadSession(),
+  map: null,
+  marker: null
 };
-state.currentUser = restoreSession();
 
 const elements = {
-  loginBtn: document.getElementById('loginBtn'),
+  loginScreen: document.getElementById('loginScreen'),
+  authProviders: document.getElementById('authProviders'),
+  authDivider: document.getElementById('authDivider'),
+  emailProviderBtn: document.getElementById('emailProviderBtn'),
+  loginForm: document.getElementById('loginForm'),
+  loginRole: document.getElementById('loginRole'),
+  loginMunicipalityGroup: document.getElementById('loginMunicipalityGroup'),
+  loginMunicipality: document.getElementById('loginMunicipality'),
+  backToProviders: document.getElementById('backToProviders'),
+  continueGuestBtn: document.getElementById('continueGuestBtn'),
+  openLoginBtn: document.getElementById('openLoginBtn'),
   logoutBtn: document.getElementById('logoutBtn'),
-  authDialog: document.getElementById('authDialog'),
-  authName: document.getElementById('authName'),
-  authEmail: document.getElementById('authEmail'),
-  authRole: document.getElementById('authRole'),
-  authSubmit: document.getElementById('authSubmit'),
-  assignedMunicipality: document.getElementById('assignedMunicipality'),
-  municipalAssignment: document.getElementById('municipalAssignment'),
+  sessionBadge: document.getElementById('sessionBadge'),
+  geolocateBtn: document.getElementById('geolocateBtn'),
   municipalitySelect: document.getElementById('municipalitySelect'),
-  sessionInfo: document.getElementById('sessionInfo'),
+  locationSummary: document.getElementById('locationSummary'),
+  requestCounters: document.getElementById('requestCounters'),
+  requestFilters: document.getElementById('requestFilters'),
+  requestList: document.getElementById('requestList'),
   newRequestBtn: document.getElementById('newRequestBtn'),
   requestDialog: document.getElementById('requestDialog'),
   requestForm: document.getElementById('requestForm'),
   requestMunicipality: document.getElementById('requestMunicipality'),
-  requestType: document.getElementById('requestType'),
+  requestTypeInput: document.getElementById('requestType'),
+  requestTypeGrid: document.getElementById('requestTypeGrid'),
   requestDescription: document.getElementById('requestDescription'),
   requestImages: document.getElementById('requestImages'),
   requestImagePreview: document.getElementById('requestImagePreview'),
-  requestList: document.getElementById('requestList'),
-  requestCounters: document.getElementById('requestCounters'),
-  selectedMunicipality: document.getElementById('selectedMunicipality'),
-  geolocateBtn: document.getElementById('geolocateBtn'),
-  viewAllMunicipalitiesBtn: document.getElementById('viewAllMunicipalitiesBtn'),
-  municipalityDialog: document.getElementById('municipalityDialog'),
-  municipalityList: document.getElementById('municipalityList'),
-  municipalitySearch: document.getElementById('municipalitySearch'),
-  municipalPanel: document.getElementById('municipalPanel'),
-  municipalInfo: document.getElementById('municipalInfo'),
-  municipalTools: document.getElementById('municipalTools'),
-  municipalResponseDialog: document.getElementById('municipalResponseDialog'),
+  requestSubmit: document.getElementById('requestSubmit'),
+  responseDialog: document.getElementById('municipalResponseDialog'),
+  responseForm: document.getElementById('municipalResponseForm'),
   responseStatus: document.getElementById('responseStatus'),
   responseMessage: document.getElementById('responseMessage'),
   responseImages: document.getElementById('responseImages'),
   responseImagePreview: document.getElementById('responseImagePreview'),
-  responseRequestId: document.getElementById('responseRequestId'),
-  adminPanel: document.getElementById('adminPanel'),
-  adminTools: document.getElementById('adminTools'),
-  logoutBtnEl: document.getElementById('logoutBtn'),
-  sessionInfoEl: document.getElementById('sessionInfo')
+  responseSubmit: document.getElementById('responseSubmit'),
+  responseRequestId: document.getElementById('responseRequestId')
 };
 
-let selectedProvider = null;
+let currentProvider = null;
 
 init();
 
-function init() {
-  setupEventListeners();
-  loadMunicipalities();
-  hydrateUI();
+async function init() {
+  attachEventListeners();
+  await loadMunicipalities();
+  populateMunicipalitySelects();
+  initMap();
+  updateSessionUI();
+  renderCounters();
+  renderRequests();
+  if (!state.session) {
+    showLoginScreen();
+  }
 }
 
-function setupEventListeners() {
-  elements.loginBtn.addEventListener('click', () => openAuthDialog());
-  elements.logoutBtn.addEventListener('click', () => logout());
-
-  elements.authRole.addEventListener('change', () => toggleMunicipalAssignment());
-  elements.authDialog.querySelectorAll('.auth-providers button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedProvider = btn.dataset.provider;
-      elements.authDialog.querySelectorAll('.auth-providers button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    });
+function attachEventListeners() {
+  document.querySelectorAll('.btn.provider').forEach((btn) => {
+    btn.addEventListener('click', () => handleProviderClick(btn.dataset.provider));
   });
 
-  elements.authSubmit.addEventListener('click', handleAuthSubmit);
-  elements.municipalitySelect.addEventListener('change', event => {
-    const municipality = state.municipalities.find(m => m.id === event.target.value);
-    if (municipality) {
-      focusMunicipality(municipality);
+  elements.backToProviders.addEventListener('click', resetLoginChoices);
+  elements.continueGuestBtn.addEventListener('click', () => {
+    localStorage.removeItem(STORAGE_KEYS.SESSION);
+    state.session = null;
+    updateSessionUI();
+    hideLoginScreen();
+  });
+
+  elements.openLoginBtn.addEventListener('click', showLoginScreen);
+  elements.logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem(STORAGE_KEYS.SESSION);
+    state.session = null;
+    updateSessionUI();
+    showLoginScreen();
+  });
+
+  elements.loginRole.addEventListener('change', () => {
+    const showAssignment = elements.loginRole.value === 'municipal';
+    elements.loginMunicipalityGroup.hidden = !showAssignment;
+  });
+
+  elements.loginForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const formData = new FormData(elements.loginForm);
+    const session = {
+      name: formData.get('loginName'),
+      email: formData.get('loginEmail'),
+      role: formData.get('loginRole'),
+      provider: currentProvider || 'email'
+    };
+
+    if (session.role === 'municipal') {
+      session.municipalityId = formData.get('loginMunicipality') || null;
     }
-  });
-  elements.geolocateBtn.addEventListener('click', detectGeolocation);
-  elements.newRequestBtn.addEventListener('click', openRequestDialog);
-  elements.requestForm.addEventListener('submit', handleRequestSubmit);
-  elements.requestImages.addEventListener('change', () => previewImages(elements.requestImages.files, elements.requestImagePreview));
-  elements.responseImages.addEventListener('change', () => previewImages(elements.responseImages.files, elements.responseImagePreview));
-  document.getElementById('municipalResponseForm').addEventListener('submit', handleMunicipalResponseSubmit);
-  elements.viewAllMunicipalitiesBtn.addEventListener('click', () => elements.municipalityDialog.showModal());
-  elements.municipalityDialog.addEventListener('close', () => {
-    elements.municipalitySearch.value = '';
-    renderMunicipalityList(state.municipalities);
-  });
-  elements.municipalitySearch.addEventListener('input', () => {
-    const search = elements.municipalitySearch.value.toLowerCase();
-    const filtered = state.municipalities.filter(m => m.name.toLowerCase().includes(search) || m.department.toLowerCase().includes(search));
-    renderMunicipalityList(filtered);
-  });
-}
 
-function loadMunicipalities() {
-  fetch('data/municipalities.json')
-    .then(response => response.json())
-    .then(data => {
-      state.municipalities = data;
-      populateMunicipalitySelect();
-      renderMunicipalityList(data);
-      populateMunicipalAssignmentOptions();
-      plotMunicipalitiesOnMap();
-      if (!state.selectedMunicipality && state.currentUser?.assignedMunicipalityId) {
-        const assigned = state.municipalities.find(m => m.id === state.currentUser.assignedMunicipalityId);
-        if (assigned) {
-          focusMunicipality(assigned);
-        }
-      }
-    })
-    .catch(() => {
-      notify('No se pudieron cargar las municipalidades.');
+    setSession(session);
+    elements.loginForm.reset();
+    elements.loginMunicipalityGroup.hidden = true;
+    resetLoginChoices();
+    hideLoginScreen();
+  });
+
+  elements.geolocateBtn.addEventListener('click', detectUserLocation);
+  elements.municipalitySelect.addEventListener('change', () => {
+    const municipalityId = elements.municipalitySelect.value;
+    const municipality = state.municipalities.find((item) => item.id === municipalityId) || null;
+    setSelectedMunicipality(municipality);
+  });
+
+  elements.newRequestBtn.addEventListener('click', () => {
+    if (!state.selectedMunicipality) {
+      alert('Selecciona una municipalidad antes de crear una solicitud.');
+      return;
+    }
+
+    elements.requestMunicipality.value = state.selectedMunicipality.name;
+    elements.requestTypeInput.value = '';
+    elements.requestDescription.value = '';
+    elements.requestImagePreview.innerHTML = '';
+    elements.requestTypeGrid.querySelectorAll('.type-card').forEach((card) => card.classList.remove('active'));
+    elements.requestImages.value = '';
+    elements.requestDialog.showModal();
+  });
+
+  elements.requestTypeGrid.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-value]');
+    if (!button) return;
+    elements.requestTypeGrid.querySelectorAll('.type-card').forEach((card) => card.classList.remove('active'));
+    button.classList.add('active');
+    elements.requestTypeInput.value = button.dataset.value;
+  });
+
+  elements.requestImages.addEventListener('change', async () => {
+    const files = Array.from(elements.requestImages.files || []);
+    const previews = await readImagePreviews(files);
+    renderImagePreview(elements.requestImagePreview, previews);
+  });
+
+  elements.requestForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!state.selectedMunicipality) return;
+    if (!elements.requestTypeInput.value) {
+      alert('Selecciona el tipo de solicitud.');
+      return;
+    }
+
+    const images = await readImagePreviews(Array.from(elements.requestImages.files || []));
+    const newRequest = {
+      id: createId(),
+      municipalityId: state.selectedMunicipality.id,
+      type: elements.requestTypeInput.value,
+      description: elements.requestDescription.value.trim(),
+      status: 'pendiente',
+      createdAt: new Date().toISOString(),
+      citizen: state.session?.name || 'Usuario',
+      images,
+      responses: []
+    };
+
+    state.requests.push(newRequest);
+    saveRequests();
+    elements.requestDialog.close();
+    renderCounters();
+    renderRequests();
+  });
+
+  elements.responseImages.addEventListener('change', async () => {
+    const files = Array.from(elements.responseImages.files || []);
+    const previews = await readImagePreviews(files);
+    renderImagePreview(elements.responseImagePreview, previews);
+  });
+
+  elements.responseForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const requestId = elements.responseRequestId.value;
+    const request = state.requests.find((item) => item.id === requestId);
+    if (!request) return;
+
+    request.status = elements.responseStatus.value;
+    const responseImages = await readImagePreviews(Array.from(elements.responseImages.files || []));
+    request.responses.push({
+      id: createId(),
+      author: state.session?.name || 'Funcionario',
+      message: elements.responseMessage.value.trim(),
+      createdAt: new Date().toISOString(),
+      images: responseImages
     });
+
+    saveRequests();
+    elements.responseForm.reset();
+    elements.responseImagePreview.innerHTML = '';
+    elements.responseDialog.close();
+    renderCounters();
+    renderRequests();
+  });
+
+  elements.requestFilters.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-filter]');
+    if (!button) return;
+    state.filter = button.dataset.filter;
+    elements.requestFilters.querySelectorAll('.filter-chip').forEach((chip) => chip.classList.toggle('active', chip.dataset.filter === state.filter));
+    renderRequests();
+  });
 }
 
-function populateMunicipalitySelect() {
+async function loadMunicipalities() {
+  const response = await fetch('data/municipalities.json');
+  state.municipalities = await response.json();
+}
+
+function populateMunicipalitySelects() {
+  if (!state.municipalities.length) return;
   elements.municipalitySelect.innerHTML = '<option value="">Selecciona una municipalidad…</option>';
-  state.municipalities
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .forEach(m => {
-      const option = document.createElement('option');
-      option.value = m.id;
-      option.textContent = `${m.name} (${m.department})`;
-      elements.municipalitySelect.append(option);
-    });
-}
+  elements.loginMunicipality.innerHTML = '<option value="">Selecciona una municipalidad…</option>';
 
-function renderMunicipalityList(municipalities) {
-  elements.municipalityList.innerHTML = '';
-  municipalities.forEach(m => {
-    const li = document.createElement('li');
-    li.innerHTML = `<strong>${m.name}</strong><br><small>${m.department}</small>`;
-    li.addEventListener('click', () => {
-      focusMunicipality(m);
-      elements.municipalityDialog.close();
-    });
-    elements.municipalityList.append(li);
-  });
-}
-
-function populateMunicipalAssignmentOptions() {
-  elements.assignedMunicipality.innerHTML = '<option value="">Selecciona una municipalidad</option>';
-  state.municipalities.forEach(m => {
+  const fragment = document.createDocumentFragment();
+  state.municipalities.forEach((municipality) => {
     const option = document.createElement('option');
-    option.value = m.id;
-    option.textContent = `${m.name} (${m.department})`;
-    elements.assignedMunicipality.append(option);
+    option.value = municipality.id;
+    option.textContent = `${municipality.name} · ${municipality.department}`;
+    fragment.append(option);
   });
+  elements.municipalitySelect.append(fragment.cloneNode(true));
+  elements.loginMunicipality.append(fragment);
 }
 
-function plotMunicipalitiesOnMap() {
-  municipalityLayer.clearLayers();
-  state.municipalities.forEach(m => {
-    const marker = L.circleMarker([m.lat, m.lng], {
-      radius: 6,
-      color: '#256073',
-      weight: 1,
-      fillColor: '#4c9a6a',
-      fillOpacity: 0.7
-    }).addTo(municipalityLayer);
-    marker.bindTooltip(`${m.name} (${m.department})`);
-    marker.on('click', () => focusMunicipality(m));
-  });
+function initMap() {
+  state.map = L.map('map', {
+    zoomControl: false
+  }).setView([-23.6, -58.4], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(state.map);
+
+  L.control.zoom({ position: 'topright' }).addTo(state.map);
 }
 
-function focusMunicipality(municipality) {
-  state.selectedMunicipality = municipality;
-  map.setView([municipality.lat, municipality.lng], 11);
-  highlightMunicipality(municipality);
-  renderSelectedMunicipality();
+function showLoginScreen() {
+  resetLoginChoices();
+  elements.loginScreen.classList.remove('hidden');
+}
+
+function hideLoginScreen() {
+  elements.loginScreen.classList.add('hidden');
+}
+
+function handleProviderClick(provider) {
+  currentProvider = provider;
+  elements.authProviders.classList.add('hidden');
+  elements.authDivider?.classList.add('hidden');
+  elements.emailProviderBtn?.classList.add('hidden');
+  elements.loginForm.classList.remove('hidden');
+
+  const emailField = document.getElementById('loginEmail');
+  emailField.value = '';
+  if (provider === 'gmail') {
+    emailField.placeholder = 'usuario@gmail.com';
+  } else if (provider === 'outlook') {
+    emailField.placeholder = 'usuario@outlook.com';
+  } else if (provider === 'icloud') {
+    emailField.placeholder = 'usuario@icloud.com';
+  } else {
+    emailField.placeholder = 'correo@ejemplo.com';
+  }
+}
+
+function resetLoginChoices() {
+  currentProvider = null;
+  elements.loginForm.classList.add('hidden');
+  elements.authProviders.classList.remove('hidden');
+  elements.authDivider?.classList.remove('hidden');
+  elements.emailProviderBtn?.classList.remove('hidden');
+  elements.loginForm.reset();
+  elements.loginMunicipalityGroup.hidden = true;
+}
+
+function setSession(session) {
+  state.session = session;
+  if (session && session.role !== 'guest') {
+    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
+  } else if (session?.role === 'guest') {
+    localStorage.removeItem(STORAGE_KEYS.SESSION);
+  }
+  updateSessionUI();
+}
+
+function updateSessionUI() {
+  const role = state.session?.role || 'guest';
+  elements.sessionBadge.textContent = roleLabel(role);
+  if (!state.session) {
+    elements.openLoginBtn.hidden = false;
+    elements.logoutBtn.hidden = true;
+    elements.newRequestBtn.hidden = true;
+  } else {
+    elements.openLoginBtn.hidden = true;
+    elements.logoutBtn.hidden = false;
+    elements.newRequestBtn.hidden = role !== 'citizen';
+  }
   renderRequests();
 }
 
-function highlightMunicipality(municipality) {
-  municipalityLayer.eachLayer(layer => {
-    if (layer.setStyle) {
-      layer.setStyle({ fillOpacity: 0.7, radius: 6, color: '#256073' });
-    }
-  });
-
-  municipalityLayer.eachLayer(layer => {
-    if (layer.getLatLng && layer.getLatLng().lat === municipality.lat && layer.getLatLng().lng === municipality.lng) {
-      layer.setStyle({ fillOpacity: 1, radius: 10, color: '#f97316' });
-    }
-  });
+function roleLabel(role) {
+  switch (role) {
+    case 'citizen':
+      return 'Ciudadano';
+    case 'municipal':
+      return 'Funcionario municipal';
+    case 'admin':
+      return 'Administrador';
+    default:
+      return 'Invitado';
+  }
 }
 
-function detectGeolocation() {
-  if (!navigator.geolocation) {
-    notify('La geolocalización no es compatible con este navegador.');
+function setSelectedMunicipality(municipality) {
+  state.selectedMunicipality = municipality;
+  state.filter = 'todos';
+  elements.requestFilters.querySelectorAll('.filter-chip').forEach((chip) => {
+    chip.classList.toggle('active', chip.dataset.filter === 'todos');
+  });
+  if (!municipality) {
+    elements.municipalitySelect.value = '';
+    elements.locationSummary.textContent = 'Ubicación no detectada';
+    elements.requestList.classList.add('empty');
+    elements.requestList.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">🔍</span>
+        <p>Selecciona una municipalidad para ver las solicitudes.</p>
+      </div>
+    `;
+    elements.requestFilters.hidden = true;
+    renderCounters();
     return;
   }
 
+  elements.locationSummary.textContent = `${municipality.name}, ${municipality.department}`;
+  elements.municipalitySelect.value = municipality.id;
+  if (state.map) {
+    state.map.setView([municipality.lat, municipality.lng], 13);
+    if (!state.marker) {
+      state.marker = L.marker([municipality.lat, municipality.lng]).addTo(state.map);
+    } else {
+      state.marker.setLatLng([municipality.lat, municipality.lng]);
+    }
+  }
+  renderCounters();
+  renderRequests();
+}
+
+async function detectUserLocation() {
+  if (!navigator.geolocation) {
+    alert('La geolocalización no está soportada en este navegador.');
+    return;
+  }
+
+  elements.geolocateBtn.disabled = true;
+  elements.geolocateBtn.textContent = 'Detectando...';
+
   navigator.geolocation.getCurrentPosition(
-    position => {
+    (position) => {
       const { latitude, longitude } = position.coords;
-      map.setView([latitude, longitude], 13);
-      const municipality = findClosestMunicipality(latitude, longitude);
-      if (municipality) {
-        focusMunicipality(municipality);
-        notify(`Ubicación detectada: ${municipality.name}`);
-      } else {
-        notify('No se encontró una municipalidad cercana en el listado.');
+      const closest = findClosestMunicipality(latitude, longitude);
+      if (closest) {
+        elements.municipalitySelect.value = closest.id;
+        setSelectedMunicipality(closest);
       }
+      elements.geolocateBtn.disabled = false;
+      elements.geolocateBtn.textContent = '📍 Detectar mi posición';
     },
-    error => {
-      if (error.code === error.PERMISSION_DENIED) {
-        notify('Necesitamos permiso de ubicación para detectar tu municipalidad.');
-      } else {
-        notify('No se pudo obtener la ubicación actual.');
-      }
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
+    () => {
+      alert('No se pudo obtener la ubicación.');
+      elements.geolocateBtn.disabled = false;
+      elements.geolocateBtn.textContent = '📍 Detectar mi posición';
+    }
   );
 }
 
 function findClosestMunicipality(lat, lng) {
-  if (!state.municipalities.length) return null;
   let closest = null;
-  let minDistance = Infinity;
-
-  state.municipalities.forEach(m => {
-    const distance = haversineDistance(lat, lng, m.lat, m.lng);
-    if (distance < minDistance) {
-      minDistance = distance;
-      closest = m;
+  let shortestDistance = Number.MAX_VALUE;
+  state.municipalities.forEach((municipality) => {
+    const distance = haversine(lat, lng, municipality.lat, municipality.lng);
+    if (distance < shortestDistance) {
+      shortestDistance = distance;
+      closest = municipality;
     }
   });
-
   return closest;
 }
 
-function haversineDistance(lat1, lon1, lat2, lon2) {
+function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
-function toRad(value) {
-  return (value * Math.PI) / 180;
-}
-
-function openAuthDialog() {
-  selectedProvider = null;
-  elements.authDialog.querySelectorAll('.auth-providers button').forEach(b => b.classList.remove('active'));
-  elements.authName.value = '';
-  elements.authEmail.value = '';
-  elements.authRole.value = 'citizen';
-  toggleMunicipalAssignment();
-  elements.authDialog.showModal();
-}
-
-function toggleMunicipalAssignment() {
-  if (elements.authRole.value === 'municipal') {
-    elements.municipalAssignment.hidden = false;
-  } else {
-    elements.municipalAssignment.hidden = true;
-    elements.assignedMunicipality.value = '';
-  }
-}
-
-function handleAuthSubmit(event) {
-  event.preventDefault();
-  if (!selectedProvider) {
-    notify('Selecciona un proveedor de autenticación.');
-    return;
-  }
-
-  if (elements.authRole.value === 'municipal' && !elements.assignedMunicipality.value) {
-    notify('Selecciona la municipalidad asignada.');
-    return;
-  }
-
-  const email = elements.authEmail.value.trim().toLowerCase();
-  const name = elements.authName.value.trim();
-
-  if (!email || !name) {
-    notify('Completa todos los campos requeridos.');
-    return;
-  }
-
-  const existingUser = state.users.find(u => u.email === email);
-  let user;
-  if (existingUser) {
-    user = { ...existingUser, name, provider: selectedProvider, role: elements.authRole.value };
-    if (elements.authRole.value === 'municipal') {
-      user.assignedMunicipalityId = elements.assignedMunicipality.value;
-    }
-    state.users = state.users.map(u => (u.id === user.id ? user : u));
-  } else {
-    user = {
-      id: crypto.randomUUID(),
-      name,
-      email,
-      provider: selectedProvider,
-      role: elements.authRole.value,
-      assignedMunicipalityId: elements.assignedMunicipality.value || null,
-      createdAt: new Date().toISOString()
-    };
-    state.users.push(user);
-  }
-
-  persistToStorage(STORAGE_KEYS.users, state.users);
-  state.currentUser = user;
-  persistToStorage(STORAGE_KEYS.session, { userId: user.id });
-  elements.authDialog.close();
-  hydrateUI();
-  notify(`Bienvenido ${user.name}`);
-}
-
-function hydrateUI() {
-  if (state.currentUser) {
-    elements.sessionInfo.textContent = `${state.currentUser.name} · ${rolLabel(state.currentUser.role)}`;
-    elements.loginBtn.hidden = true;
-    elements.logoutBtn.hidden = false;
-    elements.newRequestBtn.hidden = state.currentUser.role !== 'citizen';
-  } else {
-    elements.sessionInfo.textContent = 'Sesión invitado';
-    elements.loginBtn.hidden = false;
-    elements.logoutBtn.hidden = true;
-    elements.newRequestBtn.hidden = true;
-  }
-
-  renderMunicipalPanel();
-  renderAdminPanel();
-  renderRequests();
-}
-
-function renderMunicipalPanel() {
-  if (state.currentUser?.role === 'municipal') {
-    elements.municipalPanel.hidden = false;
-    const municipality = state.municipalities.find(m => m.id === state.currentUser.assignedMunicipalityId);
-    if (municipality) {
-      elements.municipalInfo.innerHTML = `<strong>${municipality.name}</strong><p>${municipality.department}</p>`;
-      const requests = getRequestsByMunicipality(municipality.id);
-      elements.municipalTools.innerHTML = `
-        <div class="municipal-summary">
-          <p><strong>Total solicitudes:</strong> ${requests.length}</p>
-          <p><strong>Pendientes:</strong> ${requests.filter(r => r.status === 'pendiente').length}</p>
-          <p><strong>En progreso:</strong> ${requests.filter(r => r.status === 'en_progreso').length}</p>
-          <p><strong>Completadas:</strong> ${requests.filter(r => r.status === 'completado').length}</p>
-        </div>
-        <button class="btn secondary" id="goToAssignedMunicipality">Ver solicitudes asignadas</button>
-      `;
-      document.getElementById('goToAssignedMunicipality').addEventListener('click', () => focusMunicipality(municipality));
-      if (!state.selectedMunicipality) {
-        focusMunicipality(municipality);
-      }
-    } else {
-      elements.municipalInfo.textContent = 'No hay municipalidad asignada.';
-      elements.municipalTools.innerHTML = '';
-    }
-  } else {
-    elements.municipalPanel.hidden = true;
-  }
-}
-
-function renderAdminPanel() {
-  if (state.currentUser?.role === 'admin') {
-    elements.adminPanel.hidden = false;
-    renderAdminTools();
-  } else {
-    elements.adminPanel.hidden = true;
-    elements.adminTools.innerHTML = '';
-  }
-}
-
-function renderAdminTools() {
-  const usersTableRows = state.users.map(user => `
-    <tr>
-      <td>${user.name}</td>
-      <td>${user.email}</td>
-      <td>${rolLabel(user.role)}</td>
-      <td>${user.assignedMunicipalityId ? municipalityName(user.assignedMunicipalityId) : '—'}</td>
-    </tr>
-  `).join('');
-
-  const reports = generateReportData();
-  const reportRows = reports.municipalities.map(row => `
-    <tr>
-      <td>${row.municipality}</td>
-      <td>${row.total}</td>
-      <td>${row.pendiente}</td>
-      <td>${row.en_progreso}</td>
-      <td>${row.completado}</td>
-    </tr>
-  `).join('');
-
-  elements.adminTools.innerHTML = `
-    <section>
-      <h4>Usuarios registrados</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Correo</th>
-            <th>Rol</th>
-            <th>Municipalidad</th>
-          </tr>
-        </thead>
-        <tbody>${usersTableRows || '<tr><td colspan="4">Sin usuarios registrados</td></tr>'}</tbody>
-      </table>
-    </section>
-    <section>
-      <h4>Informe de solicitudes</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Municipalidad</th>
-            <th>Total</th>
-            <th>Pendientes</th>
-            <th>En progreso</th>
-            <th>Completadas</th>
-          </tr>
-        </thead>
-        <tbody>${reportRows || '<tr><td colspan="5">Sin datos disponibles</td></tr>'}</tbody>
-      </table>
-      <div class="request-actions">
-        <button class="btn secondary" id="downloadReport">Descargar CSV</button>
-      </div>
-    </section>
-  `;
-
-  document.getElementById('downloadReport').addEventListener('click', () => downloadCSVReport(reports));
-}
-
-function renderSelectedMunicipality() {
-  if (!state.selectedMunicipality) {
-    elements.selectedMunicipality.hidden = true;
-    return;
-  }
-  const { name, department } = state.selectedMunicipality;
-  elements.selectedMunicipality.hidden = false;
-  elements.selectedMunicipality.innerHTML = `<strong>${name}</strong> · ${department}`;
-  elements.municipalitySelect.value = state.selectedMunicipality.id;
-  elements.requestMunicipality.value = name;
-  renderCounters();
-  plotRequestsOnMap();
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
 }
 
 function renderCounters() {
-  if (!state.selectedMunicipality) return;
-  const requests = getRequestsByMunicipality(state.selectedMunicipality.id);
-  const counts = Object.keys(REQUEST_TYPES).reduce((acc, key) => ({ ...acc, [key]: 0 }), {});
-  requests.forEach(r => {
-    counts[r.type] = (counts[r.type] || 0) + 1;
-  });
-  elements.requestCounters.innerHTML = Object.entries(REQUEST_TYPES)
-    .map(([key, value]) => `<span class="counter-pill" style="background:${hexToRgba(value.color, 0.12)};color:${value.color}">${value.icon} ${value.label}: ${counts[key] || 0}</span>`)
-    .join('');
-}
-
-function openRequestDialog() {
-  if (!state.selectedMunicipality) {
-    notify('Selecciona una municipalidad antes de cargar la solicitud.');
-    return;
-  }
-  elements.requestMunicipality.value = state.selectedMunicipality.name;
-  elements.requestType.value = '';
-  elements.requestDescription.value = '';
-  elements.requestImages.value = '';
-  elements.requestImagePreview.innerHTML = '';
-  elements.requestDialog.showModal();
-}
-
-async function handleRequestSubmit(event) {
-  event.preventDefault();
-  if (!state.currentUser || state.currentUser.role !== 'citizen') {
-    notify('Debes iniciar sesión como ciudadano para crear solicitudes.');
-    return;
-  }
-  if (!state.selectedMunicipality) {
-    notify('Selecciona una municipalidad.');
-    return;
-  }
-
-  const type = elements.requestType.value;
-  const description = elements.requestDescription.value.trim();
-  if (!type || !description) {
-    notify('Completa el tipo y la descripción.');
-    return;
-  }
-
-  const images = await serializeFiles(elements.requestImages.files);
-
-  const newRequest = {
-    id: crypto.randomUUID(),
-    municipalityId: state.selectedMunicipality.id,
-    type,
-    description,
-    images,
-    status: 'pendiente',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    citizenId: state.currentUser.id,
-    followUps: []
+  elements.requestCounters.innerHTML = '';
+  const counts = {
+    reparacion: 0,
+    mantenimiento: 0,
+    creacion: 0,
+    alerta: 0
   };
 
-  state.requests.push(newRequest);
-  persistToStorage(STORAGE_KEYS.requests, state.requests);
-  elements.requestDialog.close();
-  renderCounters();
-  renderRequests();
-  plotRequestsOnMap();
-  notify('Solicitud registrada correctamente.');
-}
+  if (state.selectedMunicipality) {
+    state.requests
+      .filter((request) => request.municipalityId === state.selectedMunicipality.id)
+      .forEach((request) => {
+        counts[request.type] = (counts[request.type] || 0) + 1;
+      });
+  }
 
-function previewImages(files, container) {
-  container.innerHTML = '';
-  Array.from(files).forEach(file => {
-    if (file.size > 25 * 1024 * 1024) {
-      notify(`La imagen ${file.name} supera los 25MB y no se incluirá.`);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = event => {
-      const img = document.createElement('img');
-      img.src = event.target.result;
-      img.alt = file.name;
-      container.append(img);
-    };
-    reader.readAsDataURL(file);
+  Object.entries(TYPE_INFO).forEach(([type, meta]) => {
+    const card = document.createElement('div');
+    card.className = `counter-card type-${type}`;
+    card.innerHTML = `
+      <span class="counter-icon">${meta.icon}</span>
+      <span class="counter-label">${meta.label}</span>
+      <span class="counter-value">${counts[type] || 0}</span>
+    `;
+    elements.requestCounters.append(card);
   });
-}
-
-function serializeFiles(fileList) {
-  const files = Array.from(fileList);
-  const promises = files.map(file => {
-    if (file.size > 25 * 1024 * 1024) {
-      return Promise.resolve(null);
-    }
-    return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = event => {
-        resolve({ name: file.name, dataUrl: event.target.result });
-      };
-      reader.readAsDataURL(file);
-    });
-  });
-  return Promise.all(promises).then(results => results.filter(Boolean));
 }
 
 function renderRequests() {
   if (!state.selectedMunicipality) {
-    elements.requestList.classList.add('empty-state');
-    elements.requestList.innerHTML = '<p>Selecciona una municipalidad para ver las solicitudes.</p>';
-    requestLayer.clearLayers();
+    elements.requestList.classList.add('empty');
+    elements.requestFilters.hidden = true;
     return;
   }
 
-  const requests = getRequestsByMunicipality(state.selectedMunicipality.id);
+  const requests = state.requests.filter((request) => request.municipalityId === state.selectedMunicipality.id);
+  elements.requestFilters.hidden = requests.length === 0;
+
   if (!requests.length) {
-    elements.requestList.classList.add('empty-state');
-    elements.requestList.innerHTML = '<p>No se registran solicitudes para esta municipalidad.</p>';
-    requestLayer.clearLayers();
+    elements.requestList.className = 'request-list empty';
+    elements.requestList.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">🗂️</span>
+        <p>No hay solicitudes registradas aún en esta municipalidad.</p>
+      </div>
+    `;
     return;
   }
 
-  elements.requestList.classList.remove('empty-state');
+  let filtered = requests;
+  if (state.filter !== 'todos') {
+    filtered = requests.filter((request) => request.type === state.filter);
+  }
+
+  if (!filtered.length) {
+    elements.requestList.className = 'request-list empty';
+    elements.requestList.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">✨</span>
+        <p>Aún no hay solicitudes de este tipo.</p>
+      </div>
+    `;
+    return;
+  }
+
+  elements.requestList.className = 'request-list';
   elements.requestList.innerHTML = '';
-
-  requests
+  filtered
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .forEach(request => {
-      const template = document.getElementById('requestTemplate');
-      const node = template.content.cloneNode(true);
-      const card = node.querySelector('.request-card');
-      const typeMeta = REQUEST_TYPES[request.type];
-      card.querySelector('[data-type]').innerHTML = typeMeta.icon;
-      card.querySelector('[data-type]').style.background = hexToRgba(typeMeta.color, 0.1);
-      card.querySelector('[data-title]').textContent = `${typeMeta.label}`;
-      card.querySelector('[data-meta]').textContent = `Cargada el ${formatDate(request.createdAt)}`;
-      card.querySelector('[data-status]').textContent = STATUS_LABELS[request.status];
-      card.querySelector('[data-status]').dataset.state = request.status;
-      card.querySelector('[data-description]').textContent = request.description;
-      const imagesContainer = card.querySelector('[data-images]');
-      request.images.forEach(image => {
-        const img = document.createElement('img');
-        img.src = image.dataUrl;
-        img.alt = image.name;
-        imagesContainer.append(img);
-      });
-      if (request.followUps.length) {
-        const details = card.querySelector('[data-responses]');
-        details.hidden = false;
-        const list = card.querySelector('[data-response-list]');
-        request.followUps.forEach(followUp => {
-          const li = document.createElement('li');
-          const author = userName(followUp.userId);
-          li.innerHTML = `<strong>${author}</strong> · ${formatDate(followUp.createdAt)}<br>${followUp.message}`;
-          if (followUp.images?.length) {
-            const preview = document.createElement('div');
-            preview.className = 'image-preview';
-            followUp.images.forEach(imgData => {
-              const img = document.createElement('img');
-              img.src = imgData.dataUrl;
-              img.alt = imgData.name;
-              preview.append(img);
-            });
-            li.append(preview);
-          }
-          list.append(li);
-        });
-      }
-
-      if (canManageRequest(request)) {
-        const actions = card.querySelector('[data-actions]');
-        actions.hidden = false;
-        const button = document.createElement('button');
-        button.className = 'btn secondary';
-        button.textContent = 'Dar seguimiento';
-        button.addEventListener('click', () => openMunicipalResponseDialog(request));
-        actions.append(button);
-      }
-
+    .forEach((request) => {
+      const card = buildRequestCard(request);
       elements.requestList.append(card);
     });
-
-  plotRequestsOnMap();
 }
 
-function plotRequestsOnMap() {
-  requestLayer.clearLayers();
-  if (!state.selectedMunicipality) return;
-  const requests = getRequestsByMunicipality(state.selectedMunicipality.id);
-  requests.forEach(request => {
-    const municipality = state.municipalities.find(m => m.id === request.municipalityId);
-    if (!municipality) return;
-    const icon = L.divIcon({
-      className: 'request-map-icon',
-      html: `<span style="background:${REQUEST_TYPES[request.type].color}"></span>`,
-      iconSize: [20, 20]
+function buildRequestCard(request) {
+  const card = document.createElement('article');
+  card.className = 'request-card';
+
+  const header = document.createElement('div');
+  header.className = 'request-card-header';
+
+  const info = document.createElement('div');
+  info.className = 'info';
+
+  const icon = document.createElement('div');
+  icon.className = `request-icon type-${request.type}`;
+  icon.textContent = TYPE_INFO[request.type]?.icon || '📌';
+
+  const text = document.createElement('div');
+  const title = document.createElement('h3');
+  title.className = 'request-title';
+  title.textContent = TYPE_INFO[request.type]?.label || 'Solicitud';
+
+  const meta = document.createElement('p');
+  meta.className = 'request-meta';
+  meta.textContent = `${formatDate(request.createdAt)} · ${request.citizen || 'Ciudadano'}`;
+
+  text.append(title, meta);
+  info.append(icon, text);
+
+  const status = document.createElement('span');
+  status.className = `status-badge status-${request.status}`;
+  status.textContent = STATUS_INFO[request.status] || request.status;
+
+  header.append(info, status);
+
+  const description = document.createElement('p');
+  description.className = 'request-description';
+  description.textContent = request.description;
+
+  card.append(header, description);
+
+  if (request.images?.length) {
+    const gallery = document.createElement('div');
+    gallery.className = 'image-preview';
+    request.images.forEach((src) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = 'Evidencia de la solicitud';
+      gallery.append(img);
     });
-    L.marker([municipality.lat + randomOffset(), municipality.lng + randomOffset()], { icon })
-      .addTo(requestLayer)
-      .bindPopup(`
-        <strong>${REQUEST_TYPES[request.type].label}</strong><br>
-        Estado: ${STATUS_LABELS[request.status]}<br>
-        ${truncate(request.description, 120)}
-      `);
-  });
-}
+    card.append(gallery);
+  }
 
-function randomOffset() {
-  return (Math.random() - 0.5) * 0.01;
+  if (request.responses?.length) {
+    request.responses.forEach((response) => {
+      const block = document.createElement('div');
+      block.className = 'response-block';
+      const heading = document.createElement('h4');
+      heading.textContent = `Respuesta · ${formatDate(response.createdAt)}`;
+      const message = document.createElement('p');
+      message.textContent = response.message;
+      block.append(heading, message);
+      if (response.images?.length) {
+        const gallery = document.createElement('div');
+        gallery.className = 'image-preview';
+        response.images.forEach((src) => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = 'Evidencia de solución';
+          gallery.append(img);
+        });
+        block.append(gallery);
+      }
+      card.append(block);
+    });
+  }
+
+  if (canManageRequest(request)) {
+    const actions = document.createElement('div');
+    const button = document.createElement('button');
+    button.className = 'btn secondary';
+    button.textContent = 'Actualizar seguimiento';
+    button.addEventListener('click', () => openResponseDialog(request));
+    actions.append(button);
+    card.append(actions);
+  }
+
+  return card;
 }
 
 function canManageRequest(request) {
-  if (!state.currentUser) return false;
-  if (state.currentUser.role === 'admin') return true;
-  if (state.currentUser.role === 'municipal') {
-    return state.currentUser.assignedMunicipalityId === request.municipalityId;
+  if (!state.session) return false;
+  if (state.session.role === 'admin') return true;
+  if (state.session.role === 'municipal') {
+    return state.session.municipalityId === request.municipalityId;
   }
   return false;
 }
 
-function openMunicipalResponseDialog(request) {
+function openResponseDialog(request) {
   elements.responseRequestId.value = request.id;
   elements.responseStatus.value = request.status;
   elements.responseMessage.value = '';
   elements.responseImages.value = '';
   elements.responseImagePreview.innerHTML = '';
-  elements.municipalResponseDialog.showModal();
+  elements.responseDialog.showModal();
 }
 
-async function handleMunicipalResponseSubmit(event) {
-  event.preventDefault();
-  const requestId = elements.responseRequestId.value;
-  const request = state.requests.find(r => r.id === requestId);
-  if (!request) return;
-  const status = elements.responseStatus.value;
-  const message = elements.responseMessage.value.trim();
-  if (!message) {
-    notify('Describe la acción realizada.');
-    return;
-  }
-  const images = await serializeFiles(elements.responseImages.files);
-  const followUp = {
-    id: crypto.randomUUID(),
-    userId: state.currentUser.id,
-    status,
-    message,
-    images,
-    createdAt: new Date().toISOString()
-  };
-  request.followUps.push(followUp);
-  request.status = status;
-  request.updatedAt = new Date().toISOString();
-  state.requests = state.requests.map(r => (r.id === request.id ? request : r));
-  persistToStorage(STORAGE_KEYS.requests, state.requests);
-  elements.municipalResponseDialog.close();
-  renderRequests();
-  renderCounters();
-  plotRequestsOnMap();
-  notify('Seguimiento actualizado.');
+function renderImagePreview(container, images) {
+  container.innerHTML = '';
+  images.forEach((src) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Vista previa';
+    container.append(img);
+  });
 }
 
-function getRequestsByMunicipality(id) {
-  return state.requests.filter(r => r.municipalityId === id);
+function formatDate(value) {
+  return new Intl.DateTimeFormat('es-PY', {
+    dateStyle: 'long',
+    timeStyle: 'short'
+  }).format(new Date(value));
 }
 
-function notify(message) {
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
-  document.body.append(toast);
-  requestAnimationFrame(() => toast.classList.add('visible'));
-  setTimeout(() => {
-    toast.classList.remove('visible');
-    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-  }, 3500);
+function readImagePreviews(files) {
+  const uploads = files.slice(0, 6).map((file) => {
+    if (file.size > 25 * 1024 * 1024) {
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+  });
+  return Promise.all(uploads).then((images) => images.filter(Boolean));
 }
 
-function loadFromStorage(key) {
+function loadSession() {
+  const stored = localStorage.getItem(STORAGE_KEYS.SESSION);
+  if (!stored) return null;
   try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistToStorage(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function restoreSession() {
-  try {
-    const session = JSON.parse(localStorage.getItem(STORAGE_KEYS.session));
-    if (!session?.userId) return null;
-    const user = state?.users?.find(u => u.id === session.userId);
-    return user || null;
-  } catch {
+    return JSON.parse(stored);
+  } catch (error) {
+    console.error('Error parsing session', error);
     return null;
   }
 }
 
-function logout() {
-  state.currentUser = null;
-  localStorage.removeItem(STORAGE_KEYS.session);
-  hydrateUI();
-  notify('Sesión cerrada.');
-}
-
-function formatDate(isoString) {
-  return new Date(isoString).toLocaleString('es-PY', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-function municipalityName(id) {
-  const municipality = state.municipalities.find(m => m.id === id);
-  return municipality ? municipality.name : '—';
-}
-
-function userName(id) {
-  const user = state.users.find(u => u.id === id);
-  return user ? user.name : 'Funcionario municipal';
-}
-
-function rolLabel(role) {
-  switch (role) {
-    case 'citizen':
-      return 'Ciudadano';
-    case 'municipal':
-      return 'Funcionario';
-    case 'admin':
-      return 'Administrador';
-    default:
-      return role;
+function loadRequests() {
+  const stored = localStorage.getItem(STORAGE_KEYS.REQUESTS);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error('Error parsing requests', error);
+    }
   }
+  const seed = seedRequests();
+  localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(seed));
+  return seed;
 }
 
-function generateReportData() {
-  const municipalities = state.municipalities.map(m => {
-    const requests = getRequestsByMunicipality(m.id);
-    return {
-      municipality: `${m.name} (${m.department})`,
-      total: requests.length,
-      pendiente: requests.filter(r => r.status === 'pendiente').length,
-      en_progreso: requests.filter(r => r.status === 'en_progreso').length,
-      completado: requests.filter(r => r.status === 'completado').length
-    };
-  }).filter(row => row.total > 0);
-
-  const statusDistribution = state.requests.reduce((acc, request) => {
-    acc[request.status] = (acc[request.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  return { municipalities, statusDistribution };
+function saveRequests() {
+  localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(state.requests));
 }
 
-function downloadCSVReport(report) {
-  const headers = ['Municipalidad', 'Total', 'Pendiente', 'En progreso', 'Completadas'];
-  const rows = report.municipalities.map(row => [row.municipality, row.total, row.pendiente, row.en_progreso, row.completado]);
-  const csvContent = [headers, ...rows].map(columns => columns.join(',')).join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'reporte-solicitudes.csv';
-  link.click();
-  URL.revokeObjectURL(url);
+function seedRequests() {
+  const now = new Date();
+  return [
+    {
+      id: createId(),
+      municipalityId: 'asu',
+      type: 'reparacion',
+      description: 'Bache en la calle principal',
+      status: 'pendiente',
+      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 4).toISOString(),
+      citizen: 'María López',
+      images: [],
+      responses: []
+    },
+    {
+      id: createId(),
+      municipalityId: 'asu',
+      type: 'mantenimiento',
+      description: 'Poste de luz con problemas eléctricos',
+      status: 'en_progreso',
+      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+      citizen: 'Luis Fernández',
+      images: [],
+      responses: [
+        {
+          id: createId(),
+          author: 'Equipo de Alumbrado',
+          message: 'Se programó la reparación para el fin de semana.',
+          createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 12).toISOString(),
+          images: []
+        }
+      ]
+    },
+    {
+      id: createId(),
+      municipalityId: 'asu',
+      type: 'alerta',
+      description: 'Árbol caído obstruyendo la vereda',
+      status: 'completado',
+      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 6).toISOString(),
+      citizen: 'Andrea Benítez',
+      images: [],
+      responses: [
+        {
+          id: createId(),
+          author: 'Dirección de Servicios',
+          message: 'Se retiró el árbol y se liberó el paso.',
+          createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+          images: []
+        }
+      ]
+    },
+    {
+      id: createId(),
+      municipalityId: 'asu',
+      type: 'creacion',
+      description: 'Solicitud de semáforo en intersección concurrida',
+      status: 'pendiente',
+      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+      citizen: 'Roberto Díaz',
+      images: [],
+      responses: []
+    }
+  ];
 }
-
-function truncate(text, limit) {
-  if (!text) return '';
-  return text.length > limit ? `${text.slice(0, limit)}…` : text;
-}
-
-function hexToRgba(hex, alpha) {
-  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-  hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) {
-    return hex;
-  }
-  const r = parseInt(result[1], 16);
-  const g = parseInt(result[2], 16);
-  const b = parseInt(result[3], 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-// Toast styles
-const toastStyles = document.createElement('style');
-toastStyles.textContent = `
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: #1f2933;
-  color: white;
-  padding: 0.75rem 1.25rem;
-  border-radius: 999px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  z-index: 1000;
-}
-.toast.visible {
-  opacity: 0.95;
-  transform: translateY(0);
-}
-.request-map-icon span {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
-}
-`;
-document.head.append(toastStyles);
