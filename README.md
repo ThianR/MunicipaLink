@@ -52,10 +52,12 @@ El servicio quedará disponible en <http://localhost:8080> con los siguientes en
 
 ## Visualización del frontend
 
-Puedes servir la carpeta `public` con cualquier servidor estático, por ejemplo:
+Dentro de la carpeta `public` se incluye un pequeño servidor HTTP sin dependencias externas para facilitar las pruebas en entornos
+sin acceso a npm. Para levantar la interfaz ejecuta:
 
 ```bash
-npx serve public
+node public/server.js
 ```
 
-Luego visita <http://localhost:3000> (o el puerto indicado por la herramienta) para interactuar con la interfaz.
+El servidor escuchará en <http://localhost:3000> y entregará automáticamente `index.html` para cualquier ruta desconocida, lo que
+permite navegar por la aplicación sin errores 404.
