@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MunicipaLink</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+4pskSeT3E8G3Epr6s3HoVgfQEQ7WZz8A5pIe7wYw=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="loginScreen" class="login-screen hidden">
+    <div class="login-card">
+      <header>
+        <h1>MunicipaLink</h1>
+        <p>Conectando ciudadanos con sus municipios</p>
+      </header>
+      <section>
+        <h2>Iniciar sesión</h2>
+        <div class="provider-stack" id="authProviders">
+          <button class="btn provider gmail" data-provider="gmail">Continuar con Google</button>
+          <button class="btn provider outlook" data-provider="outlook">Continuar con Outlook</button>
+          <button class="btn provider icloud" data-provider="icloud">Continuar con iCloud</button>
+        </div>
+        <div class="divider" id="authDivider"><span>o</span></div>
+        <button class="btn provider neutral" data-provider="email" id="emailProviderBtn">Iniciar con correo electrónico</button>
+        <form id="loginForm" class="login-form hidden">
+          <div class="input-group">
+            <label for="loginName">Nombre completo</label>
+            <input type="text" id="loginName" name="loginName" required placeholder="Tu nombre" autocomplete="name">
+          </div>
+          <div class="input-group">
+            <label for="loginEmail">Correo electrónico</label>
+            <input type="email" id="loginEmail" name="loginEmail" required placeholder="correo@ejemplo.com" autocomplete="email">
+          </div>
+          <div class="input-group">
+            <label for="loginRole">Rol</label>
+            <select id="loginRole" name="loginRole" required>
+              <option value="citizen">Ciudadano</option>
+              <option value="municipal">Funcionario municipal</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <div class="input-group" id="loginMunicipalityGroup" hidden>
+            <label for="loginMunicipality">Municipalidad asignada</label>
+            <select id="loginMunicipality" name="loginMunicipality"></select>
+          </div>
+          <button type="submit" class="btn primary full">Continuar</button>
+          <button type="button" class="btn ghost" id="backToProviders">Elegir otro método</button>
+        </form>
+        <button class="btn ghost" id="continueGuestBtn">Continuar como invitado</button>
+      </section>
+      <footer>
+        <small>Al continuar aceptas nuestros Términos de servicio y Políticas de privacidad.</small>
+      </footer>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <strong>MunicipaLink</strong>
+        <span>Ciudades conectadas</span>
+      </div>
+      <div class="top-actions">
+        <span id="sessionBadge" class="session-badge">Invitado</span>
+        <button id="openLoginBtn" class="link-btn">Iniciar sesión</button>
+        <button id="logoutBtn" class="link-btn" hidden>Cerrar sesión</button>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <section class="panel location-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Ubicación</h2>
+            <p id="locationSummary">Ubicación no detectada</p>
+          </div>
+          <div class="panel-actions">
+            <button id="geolocateBtn" class="btn secondary">📍 Detectar mi posición</button>
+            <label class="select">
+              <span>Seleccionar municipalidad</span>
+              <select id="municipalitySelect">
+                <option value="">Selecciona una municipalidad…</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="map" class="map"></div>
+      </section>
+
+      <section class="panel requests-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Solicitudes</h2>
+            <p>Selecciona la municipalidad para ver los casos cargados</p>
+          </div>
+          <button id="newRequestBtn" class="btn primary" hidden>➕ Nueva solicitud</button>
+        </div>
+
+        <div id="requestCounters" class="request-counters"></div>
+
+        <div class="filter-bar" id="requestFilters" hidden>
+          <button class="filter-chip active" data-filter="todos">Todos</button>
+          <button class="filter-chip" data-filter="reparacion">Reparación</button>
+          <button class="filter-chip" data-filter="mantenimiento">Mantenimiento</button>
+          <button class="filter-chip" data-filter="creacion">Creación</button>
+          <button class="filter-chip" data-filter="alerta">Alerta</button>
+        </div>
+
+        <div id="requestList" class="request-list empty">
+          <div class="empty-state">
+            <span class="empty-icon">🔍</span>
+            <p>Selecciona una municipalidad para ver las solicitudes.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="requestDialog" class="modal">
+    <form method="dialog" class="modal-content" id="requestForm">
+      <header class="modal-head">
+        <h2>Nueva Solicitud</h2>
+      </header>
+      <section class="modal-body">
+        <div class="input-group">
+          <label>Municipalidad</label>
+          <input id="requestMunicipality" type="text" readonly>
+        </div>
+        <div class="input-group">
+          <label>Tipo de Solicitud</label>
+          <div class="type-grid" id="requestTypeGrid">
+            <button type="button" data-value="reparacion" class="type-card">
+              <span class="icon">🛠️</span>
+              <span>Reparación</span>
+            </button>
+            <button type="button" data-value="mantenimiento" class="type-card">
+              <span class="icon">🧰</span>
+              <span>Mantenimiento</span>
+            </button>
+            <button type="button" data-value="creacion" class="type-card">
+              <span class="icon">➕</span>
+              <span>Creación</span>
+            </button>
+            <button type="button" data-value="alerta" class="type-card">
+              <span class="icon">⚠️</span>
+              <span>Alerta</span>
+            </button>
+          </div>
+          <input type="hidden" id="requestType" required>
+        </div>
+        <div class="input-group">
+          <label for="requestDescription">Descripción</label>
+          <textarea id="requestDescription" rows="4" placeholder="Describe detalladamente su solicitud..." required></textarea>
+        </div>
+        <div class="input-group">
+          <label for="requestImages">Imágenes (máx. 25MB cada una)</label>
+          <div class="upload-zone">
+            <input type="file" id="requestImages" accept="image/*" multiple>
+            <span>Subir imágenes</span>
+          </div>
+          <div id="requestImagePreview" class="image-preview"></div>
+        </div>
+      </section>
+      <footer class="modal-foot">
+        <button value="cancel" class="btn ghost">Cancelar</button>
+        <button id="requestSubmit" value="confirm" class="btn primary">Crear Solicitud</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="municipalResponseDialog" class="modal">
+    <form method="dialog" class="modal-content" id="municipalResponseForm">
+      <header class="modal-head">
+        <h2>Seguimiento de solicitud</h2>
+      </header>
+      <section class="modal-body">
+        <input type="hidden" id="responseRequestId">
+        <div class="input-group">
+          <label for="responseStatus">Estado</label>
+          <select id="responseStatus" required>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_progreso">En progreso</option>
+            <option value="completado">Completado</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="responseMessage">Respuesta</label>
+          <textarea id="responseMessage" rows="4" placeholder="Detalle de la gestión realizada" required></textarea>
+        </div>
+        <div class="input-group">
+          <label for="responseImages">Evidencias</label>
+          <div class="upload-zone">
+            <input type="file" id="responseImages" accept="image/*" multiple>
+            <span>Subir imágenes</span>
+          </div>
+          <div id="responseImagePreview" class="image-preview"></div>
+        </div>
+      </section>
+      <footer class="modal-foot">
+        <button value="cancel" class="btn ghost">Cancelar</button>
+        <button id="responseSubmit" value="confirm" class="btn primary">Guardar cambios</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j7kB0C7L1Q6ttuPAoBs+K6TfXYD2vA5p3p3pLFw=" crossorigin=""></script>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
