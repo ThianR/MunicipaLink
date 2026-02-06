@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MunicipaLink | Gestión Ciudadana</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="role-guest">
+    <!-- Login Screen -->
+    <div id="screen-login" class="screen active">
+        <div class="login-card">
+            <i data-lucide="map-pin" style="width: 48px; height: 48px; color: #10b981;"></i>
+            <h1>MunicipaLink</h1>
+            <p>Conectando ciudadanos con su ciudad.</p>
+            
+            <form id="form-auth" class="auth-form">
+                <div class="form-group">
+                    <input type="email" id="auth-email" placeholder="Correo electrónico" required class="muni-selector">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="auth-password" placeholder="Contraseña" required class="muni-selector">
+                </div>
+                <div class="auth-buttons">
+                    <button type="submit" id="btn-login" class="btn-action">Iniciar Sesión</button>
+                    <button type="button" id="btn-signup" class="btn-guest" style="margin-top: 1rem; text-decoration: none;">¿No tienes cuenta? Regístrate</button>
+                </div>
+            </form>
+            
+            <button id="btn-forgot-password" class="btn-guest" style="margin-top: 0.5rem; font-size: 0.875rem;">
+                ¿Olvidaste tu contraseña?
+            </button>
+            
+            <div class="divider"><span>o continuar con</span></div>
+            
+            <button id="btn-login-google" class="btn-login-google" style="margin-bottom: 1.5rem;">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" alt="G">
+                Google
+            </button>
+
+            <button id="btn-login-guest" class="btn-guest">Entrar como Invitado</button>
+        </div>
+    </div>
+
+    <!-- App Screen -->
+    <div id="screen-app" class="screen">
+        <header class="main-header">
+            <div class="logo">
+                <i data-lucide="map-pin"></i>
+                <h1>MunicipaLink</h1>
+            </div>
+            <div class="user-info">
+                <span id="user-display">Invitado</span>
+                <button id="btn-logout" class="btn-guest">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <div class="app-content">
+            <!-- Left Sidebar -->
+            <aside class="sidebar">
+                <!-- Sidebar Map Controls -->
+                <div class="map-controls">
+                    <button id="btn-recenter" class="btn-map-tool" title="Centrar en Municipalidad">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+                    <button id="btn-locate" class="btn-map-tool" title="Mi Ubicación">
+                        <i data-lucide="navigation"></i>
+                    </button>
+                </div>
+
+                <section>
+                    <label style="font-weight: 700; display: block; margin-bottom: 0.5rem;">Municipalidad</label>
+                    <select id="muni-selector" class="muni-selector">
+                        <option value="">Detectando...</option>
+                    </select>
+                </section>
+
+                <nav class="sidebar-nav" style="margin-top: 1.5rem;">
+                    <button class="nav-item active" data-view="map">
+                        <i data-lucide="map"></i> Explorar Mapa
+                    </button>
+                    <button class="nav-item" data-view="reports">
+                        <i data-lucide="list"></i> Solicitudes
+                    </button>
+                    <button class="nav-item" data-view="profile">
+                        <i data-lucide="user"></i> Mi Perfil
+                    </button>
+                </nav>
+
+                <div id="admin-panel" class="admin-only" style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
+                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">ADMIN PANEL</h3>
+                    <button class="btn-action" style="background: #374151;">Gestionar Municipalidades</button>
+                </div>
+
+                <div style="margin-top: auto;">
+                    <button id="btn-open-report" class="btn-action role-restricted">
+                        <i data-lucide="plus"></i> Nuevo Reporte
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="content-view">
+                <!-- Map View -->
+                <div id="view-map" class="view active" style="position: relative;">
+                    <div id="map"></div>
+                    
+                    <!-- Floating Map Controls (Mobile/Visual) -->
+                    <div class="floating-map-tools">
+                        <select id="muni-selector-map" class="muni-selector-compact">
+                            <option value="">Cargando...</option>
+                        </select>
+                        <div class="map-action-group">
+                            <button id="btn-recenter-map" class="btn-map-float" title="Centrar">
+                                <i data-lucide="refresh-cw"></i>
+                            </button>
+                            <button id="btn-locate-map" class="btn-map-float" title="Mi Ubicación">
+                                <i data-lucide="navigation"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports History View -->
+                <div id="view-reports" class="view">
+                    <div class="view-header reports-header-layout">
+                        <div class="header-title">
+                            <h2>Solicitudes</h2>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Gestión de reportes.</p>
+                        </div>
+                        
+                        <div class="reports-controls-container">
+                        
+                            <!-- Mobile Toggle Button -->
+                            <button id="btn-toggle-filters" class="mobile-filter-toggle">
+                                <i data-lucide="filter"></i> Filtros
+                            </button>
+
+                            <!-- Collapsible Toolbar -->
+                             <div id="reports-toolbar" class="reports-toolbar">
+                                <div class="filter-group search-group">
+                                    <i data-lucide="search" class="search-icon"></i>
+                                    <input type="text" id="search-input" placeholder="Buscar ID o descripción..." class="search-input">
+                                </div>
+                                <select id="sort-selector" class="toolbar-select">
+                                    <option value="recent">Más Recientes</option>
+                                    <option value="oldest">Más Antiguos</option>
+                                    <option value="impact">Más Relevantes</option>
+                                </select>
+                                <select id="muni-selector-reports" class="toolbar-select">
+                                    <option value="">Municipio: Todos</option>
+                                </select>
+                                <select id="status-selector-reports" class="toolbar-select">
+                                    <option value="">Estado: Todos</option>
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="En proceso">En proceso</option>
+                                    <option value="Resuelto">Resuelto</option>
+                                    <option value="Rechazado">Rechazado</option>
+                                </select>
+                                <button id="btn-clear-filters" class="btn-clear-filters" title="Limpiar filtros">
+                                    <i data-lucide="x-circle"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tab Navigation (Mobile Only) -->
+                    <div class="reports-controls-mobile">
+                        <!-- Removed duplicate filters for mobile, using unified toolbar now -->
+                        <div class="tabs-container">
+                            <button class="tab-btn role-restricted active" data-tab="my-requests">
+                                <i data-lucide="user"></i> Mis Solicitudes
+                            </button>
+                            <button class="tab-btn" data-tab="all-requests">
+                                <i data-lucide="globe"></i> Todas las Solicitudes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: My Requests -->
+                    <div id="tab-my-requests" class="tab-content active">
+                        <div id="my-reports-list" class="reports-list">
+                            <!-- Items will be rendered here -->
+                            <div class="empty-state">
+                                <i data-lucide="clipboard-list"></i>
+                                <p>Aún no has enviado ningún reporte.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: All Requests -->
+                    <div id="tab-all-requests" class="tab-content">
+                        <div class="filter-info">
+                            <i data-lucide="filter"></i>
+                            <span id="filter-status">Mostrando todas las solicitudes</span>
+                        </div>
+                        <div id="all-reports-list" class="reports-list">
+                            <!-- Items will be rendered here -->
+                            <div class="empty-state">
+                                <i data-lucide="inbox"></i>
+                                <p>No hay solicitudes para mostrar.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <!-- View: Report Detail (Full Screen Form) -->
+    <div id="view-report-detail" class="view view-detail">
+        <div class="view-header">
+            <button id="btn-back-detail" class="btn-back">
+                <i data-lucide="arrow-left"></i> Volver a solicitudes
+            </button>
+            <h2 id="detail-title">Detalle de Solicitud</h2>
+        </div>
+
+        <div class="detail-content-scroll">
+            <div class="detail-grid">
+                <!-- Left Column: Map & Info -->
+                <div class="detail-left">
+                    <div class="detail-map-container">
+                        <div id="detail-map" class="detail-map-large"></div>
+                    </div>
+                    
+                    <div class="detail-card">
+                        <div class="detail-meta">
+                            <span id="detail-category" class="category-tag">Categoría</span>
+                            <span id="detail-status" class="status-badge">Estado</span>
+                            <span id="detail-date" class="detail-date">Fecha</span>
+                        </div>
+                        <h3 class="detail-section-title">Descripción</h3>
+                        <p id="detail-description" class="detail-description"></p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Evidence & Interaction -->
+                <div class="detail-right">
+                    <!-- Evidence Carousel -->
+                    <div class="detail-card">
+                        <h3 class="detail-section-title"><i data-lucide="image"></i> Evidencias</h3>
+                        <div id="evidences-carousel" class="evidences-carousel">
+                            <!-- Images rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="detail-card">
+                        <div class="detail-actions">
+                            <button id="btn-vote-up" class="btn-vote role-restricted" data-vote="voto_positivo">
+                                <i data-lucide="thumbs-up"></i>
+                                <span id="vote-up-count">0</span>
+                            </button>
+                            <button id="btn-vote-down" class="btn-vote role-restricted" data-vote="voto_negativo">
+                                <i data-lucide="thumbs-down"></i>
+                                <span id="vote-down-count">0</span>
+                            </button>
+                            <button id="btn-follow" class="btn-follow role-restricted">
+                                <i data-lucide="eye"></i> Seguir
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2" style="font-size: 0.75rem; margin-top: 0.5rem; display: block;">
+                            <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                            Tus interacciones ayudan a priorizar este reporte.
+                        </small>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="detail-card">
+                        <h3 class="detail-section-title"><i data-lucide="message-circle"></i> Comentarios (<span id="comments-count">0</span>)</h3>
+                        <div id="comments-list" class="comments-list">
+                            <!-- Comments rendered here -->
+                        </div>
+                        
+                        <form id="form-add-comment" class="add-comment-form role-restricted">
+                            <textarea id="comment-content" class="muni-selector" placeholder="Escribe un comentario..." required rows="3"></textarea>
+                            <button type="submit" class="btn-action">Enviar Comentario</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            </main>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <nav class="mobile-nav">
+            <button class="nav-item active" data-view="map">
+                <i data-lucide="map"></i>
+                <span>Mapa</span>
+            </button>
+            <button class="nav-item" data-view="reports">
+                <i data-lucide="list"></i>
+                <span>Solicitudes</span>
+            </button>
+            <button class="nav-item" data-view="profile">
+                <i data-lucide="user"></i>
+                <span>Perfil</span>
+            </button>
+        </nav>
+
+        <!-- Mobile FAB -->
+        <button id="btn-open-report-mobile" class="fab-report">
+            <i data-lucide="plus"></i>
+        </button>
+
+        <!-- View: User Profile -->
+        <div id="view-profile" class="view">
+            <div class="view-header">
+                <button id="btn-back-profile" class="btn-back">
+                    <i data-lucide="arrow-left"></i> Volver al Mapa
+                </button>
+                <h2><i data-lucide="award"></i> Mi Perfil y Rango</h2>
+            </div>
+            
+            <div class="profile-container">
+                <div class="profile-sidebar">
+                    <div class="profile-avatar-section">
+                        <div id="profile-avatar-preview" class="avatar-large">
+                            <i data-lucide="user"></i>
+                        </div>
+                        <input type="file" id="input-avatar" accept="image/*" style="display: none;">
+                        <button type="button" class="btn-guest" onclick="document.getElementById('input-avatar').click()">
+                            Cambiar Foto
+                        </button>
+                    </div>
+
+                    <!-- Level Section -->
+                    <div class="level-card">
+                        <div class="level-badge" id="user-badge">🧊</div>
+                        <div class="level-info">
+                            <h3 id="user-rank">Vecino Novato</h3>
+                            <span class="level-number">Nivel <span id="user-level-num">1</span></span>
+                        </div>
+                        <div class="level-progress-container">
+                            <div class="level-progress-bar">
+                                <div id="level-progress-fill" class="level-progress-fill" style="width: 0%;"></div>
+                            </div>
+                            <small id="level-xp-text">0 / 500 XP</small>
+                        </div>
+                        <button id="btn-open-xp-guide" class="btn-xp-guide">
+                            <i data-lucide="help-circle"></i> ¿Cómo ganar XP?
+                        </button>
+                    </div>
+
+                    <div class="stats-summary-card">
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-reports">0</span>
+                            <span class="stat-label">Reportes</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-comments">0</span>
+                            <span class="stat-label">Comentarios</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-votes">0</span>
+                            <span class="stat-label">Votos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-followers">0</span>
+                            <span class="stat-label">Seguidores</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-following">0</span>
+                            <span class="stat-label">Siguiendo</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-my-history" class="btn-guest" style="width:100%; margin-top:0.5rem;">
+                        <i data-lucide="history"></i> Mi Historial de Reportes
+                    </button>
+
+                    <div class="trust-meter-card">
+                        <div class="trust-meter-header">
+                            <span class="trust-label">Nivel de Impacto</span>
+                            <span id="trust-multiplier" class="trust-value">1.0x</span>
+                        </div>
+                        <div class="trust-progress-bg">
+                            <div id="trust-progress-fill" class="trust-progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <p class="trust-hint">Completa tu perfil para que tus reportes tengan hasta el <strong>doble de prioridad</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="profile-main">
+                    <!-- Mensaje para Invitados -->
+                    <div id="guest-welcome-message" class="guest-welcome-card" style="display: none;">
+                        <div class="guest-msg-content">
+                            <i data-lucide="sparkles" class="guest-msg-icon"></i>
+                            <h3>¡Únete a nuestra comunidad!</h3>
+                            <p>Estás navegando como <strong>invitado</strong>. Para poder reportar problemas, votar solicitudes y ganar puntos de impacto, necesitas una cuenta.</p>
+                            <p class="guest-msg-quote">"Pequeñas acciones ciudadanas logran grandes cambios en nuestra ciudad. ¡Registrate hoy y sé parte del cambio!"</p>
+                            <button onclick="location.reload()" class="btn-action" style="margin-top: 1.5rem;">Ir a Inicio de Sesión</button>
+                        </div>
+                    </div>
+
+                    <form id="form-profile" class="profile-form">
+                        <div class="profile-grid">
+                            <div class="form-group">
+                                <label>Nombre de Usuario (Alias)</label>
+                                <input type="text" name="alias" class="muni-selector" placeholder="@usuario">
+                            </div>
+                            <div class="form-group private-field">
+                                <label>Nombre Completo</label>
+                                <input type="text" name="nombre_completo" class="muni-selector" placeholder="Tu nombre">
+                            </div>
+                            <div class="form-group private-field">
+                                <label>Fecha de Nacimiento</label>
+                                <input type="date" name="fecha_nacimiento" class="muni-selector">
+                                <small id="display-age" class="text-muted" style="margin-top: 0.25rem; display: block;"></small>
+                            </div>
+                            <div class="form-group private-field">
+                                <label>Género</label>
+                                <select name="genero" class="muni-selector">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Femenino">Femenino</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="form-group private-field">
+                                <label>Contacto / WhatsApp</label>
+                                <input type="text" name="contacto" class="muni-selector" placeholder="+595 ...">
+                            </div>
+                            <div class="form-group private-field">
+                                <label>Dirección Física</label>
+                                <input type="text" name="direccion" class="muni-selector" placeholder="Barrio, Ciudad...">
+                            </div>
+                        </div>
+                        <div class="form-footer">
+                            <button type="submit" id="btn-save-profile" class="btn-action">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-report" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Reporte</h2>
+                <button id="btn-close-modal" class="btn-close">&times;</button>
+            </div>
+            <form id="form-report">
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select name="category_id" id="report-category" class="muni-selector" required>
+                        <option value="">Cargando categorías...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea name="description" id="report-description" class="muni-selector" placeholder="Describe el problema aquí..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Fotos (Máx. 3)</label>
+                    <div class="file-upload-container">
+                        <input type="file" id="report-photos" name="photos" accept="image/*" multiple class="muni-selector">
+                        <small class="text-muted">Puedes seleccionar múltiples fotos o tomar fotos con tu cámara.</small>
+                        <small class="text-muted">Máximo 3 archivos, cada uno con un tamaño máximo de 30MB.</small>
+                    </div>
+                </div>
+                <div class="form-group" style="display: flex; gap: 1rem; align-items: center; background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                    <i data-lucide="map-pin" style="color: var(--primary);"></i>
+                    <span id="report-coords" style="font-size: 0.875rem; color: var(--text-muted);">Capturando ubicación...</span>
+                </div>
+                
+                <div class="form-group" style="margin-top: 1rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <input type="checkbox" id="terms-check" required style="margin-top: 0.25rem;">
+                    <label for="terms-check" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.3;">
+                        Acepto los términos y condiciones. Entiendo que subir contenido falso, documentos inválidos o censurables puede resultar en el <strong>baneo permanente</strong> de mi cuenta.
+                    </label>
+                </div>
+
+                <button type="submit" id="btn-submit-report" class="btn-action">Enviar Reporte</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Request Password Reset -->
+    <div id="modal-reset-request" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Recuperar Contraseña</h2>
+                <button id="btn-close-reset-request" class="btn-close">&times;</button>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+            </p>
+            <form id="form-reset-request">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="reset-email" class="muni-selector" placeholder="tu@email.com" required>
+                </div>
+                <button type="submit" class="btn-action">Enviar Enlace de Recuperación</button>
+            </form>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- Modal: XP Guide -->
+    <div id="modal-xp-guide" class="modal">
+        <div class="modal-content modal-xp">
+            <div class="modal-header">
+                <h2><i data-lucide="award"></i> Guía de Experiencia</h2>
+                <button id="btn-close-xp-guide" class="btn-close">&times;</button>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">
+                Gana puntos de experiencia (XP) participando activamente en tu comunidad
+            </p>
+            <div class="xp-rewards-grid">
+                <div class="xp-reward-item">
+                    <div class="xp-icon" style="background: #dbeafe; color: #2563eb;">
+                        <i data-lucide="edit-3"></i>
+                    </div>
+                    <div class="xp-info">
+                        <span class="xp-action">Reportar Problema</span>
+                        <span class="xp-value">+50 XP</span>
+                    </div>
+                </div>
+                <div class="xp-reward-item">
+                    <div class="xp-icon" style="background: #e0e7ff; color: #6366f1;">
+                        <i data-lucide="message-square"></i>
+                    </div>
+                    <div class="xp-info">
+                        <span class="xp-action">Comentar Solicitud</span>
+                        <span class="xp-value">+10 XP</span>
+                    </div>
+                </div>
+                <div class="xp-reward-item">
+                    <div class="xp-icon" style="background: #fef3c7; color: #f59e0b;">
+                        <i data-lucide="thumbs-up"></i>
+                    </div>
+                    <div class="xp-info">
+                        <span class="xp-action">Recibir Voto Útil</span>
+                        <span class="xp-value">+5 XP</span>
+                    </div>
+                </div>
+                <div class="xp-reward-item">
+                    <div class="xp-icon" style="background: #d1fae5; color: #059669;">
+                        <i data-lucide="award"></i>
+                    </div>
+                    <div class="xp-info">
+                        <span class="xp-action">Reporte Resuelto</span>
+                        <span class="xp-value">+150 XP</span>
+                    </div>
+                </div>
+            </div>
+            <div class="xp-tip">
+                <i data-lucide="lightbulb"></i>
+                <p>Completa tu perfil y mantén una participación constante para subir de nivel más rápido</p>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Modal: User Profile -->
+    <div id="modal-user-profile" class="modal">
+        <div class="modal-content profile-card-modal">
+            <div class="modal-header">
+                <h2>Perfil del Ciudadano</h2>
+                <button class="btn-close" onclick="document.getElementById('modal-user-profile').classList.remove('active')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="profile-card-body">
+                <div class="profile-card-header">
+                    <div class="profile-avatar-wrapper" id="modal-user-avatar-click">
+                        <img id="modal-user-avatar" src="" alt="Avatar" class="profile-avatar-large">
+                    </div>
+                    <div class="profile-info-large">
+                        <h3 id="modal-user-handle">@usuario</h3>
+                        
+                        <div class="rank-badge-container">
+                            <div class="rank-icon-wrapper">
+                                <i data-lucide="eye" class="rank-icon"></i>
+                            </div>
+                            <span id="modal-user-rank" class="rank-name">OBSERVADOR ACTIVO - NIVEL 1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-stats-grid-extended">
+                    <div class="stat-item-ext">
+                        <span class="stat-value-ext" id="modal-user-reports">0</span>
+                        <span class="stat-label-ext">REPORTES</span>
+                    </div>
+                    <div class="stat-item-ext">
+                        <span class="stat-value-ext" id="modal-user-votes">0</span>
+                        <span class="stat-label-ext">VOTOS</span>
+                    </div>
+                </div>
+
+                <div class="xp-progress-section">
+                    <div class="xp-progress-wrapper">
+                        <div id="modal-user-xp-bar" class="xp-progress-fill-card" style="width: 0%;"></div>
+                    </div>
+                    <p class="xp-progress-text" id="modal-user-xp-detail">0 / 500 XP para el siguiente nivel</p>
+                </div>
+
+                <p class="profile-footer-date" id="modal-user-joined-full">Ciudadano desde el -- de -- de ----</p>
+
+                <div class="modal-footer-actions" style="margin-top: 1.5rem;">
+                    <button id="btn-view-user-reports" class="btn-orange" style="width: 100%; justify-content: center; gap: 0.5rem;">
+                        <i data-lucide="external-link"></i> Ver sus reportes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Public Profile -->
+    <div id="modal-public-profile" class="modal">
+        <div class="modal-content profile-modal-compact">
+            <div class="modal-header">
+                <h2>Perfil del Ciudadano</h2>
+                <button id="btn-close-public-profile" class="btn-close">&times;</button>
+            </div>
+            <div id="public-profile-content">
+                <!-- Content injected via JS -->
+                <div class="loading-spinner">Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal: Update Password -->
+    <div id="modal-update-password" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Contraseña</h2>
+                <button id="btn-close-update-password" class="btn-close">&times;</button>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                Ingresa tu nueva contraseña.
+            </p>
+            <form id="form-update-password">
+                <div class="form-group">
+                    <label>Nueva Contraseña</label>
+                    <input type="password" id="new-password" class="muni-selector" placeholder="Mínimo 6 caracteres" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Contraseña</label>
+                    <input type="password" id="confirm-password" class="muni-selector" placeholder="Repite tu contraseña" required minlength="6">
+                </div>
+                <button type="submit" class="btn-action">Actualizar Contraseña</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Lightbox Modal -->
+    <div id="modal-lightbox" class="lightbox">
+        <span id="btn-close-lightbox" class="lightbox-close">&times;</span>
+        <img id="lightbox-img" class="lightbox-content">
+        <a id="btn-download-img" class="lightbox-download" download>
+            <i data-lucide="download"></i> Descargar
+        </a>
+    </div>
+
+
+
+
+    <!-- Custom Toasts -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Floating Action Button (Mobile) -->
+    <button id="btn-open-report-mobile" class="fab-report" data-action="new-report">
+        <i data-lucide="plus"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Main Application Script (Modular) -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
