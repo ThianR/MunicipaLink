@@ -13,27 +13,27 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
-    <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Custom Style - Modular CSS -->
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body class="role-guest">
     <!-- Login Screen -->
-    <div id="screen-login" class="screen active">
+    <div id="screen-login" class="screen screen--active login-screen">
         <div class="login-card">
             <i data-lucide="map-pin" style="width: 48px; height: 48px; color: #10b981;"></i>
-            <h1>MunicipaLink</h1>
-            <p>Conectando ciudadanos con su ciudad.</p>
+            <h1 class="login-card__title">MunicipaLink</h1>
+            <p class="login-card__subtitle">Conectando ciudadanos con su ciudad.</p>
             
             <form id="form-auth" class="auth-form">
                 <div class="form-group">
-                    <input type="email" id="auth-email" placeholder="Correo electrónico" required class="muni-selector">
+                    <input type="email" id="auth-email" placeholder="Correo electrónico" required class="input">
                 </div>
                 <div class="form-group">
-                    <input type="password" id="auth-password" placeholder="Contraseña" required class="muni-selector">
+                    <input type="password" id="auth-password" placeholder="Contraseña" required class="input">
                 </div>
                 <div class="auth-buttons">
-                    <button type="submit" id="btn-login" class="btn-action">Iniciar Sesión</button>
-                    <button type="button" id="btn-signup" class="btn-guest" style="margin-top: 1rem; text-decoration: none;">¿No tienes cuenta? Regístrate</button>
+                    <button type="submit" id="btn-login" class="button button--primary">Iniciar Sesión</button>
+                    <button type="button" id="btn-signup" class="button button--secondary" style="margin-top: 1rem;">¿No tienes cuenta? Regístrate</button>
                 </div>
             </form>
             
@@ -43,7 +43,7 @@
             
             <div class="divider"><span>o continuar con</span></div>
             
-            <button id="btn-login-google" class="btn-login-google" style="margin-bottom: 1.5rem;">
+            <button id="btn-login-google" class="button button--google" style="margin-bottom: 1.5rem;">
                 <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" alt="G">
                 Google
             </button>
@@ -54,13 +54,13 @@
 
     <!-- App Screen -->
     <div id="screen-app" class="screen">
-        <header class="main-header">
-            <div class="logo">
+        <header class="header">
+            <div class="header__logo">
                 <i data-lucide="map-pin"></i>
-                <h1>MunicipaLink</h1>
+                <h1 class="header__logo-title">MunicipaLink</h1>
             </div>
-            <div class="user-info">
-                <span id="user-display">Invitado</span>
+            <div class="header__user-info">
+                <span id="user-display" class="header__user-name">Invitado</span>
                 <button id="btn-logout" class="btn-guest">Cerrar Sesión</button>
             </div>
         </header>
@@ -69,41 +69,41 @@
             <!-- Left Sidebar -->
             <aside class="sidebar">
                 <!-- Sidebar Map Controls -->
-                <div class="map-controls">
-                    <button id="btn-recenter" class="btn-map-tool" title="Centrar en Municipalidad">
+                <div class="sidebar__controls">
+                    <button id="btn-recenter" class="button--map-tool" title="Centrar en Municipalidad">
                         <i data-lucide="refresh-cw"></i>
                     </button>
-                    <button id="btn-locate" class="btn-map-tool" title="Mi Ubicación">
+                    <button id="btn-locate" class="button--map-tool" title="Mi Ubicación">
                         <i data-lucide="navigation"></i>
                     </button>
                 </div>
 
                 <section>
-                    <label style="font-weight: 700; display: block; margin-bottom: 0.5rem;">Municipalidad</label>
+                    <label style="font-weight: 700; display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">MUNICIPALIDAD</label>
                     <select id="muni-selector" class="muni-selector">
                         <option value="">Detectando...</option>
                     </select>
                 </section>
 
-                <nav class="sidebar-nav" style="margin-top: 1.5rem;">
-                    <button class="nav-item active" data-view="map">
+                <nav class="sidebar__nav" style="margin-top: 1.5rem;">
+                    <button class="nav__item nav__item--active" data-view="map">
                         <i data-lucide="map"></i> Explorar Mapa
                     </button>
-                    <button class="nav-item" data-view="reports">
+                    <button class="nav__item" data-view="reports">
                         <i data-lucide="list"></i> Solicitudes
                     </button>
-                    <button class="nav-item" data-view="profile">
+                    <button class="nav__item" data-view="profile">
                         <i data-lucide="user"></i> Mi Perfil
                     </button>
                 </nav>
 
                 <div id="admin-panel" class="admin-only" style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
                     <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">ADMIN PANEL</h3>
-                    <button class="btn-action" style="background: #374151;">Gestionar Municipalidades</button>
+                    <button class="button button--action" style="background: #374151;">Gestionar Municipalidades</button>
                 </div>
 
                 <div style="margin-top: auto;">
-                    <button id="btn-open-report" class="btn-action role-restricted">
+                    <button id="btn-open-report" class="button button--action role-restricted">
                         <i data-lucide="plus"></i> Nuevo Reporte
                     </button>
                 </div>
@@ -112,7 +112,7 @@
             <!-- Main Content Area -->
             <main class="content-view">
                 <!-- Map View -->
-                <div id="view-map" class="view active" style="position: relative;">
+                <div id="view-map" class="view view--active" style="position: relative;">
                     <div id="map"></div>
                     
                     <!-- Floating Map Controls (Mobile/Visual) -->
@@ -133,41 +133,40 @@
 
                 <!-- Reports History View -->
                 <div id="view-reports" class="view">
-                    <div class="view-header reports-header-layout">
+                    <div class="view-header reports__header">
                         <div class="header-title">
                             <h2>Solicitudes</h2>
                             <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Gestión de reportes.</p>
                         </div>
                         
                         <div class="reports-controls-container">
-                        
                             <!-- Mobile Toggle Button -->
                             <button id="btn-toggle-filters" class="mobile-filter-toggle">
                                 <i data-lucide="filter"></i> Filtros
                             </button>
 
                             <!-- Collapsible Toolbar -->
-                             <div id="reports-toolbar" class="reports-toolbar">
-                                <div class="filter-group search-group">
-                                    <i data-lucide="search" class="search-icon"></i>
-                                    <input type="text" id="search-input" placeholder="Buscar ID o descripción..." class="search-input">
+                             <div id="reports-toolbar" class="reports__toolbar">
+                                <div class="search reports__search">
+                                    <i data-lucide="search" class="search__icon"></i>
+                                    <input type="text" id="search-input" placeholder="Buscar ID o descripción..." class="search__input">
                                 </div>
-                                <select id="sort-selector" class="toolbar-select">
+                                <select id="sort-selector" class="select reports__select">
                                     <option value="recent">Más Recientes</option>
                                     <option value="oldest">Más Antiguos</option>
                                     <option value="impact">Más Relevantes</option>
                                 </select>
-                                <select id="muni-selector-reports" class="toolbar-select">
+                                <select id="muni-selector-reports" class="select reports__select">
                                     <option value="">Municipio: Todos</option>
                                 </select>
-                                <select id="status-selector-reports" class="toolbar-select">
+                                <select id="status-selector-reports" class="select reports__select">
                                     <option value="">Estado: Todos</option>
                                     <option value="Pendiente">Pendiente</option>
                                     <option value="En proceso">En proceso</option>
                                     <option value="Resuelto">Resuelto</option>
                                     <option value="Rechazado">Rechazado</option>
                                 </select>
-                                <button id="btn-clear-filters" class="btn-clear-filters" title="Limpiar filtros">
+                                <button id="btn-clear-filters" class="button--clear" title="Limpiar filtros">
                                     <i data-lucide="x-circle"></i> Limpiar
                                 </button>
                             </div>
@@ -175,19 +174,18 @@
                     </div>
                     <!-- Tab Navigation (Mobile Only) -->
                     <div class="reports-controls-mobile">
-                        <!-- Removed duplicate filters for mobile, using unified toolbar now -->
-                        <div class="tabs-container">
-                            <button class="tab-btn role-restricted active" data-tab="my-requests">
+                        <div class="tabs">
+                            <button class="tabs__button role-restricted" data-tab="my-requests">
                                 <i data-lucide="user"></i> Mis Solicitudes
                             </button>
-                            <button class="tab-btn" data-tab="all-requests">
+                            <button class="tabs__button tabs__button--active" data-tab="all-requests">
                                 <i data-lucide="globe"></i> Todas las Solicitudes
                             </button>
                         </div>
                     </div>
 
                     <!-- Tab Content: My Requests -->
-                    <div id="tab-my-requests" class="tab-content active">
+                    <div id="tab-my-requests" class="tab-content tabs__content">
                         <div id="my-reports-list" class="reports-list">
                             <!-- Items will be rendered here -->
                             <div class="empty-state">
@@ -198,7 +196,7 @@
                     </div>
 
                     <!-- Tab Content: All Requests -->
-                    <div id="tab-all-requests" class="tab-content">
+                    <div id="tab-all-requests" class="tab-content tabs__content tabs__content--active">
                         <div class="filter-info">
                             <i data-lucide="filter"></i>
                             <span id="filter-status">Mostrando todas las solicitudes</span>
@@ -213,38 +211,39 @@
                     </div>
                 </div>
             <!-- View: Report Detail (Full Screen Form) -->
-    <div id="view-report-detail" class="view view-detail">
-        <div class="view-header">
-            <button id="btn-back-detail" class="btn-back">
+    <div id="view-report-detail" class="view detail-view">
+        <div class="detail-view__header">
+            <button id="btn-back-detail" class="button button--back">
                 <i data-lucide="arrow-left"></i> Volver a solicitudes
             </button>
             <h2 id="detail-title">Detalle de Solicitud</h2>
         </div>
 
-        <div class="detail-content-scroll">
-            <div class="detail-grid">
+        <div class="detail-view__content">
+            <div class="detail-view__grid">
                 <!-- Left Column: Map & Info -->
-                <div class="detail-left">
-                    <div class="detail-map-container">
-                        <div id="detail-map" class="detail-map-large"></div>
+                <div class="detail-view__left">
+                    <div class="detail-view__map-container">
+                        <div id="detail-map" class="detail-view__map"></div>
                     </div>
                     
                     <div class="detail-card">
-                        <div class="detail-meta">
-                            <span id="detail-category" class="category-tag">Categoría</span>
+                        <div class="detail-card__meta">
+                            <span id="detail-category" class="status-badge">Categoría</span>
                             <span id="detail-status" class="status-badge">Estado</span>
-                            <span id="detail-date" class="detail-date">Fecha</span>
+                            <span id="detail-date" class="detail-card__date">Fecha</span>
+                            <div id="detail-priority" class="report-card__priority priority-stars"></div>
                         </div>
-                        <h3 class="detail-section-title">Descripción</h3>
-                        <p id="detail-description" class="detail-description"></p>
+                        <h3 class="detail-card__title">Descripción</h3>
+                        <p id="detail-description" class="detail-card__description"></p>
                     </div>
                 </div>
 
                 <!-- Right Column: Evidence & Interaction -->
-                <div class="detail-right">
+                <div class="detail-view__right">
                     <!-- Evidence Carousel -->
                     <div class="detail-card">
-                        <h3 class="detail-section-title"><i data-lucide="image"></i> Evidencias</h3>
+                        <h3 class="detail-card__title"><i data-lucide="image"></i> Evidencias</h3>
                         <div id="evidences-carousel" class="evidences-carousel">
                             <!-- Images rendered here -->
                         </div>
@@ -253,15 +252,15 @@
                     <!-- Actions -->
                     <div class="detail-card">
                         <div class="detail-actions">
-                            <button id="btn-vote-up" class="btn-vote role-restricted" data-vote="voto_positivo">
+                            <button id="btn-vote-up" class="button button--secondary role-restricted" data-vote="voto_positivo">
                                 <i data-lucide="thumbs-up"></i>
                                 <span id="vote-up-count">0</span>
                             </button>
-                            <button id="btn-vote-down" class="btn-vote role-restricted" data-vote="voto_negativo">
+                            <button id="btn-vote-down" class="button button--secondary role-restricted" data-vote="voto_negativo">
                                 <i data-lucide="thumbs-down"></i>
                                 <span id="vote-down-count">0</span>
                             </button>
-                            <button id="btn-follow" class="btn-follow role-restricted">
+                            <button id="btn-follow" class="button button--primary role-restricted">
                                 <i data-lucide="eye"></i> Seguir
                             </button>
                         </div>
@@ -273,14 +272,14 @@
 
                     <!-- Comments -->
                     <div class="detail-card">
-                        <h3 class="detail-section-title"><i data-lucide="message-circle"></i> Comentarios (<span id="comments-count">0</span>)</h3>
+                        <h3 class="detail-card__title"><i data-lucide="message-circle"></i> Comentarios (<span id="comments-count">0</span>)</h3>
                         <div id="comments-list" class="comments-list">
                             <!-- Comments rendered here -->
                         </div>
                         
                         <form id="form-add-comment" class="add-comment-form role-restricted">
-                            <textarea id="comment-content" class="muni-selector" placeholder="Escribe un comentario..." required rows="3"></textarea>
-                            <button type="submit" class="btn-action">Enviar Comentario</button>
+                            <textarea id="comment-content" class="input" placeholder="Escribe un comentario..." required rows="3"></textarea>
+                            <button type="submit" class="button button--primary">Enviar Comentario</button>
                         </form>
                     </div>
                 </div>
@@ -291,23 +290,23 @@
         </div>
 
         <!-- Mobile Navigation -->
-        <nav class="mobile-nav">
-            <button class="nav-item active" data-view="map">
+        <nav class="nav--mobile">
+            <button class="nav__item nav__item--active" data-view="map">
                 <i data-lucide="map"></i>
                 <span>Mapa</span>
             </button>
-            <button class="nav-item" data-view="reports">
+            <button class="nav__item" data-view="reports">
                 <i data-lucide="list"></i>
                 <span>Solicitudes</span>
             </button>
-            <button class="nav-item" data-view="profile">
+            <button class="nav__item" data-view="profile">
                 <i data-lucide="user"></i>
                 <span>Perfil</span>
             </button>
         </nav>
 
         <!-- Mobile FAB -->
-        <button id="btn-open-report-mobile" class="fab-report">
+        <button id="btn-open-report-mobile" class="fab">
             <i data-lucide="plus"></i>
         </button>
 
@@ -352,24 +351,29 @@
 
                     <div class="stats-summary-card">
                         <div class="stat-item">
+                            <i data-lucide="clipboard-list" class="stat-icon"></i>
                             <span class="stat-value" id="stat-reports">0</span>
                             <span class="stat-label">Reportes</span>
                         </div>
                         <div class="stat-item">
+                            <i data-lucide="message-square" class="stat-icon"></i>
                             <span class="stat-value" id="stat-comments">0</span>
-                            <span class="stat-label">Comentarios</span>
+                            <span class="stat-label">comentarios</span>
                         </div>
                         <div class="stat-item">
+                            <i data-lucide="thumbs-up" class="stat-icon"></i>
                             <span class="stat-value" id="stat-votes">0</span>
-                            <span class="stat-label">Votos</span>
+                            <span class="stat-label">votos</span>
                         </div>
                         <div class="stat-item">
+                            <i data-lucide="users" class="stat-icon"></i>
                             <span class="stat-value" id="stat-followers">0</span>
-                            <span class="stat-label">Seguidores</span>
+                            <span class="stat-label">seguidores</span>
                         </div>
                         <div class="stat-item">
+                            <i data-lucide="user-plus" class="stat-icon"></i>
                             <span class="stat-value" id="stat-following">0</span>
-                            <span class="stat-label">Siguiendo</span>
+                            <span class="stat-label">siguiendo</span>
                         </div>
                     </div>
 
@@ -435,7 +439,7 @@
                             </div>
                         </div>
                         <div class="form-footer">
-                            <button type="submit" id="btn-save-profile" class="btn-action">Guardar Cambios</button>
+                            <button type="submit" id="btn-save-profile" class="button button--action">Guardar Cambios</button>
                         </div>
                     </form>
                 </div>
@@ -482,7 +486,7 @@
                     </label>
                 </div>
 
-                <button type="submit" id="btn-submit-report" class="btn-action">Enviar Reporte</button>
+                <button type="submit" id="btn-submit-report" class="button button--action">Enviar Reporte</button>
             </form>
         </div>
     </div>
@@ -567,10 +571,10 @@
 
     <!-- Dynamic Modal: User Profile -->
     <div id="modal-user-profile" class="modal">
-        <div class="modal-content profile-card-modal">
-            <div class="modal-header">
+        <div class="modal__content profile-card-modal">
+            <div class="modal__header">
                 <h2>Perfil del Ciudadano</h2>
-                <button class="btn-close" onclick="document.getElementById('modal-user-profile').classList.remove('active')"><i data-lucide="x"></i></button>
+                <button class="button--close" onclick="document.getElementById('modal-user-profile').classList.remove('modal--active')"><i data-lucide="x"></i></button>
             </div>
             <div class="profile-card-body">
                 <div class="profile-card-header">
@@ -610,7 +614,7 @@
                 <p class="profile-footer-date" id="modal-user-joined-full">Ciudadano desde el -- de -- de ----</p>
 
                 <div class="modal-footer-actions" style="margin-top: 1.5rem;">
-                    <button id="btn-view-user-reports" class="btn-orange" style="width: 100%; justify-content: center; gap: 0.5rem;">
+                    <button id="btn-view-user-reports" class="button button--orange">
                         <i data-lucide="external-link"></i> Ver sus reportes
                     </button>
                 </div>
@@ -672,11 +676,6 @@
 
     <!-- Custom Toasts -->
     <div id="toast-container" class="toast-container"></div>
-
-    <!-- Floating Action Button (Mobile) -->
-    <button id="btn-open-report-mobile" class="fab-report" data-action="new-report">
-        <i data-lucide="plus"></i>
-    </button>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

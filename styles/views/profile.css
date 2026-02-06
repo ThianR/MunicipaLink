@@ -1,0 +1,166 @@
+/* ============================================
+   PROFILE VIEW - MunicipaLink
+   ============================================ */
+
+.profile-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: var(--spacing-xl);
+    padding: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
+    max-height: none;
+}
+
+@media (min-width: 1101px) {
+    .profile-sidebar {
+        max-height: calc(100vh - 200px);
+    }
+}
+
+.profile-main {
+    background: white;
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid #e5e7eb;
+}
+
+.profile-avatar-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    overflow: hidden;
+    border: 3px solid var(--primary-light);
+}
+
+.trust-meter-card {
+    background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    margin-top: 1.5rem;
+}
+
+.trust-progress-bg {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    margin: 0.75rem 0;
+    overflow: hidden;
+}
+
+.trust-progress-fill {
+    height: 100%;
+    background: #34d399;
+    transition: width 0.5s ease;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Stats Summary Card */
+.stats-summary-card {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.stat-item {
+    background: #f8fafc;
+    padding: var(--spacing-md) var(--spacing-sm);
+    border-radius: var(--radius-lg);
+    border: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all var(--transition-fast);
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    background: white;
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow);
+}
+
+.stat-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Ajuste para que el último item (si es impar) ocupe dos columnas si se desea, 
+   o simplemente lo dejamos así. Con 5 items, el último quedará solo. 
+   Podemos hacerlo 1fr 1fr y el último span 2?
+*/
+.stat-item:last-child:nth-child(odd) {
+    grid-column: span 2;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.stat-item:last-child:nth-child(odd) .stat-icon {
+    margin-bottom: 0;
+}
+
+/* Visibility Helpers */
+.hidden {
+    display: none !important;
+}

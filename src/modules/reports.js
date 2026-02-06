@@ -52,12 +52,16 @@ export const ReportsModule = {
         document.addEventListener('ui:tab-changed', (e) => {
             reloadReports();
         });
-        document.addEventListener('muni:changed', () => {
-            // Recargar si estamos en la vista de reportes
-            const view = localStorage.getItem('currentView');
-            if (view === 'reports') reloadReports();
-        });
-        // ¿Carga inicial? No, esperar contenido de la vista.
+
+        // Carga inicial si ya estamos en la vista
+        const currentView = localStorage.getItem('currentView');
+        if (currentView === 'reports') {
+            setTimeout(() => {
+                const activeTab = document.querySelector('.tabs__content--active');
+                if (!activeTab) UIModule.changeTab('all-requests');
+                else reloadReports();
+            }, 200);
+        }
     },
     abrirDetalle: abrirDetalleReporte
 };
@@ -79,7 +83,6 @@ function setupListeners() {
         document.getElementById('status-selector-mobile')
     ];
     statusSelectors.forEach(s => {
-        if (s) s.addEventListener('change', reloadReports);
         if (s) s.addEventListener('change', reloadReports);
     });
 
@@ -126,7 +129,7 @@ function setupListeners() {
 
         const modal = document.getElementById('modal-report');
         if (modal) {
-            modal.classList.add('active');
+            modal.classList.add('modal--active');
             cargarCategorias();
             lucide.createIcons();
             Logger.info('Modal de reporte abierto exitosamente');
@@ -188,8 +191,14 @@ function setupListeners() {
 }
 
 function reloadReports() {
-    const activeTab = document.querySelector('.tab-content.active');
-    const tabId = activeTab ? activeTab.id : 'tab-all-requests';
+    const activeTab = document.querySelector('.tabs__content--active') || document.querySelector('.tab-content.active');
+    if (!activeTab) {
+        // Forza selección de tab si no hay ninguno
+        UIModule.changeTab('all-requests');
+        return;
+    }
+
+    const tabId = activeTab.id;
 
     const muniId = document.getElementById('muni-selector-reports')?.value ||
         document.getElementById('muni-selector-mobile')?.value;
@@ -290,7 +299,7 @@ async function enviarReporte(e) {
 
         mostrarMensaje('¡Reporte enviado!', 'success');
         e.target.reset();
-        document.getElementById('modal-report').classList.remove('active');
+        document.getElementById('modal-report').classList.remove('modal--active');
         reloadReports();
 
     } catch (err) {
@@ -386,34 +395,34 @@ async function renderizarReportes(reportes, containerId) {
 
         return `
             <div class="report-card" data-id="${r.id}">
-                <div class="report-card-header">
-                     <span class="report-id-badge">${r.numero_solicitud || 'S/N'}</span>
-                     <span class="category-tag">${r.categoria_nombre || 'General'}</span>
-                     <span class="status-badge status-${(r.estado || 'pending').toLowerCase().replace(' ', '_')}">${r.estado}</span>
+                <div class="report-card__header">
+                     <span class="report-card__id">${r.numero_solicitud || 'S/N'}</span>
+                     <span class="report-card__category">${r.categoria_nombre || 'General'}</span>
+                     <span class="status-badge status-badge--${(r.estado || 'pending').toLowerCase().replace(' ', '_')}">${r.estado}</span>
                 </div>
-                <p class="report-card-desc">${r.descripcion}</p>
+                <p class="report-card__description">${r.descripcion}</p>
                 
-                <div class="report-stats-grid">
-                     <div class="report-author" title="Ver perfil del ciudadano" onclick="window.verPerfilCiudadano(event, '${r.usuario_id}', '${author.nombre.replace(/'/g, "\\'")}', '${author.avatar_url || ''}')">
+                <div class="report-card__stats">
+                     <div class="report-card__author" title="Ver perfil del ciudadano" onclick="window.verPerfilCiudadano(event, '${r.usuario_id}', '${author.nombre.replace(/'/g, "\\'")}', '${author.avatar_url || ''}')">
                         <i data-lucide="user"></i> Ver Ciudadano
                     </div>
                     
-                    <div class="stat-badge" title="Prioridad">
+                    <div class="report-card__priority" title="Prioridad">
                          <div class="priority-stars">${starsHtml}</div>
                     </div>
 
-                    <div class="stat-badge" title="Apoyos">
+                    <div class="report-card__stat" title="Apoyos">
                         <i data-lucide="thumbs-up"></i> ${r.total_votos || r.total_interacciones || 0}
                     </div>
 
-                    <div class="stat-badge" title="Comentarios">
+                    <div class="report-card__stat" title="Comentarios">
                         <i data-lucide="message-square"></i> ${r.total_comentarios || 0}
                     </div>
                 </div>
 
-                <div class="report-meta">
-                    <span><i data-lucide="map-pin"></i> ${r.municipio_nombre}</span>
-                    <span>${new Date(r.creado_en).toLocaleDateString()}</span>
+                <div class="report-card__meta">
+                    <span class="report-card__location"><i data-lucide="map-pin"></i> ${r.municipio_nombre}</span>
+                    <span class="report-card__date">${new Date(r.creado_en).toLocaleDateString()}</span>
                 </div>
             </div>
         `;
@@ -456,25 +465,32 @@ async function abrirDetalleReporte(id) {
 
     try {
         const { data, error } = await supabaseClient
-            .from('reportes')
-            .select('*, categorias(nombre), municipalidades(nombre)')
+            .from('reportes_final_v1')
+            .select('*')
             .eq('id', id)
             .single();
 
         if (error) throw error;
 
-        if (title) title.textContent = `${data.numero_solicitud ? data.numero_solicitud + ' - ' : ''}${data.categorias?.nombre || 'Solicitud'}`;
+        if (title) title.textContent = `${data.numero_solicitud ? data.numero_solicitud + ' - ' : ''}${data.categoria_nombre || 'Solicitud'}`;
         document.getElementById('detail-description').textContent = data.descripcion;
 
         // Llenar nuevos campos
-        document.getElementById('detail-category').textContent = data.categorias?.nombre || 'Sin categoría';
+        document.getElementById('detail-category').textContent = data.categoria_nombre || 'Sin categoría';
         document.getElementById('detail-status').textContent = data.estado || 'Pendiente';
         document.getElementById('detail-date').textContent = new Date(data.creado_en).toLocaleDateString();
+
+        // Renderizar estrellas de prioridad en detalle
+        const detailPriorityEl = document.getElementById('detail-priority');
+        if (detailPriorityEl) {
+            const relevance = data.relevancia_relativa !== undefined ? data.relevancia_relativa : null;
+            detailPriorityEl.innerHTML = renderStars(relevance, data.score_impacto || 0);
+        }
 
         // Actualizar color de badge de estado
         const statusBadge = document.getElementById('detail-status');
         statusBadge.className = 'status-badge'; // reiniciar
-        statusBadge.classList.add(`status-${(data.estado || 'pending').toLowerCase().replace(' ', '_')}`);
+        statusBadge.classList.add(`status-badge--${(data.estado || 'pending').toLowerCase().replace(' ', '_')}`);
 
         // Cargar evidencias
         cargarEvidencias(id);
@@ -724,119 +740,17 @@ function updateStat(id, val) {
     if (el) el.textContent = val !== undefined && val !== null ? val : 0;
 }
 
-// Función para abrir modal de perfil de ciudadano
+// Función para navegar al perfil de un ciudadano
 async function verPerfilCiudadano(e, userId, userName, userAvatar) {
     if (e) e.stopPropagation();
 
-    const modal = document.getElementById('modal-user-profile');
-    if (!modal) return;
+    // Navegar a la vista de perfil
+    UIModule.changeView('profile');
 
-    // Reset y mostrar cargando
-    const handleEl = document.getElementById('modal-user-handle');
-    const avatarEl = document.getElementById('modal-user-avatar');
-    const reportsEl = document.getElementById('modal-user-reports');
-    const commentsEl = document.getElementById('modal-user-comments');
-    const votesEl = document.getElementById('modal-user-votes');
-    const followersEl = document.getElementById('modal-user-followers');
-    const followingEl = document.getElementById('modal-user-following');
-    const rankEl = document.getElementById('modal-user-rank');
-    const xpBarEl = document.getElementById('modal-user-xp-bar');
-    const xpDetailEl = document.getElementById('modal-user-xp-detail');
-    const joinedEl = document.getElementById('modal-user-joined-full');
-
-    handleEl.textContent = userName ? `@${userName.toLowerCase().replace(/\s+/g, '')}` : '@vecino';
-    avatarEl.src = userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'V')}&background=random`;
-
-    // Initial states
-    [reportsEl, commentsEl, votesEl, followersEl, followingEl].forEach(el => {
-        if (el) el.textContent = '-';
-    });
-    if (xpBarEl) xpBarEl.style.width = '0%';
-    if (xpDetailEl) xpDetailEl.textContent = 'Calculando nivel...';
-    if (joinedEl) joinedEl.textContent = 'Cargando datos...';
-
-    modal.classList.add('active');
-
-    if (!userId) return;
-
-    try {
-        // Obtener datos de gamificación y perfil
-        const [gamifRes, profileRes] = await Promise.all([
-            supabaseClient.rpc('obtener_datos_gamificacion', {
-                target_user_id: userId,
-                observer_id: AuthModule.getUsuarioActual()?.id || null
-            }),
-            supabaseClient.from('perfiles').select('*').eq('id', userId).single()
-        ]);
-
-        if (gamifRes.error) throw gamifRes.error;
-        const stats = gamifRes.data[0];
-
-        if (stats) {
-            updateStat('modal-user-reports', stats.total_reportes || 0);
-            updateStat('modal-user-votes', stats.total_interacciones || 0);
-
-            rankEl.textContent = `${stats.rango || 'VECINO NOVATO'} - NIVEL ${stats.nivel || 1}`;
-            xpBarEl.style.width = `${stats.progreso_porcentaje}%`;
-            xpDetailEl.textContent = `${stats.total_xp} / ${stats.proximo_nivel_xp} XP para el siguiente nivel`;
-        }
-
-        if (profileRes.data) {
-            const p = profileRes.data;
-            if (p.alias) {
-                handleEl.textContent = `@${p.alias.toLowerCase().replace(/\s+/g, '')}`;
-            }
-            if (p.avatar_url) {
-                avatarEl.src = p.avatar_url;
-            } else {
-                avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nombre_completo || 'V')}&background=random`;
-            }
-
-            if (p.creado_en) {
-                const date = new Date(p.creado_en);
-                const options = { day: 'numeric', month: 'long', year: 'numeric' };
-                joinedEl.textContent = `Ciudadano desde el ${date.toLocaleDateString('es-ES', options)}`;
-            }
-
-            // Botón ver reportes del usuario
-            const btnViewReports = document.getElementById('btn-view-user-reports');
-            if (btnViewReports) {
-                btnViewReports.onclick = () => {
-                    modal.classList.remove('active');
-                    const searchVal = p.alias || p.nombre_completo || '';
-                    const searchInput = document.getElementById('search-input');
-                    if (searchInput) {
-                        searchInput.value = searchVal;
-                    }
-                    // Actualizamos currentSearch directamente para evitar el delay del debounce al navegar
-                    currentSearch = searchVal;
-
-                    // Cambiar a la pestaña de "Todas las solicitudes"
-                    const allTab = document.querySelector('[data-tab="all-requests"]');
-                    if (allTab) {
-                        allTab.click();
-                    } else {
-                        reloadReports();
-                    }
-                };
-            }
-
-            // Navegación al perfil completo
-            const avatarClick = document.getElementById('modal-user-avatar-click');
-            if (avatarClick) {
-                avatarClick.onclick = () => {
-                    modal.classList.remove('active');
-                    // Disparamos evento de navegación si UIModule lo soporta
-                    document.dispatchEvent(new CustomEvent('ui:request-view', {
-                        detail: { view: 'profile', userId: userId }
-                    }));
-                };
-            }
-        }
-
-    } catch (err) {
-        Logger.warn(`Error al obtener perfil completo de ${userId}`, err);
-    }
+    // Cargar los datos del usuario en esa vista
+    document.dispatchEvent(new CustomEvent('profile:load-user', {
+        detail: { userId: userId }
+    }));
 }
 
 // Hacerlo global para que funcione el onclick inline

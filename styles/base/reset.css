@@ -1,0 +1,43 @@
+/* ============================================
+   RESET & BASE STYLES - MunicipaLink
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    overflow: hidden;
+    height: 100dvh;
+}
+
+/* Form elements inherit font */
+input,
+button,
+textarea,
+select {
+    font-family: inherit;
+}
+
+/* Remove default button styles */
+button {
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Better text rendering */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

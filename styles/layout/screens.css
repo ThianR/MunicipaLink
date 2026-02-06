@@ -1,0 +1,43 @@
+/* ============================================
+   SCREEN MANAGEMENT - MunicipaLink
+   ============================================ */
+
+.screen {
+    display: none;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.screen--active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* App Content Layout */
+.app-content {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.content-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* View Management */
+.view {
+    display: none;
+    height: 100%;
+    width: 100%;
+}
+
+.view--active {
+    display: flex !important;
+    flex-direction: column;
+}

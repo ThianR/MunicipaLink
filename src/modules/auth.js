@@ -23,7 +23,7 @@ export const AuthModule = {
             } else if (evento === 'SIGNED_OUT') {
                 manejarCierreSesion();
             } else if (evento === 'PASSWORD_RECOVERY') {
-                document.getElementById('modal-update-password').classList.add('active');
+                document.getElementById('modal-update-password').classList.add('modal--active');
             }
         });
     },
@@ -85,7 +85,7 @@ function setupListeners() {
     // Listeners para restablecer contraseña
     if (btnForgot) {
         btnForgot.addEventListener('click', () => {
-            document.getElementById('modal-reset-request').classList.add('active');
+            document.getElementById('modal-reset-request').classList.add('modal--active');
         });
     }
 
@@ -108,11 +108,11 @@ function setupListeners() {
     }
 
     // Lógica para cerrar modales (podría ser genérica en UI)
-    document.querySelectorAll('.btn-close').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const modal = e.target.closest('.modal');
-            if (modal) modal.classList.remove('active');
-        });
+    document.querySelectorAll('.modal').forEach(modal => {
+        const closeBtn = modal.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => modal.classList.remove('modal--active'));
+        }
     });
 }
 
@@ -123,7 +123,7 @@ async function solicitarResetPassword(email) {
         });
         if (error) throw error;
         mostrarMensaje('Enlace de recuperación enviado', 'success');
-        document.getElementById('modal-reset-request').classList.remove('active');
+        document.getElementById('modal-reset-request').classList.remove('modal--active');
     } catch (err) {
         mostrarMensaje(err.message, 'error');
     }
@@ -134,7 +134,7 @@ async function actualizarPassword(password) {
         const { error } = await supabaseClient.auth.updateUser({ password });
         if (error) throw error;
         mostrarMensaje('Contraseña actualizada', 'success');
-        document.getElementById('modal-update-password').classList.remove('active');
+        document.getElementById('modal-update-password').classList.remove('modal--active');
     } catch (err) {
         mostrarMensaje(err.message, 'error');
     }

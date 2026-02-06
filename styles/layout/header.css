@@ -1,0 +1,54 @@
+/* ============================================
+   HEADER - MunicipaLink
+   ============================================ */
+
+.header {
+    height: 60px;
+    background: var(--card-bg);
+    padding: 0 var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: var(--z-sticky);
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--bg-light);
+}
+
+.header__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--primary);
+}
+
+.header__logo-title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+}
+
+.header__user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.header__user-name {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .header {
+        height: 60px;
+        padding: 0 var(--spacing-md);
+    }
+
+    .header__logo-title {
+        font-size: var(--font-size-base);
+    }
+
+    .header__user-name {
+        display: none;
+    }
+}

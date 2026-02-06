@@ -1,0 +1,54 @@
+/* ============================================
+   COMMENTS - MunicipaLink
+   ============================================ */
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.comment-item {
+    display: flex;
+    gap: var(--spacing-md);
+    background: #f8fafc;
+    padding: var(--spacing-md);
+    border-radius: var(--radius);
+    border: 1px solid #e5e7eb;
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.comment-author {
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    color: var(--text-main);
+}
+
+.comment-date {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+.comment-text {
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-main);
+}

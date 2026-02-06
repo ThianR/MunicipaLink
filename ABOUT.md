@@ -16,7 +16,7 @@ MunicipaLink es una solución de código abierto que transforma la relación ent
 2. **Trust Meter**: Multiplicador de reputación basado en la completitud del perfil (1.0x - 2.0x)
 3. **Ranking por Impacto**: Algoritmo de relevancia relativa que prioriza reportes según votos de la comunidad
 4. **Privacidad Configurable**: Control granular sobre qué información del perfil es pública
-5. **Sin Frameworks Pesados**: Arquitectura modular en JavaScript vanilla para máximo rendimiento
+5. **Arquitectura de Vanguardia**: Código modular en JavaScript vanilla y CSS basado en **BEM atomizado** para máximo rendimiento y escalabilidad.
 
 ### Casos de Uso
 

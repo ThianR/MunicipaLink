@@ -1,0 +1,44 @@
+/* ============================================
+   HELPERS - Utility Classes
+   ============================================ */
+
+/* Visibility Helpers */
+.mobile-only {
+    display: none !important;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 1100px) {
+    .mobile-only {
+        display: block !important;
+    }
+
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* Text Helpers */
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Spacing Helpers */
+.mt-2 {
+    margin-top: var(--spacing-sm);
+}
+
+.mb-2 {
+    margin-bottom: var(--spacing-sm);
+}
+
+.d-block {
+    display: block;
+}

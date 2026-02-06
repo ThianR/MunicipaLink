@@ -1,0 +1,36 @@
+/* ============================================
+   NAVIGATION - MunicipaLink
+   ============================================ */
+
+.nav__item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.875rem var(--spacing-md);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: var(--spacing-sm);
+    font-family: inherit;
+}
+
+.nav__item:hover {
+    background: #f9fafb;
+    color: var(--text-main);
+}
+
+.nav__item--active {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.nav__item i {
+    width: 20px;
+    height: 20px;
+}

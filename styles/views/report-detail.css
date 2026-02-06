@@ -1,0 +1,106 @@
+/* ============================================
+   REPORT DETAIL VIEW - MunicipaLink
+   ============================================ */
+
+/* ============================================
+   REPORT DETAIL VIEW - MunicipaLink
+   ============================================ */
+
+.detail-view {
+    background: #f3f4f6;
+    height: 100%;
+    display: none;
+}
+
+.detail-view--active {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-view__header {
+    background: white;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-view__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-xl);
+}
+
+.detail-view__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--spacing-xl);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+    .detail-view__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.detail-card {
+    background: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: var(--spacing-xl);
+}
+
+.detail-card__title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.detail-view__map {
+    width: 100%;
+    height: 350px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: var(--spacing-xl);
+    z-index: 1;
+}
+
+/* Evidences Carousel */
+.evidences-carousel {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+}
+
+.evidence-thumbnail-container {
+    flex: 0 0 120px;
+    height: 120px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.evidence-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Interacciones */
+.detail-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid #eee;
+}

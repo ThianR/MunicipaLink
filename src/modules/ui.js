@@ -16,17 +16,36 @@ export const UIModule = {
     },
     changeView: cambiarVista,
     changeTab: cambiarPestana,
+    changeScreen: cambiarPantalla,
     getCurrentView: () => currentView
 };
 
+function cambiarPantalla(pantallaId) {
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(s => {
+        s.classList.remove('active'); // Legacy
+        s.classList.remove('screen--active');
+    });
+
+    const targetScreen = document.getElementById(pantallaId);
+    if (targetScreen) {
+        targetScreen.classList.add('screen--active');
+        document.dispatchEvent(new CustomEvent('ui:screen-changed', { detail: { screen: pantallaId } }));
+    }
+}
+
 function cambiarVista(viewName) {
     const views = document.querySelectorAll('.view');
-    views.forEach(v => v.classList.remove('active'));
+    views.forEach(v => {
+        v.classList.remove('active'); // Legacy
+        v.classList.remove('view--active');
+    });
 
     const targetView = document.getElementById(`view-${viewName}`);
     if (targetView) {
         currentView = viewName;
-        targetView.classList.add('active');
+        targetView.classList.add('view--active');
+        targetView.classList.add('active'); // Legacy support
         targetView.scrollTop = 0;
         window.scrollTo(0, 0);
 
@@ -40,10 +59,10 @@ function cambiarVista(viewName) {
 
         // Estado de navegación activo
         // Estado de navegación activo (Móvil y Escritorio)
-        const allNavItems = document.querySelectorAll('.nav-item');
+        const allNavItems = document.querySelectorAll('.nav__item');
         allNavItems.forEach(item => {
             if (item.dataset.view) {
-                item.classList.toggle('active', item.dataset.view === viewName);
+                item.classList.toggle('nav__item--active', item.dataset.view === viewName);
             }
         });
 
@@ -52,20 +71,22 @@ function cambiarVista(viewName) {
 }
 
 function cambiarPestana(tabName) {
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(t => t.classList.remove('active'));
+    const tabs = document.querySelectorAll('.tabs__content');
+    tabs.forEach(t => {
+        t.classList.remove('tabs__content--active');
+    });
 
     const targetTab = document.getElementById(`tab-${tabName}`);
     if (targetTab) {
-        targetTab.classList.add('active');
+        targetTab.classList.add('tabs__content--active');
 
         // Notificar módulos
         document.dispatchEvent(new CustomEvent('ui:tab-changed', { detail: { tab: tabName } }));
     }
 
     // Actualizar botones
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    document.querySelectorAll('.tabs__button').forEach(btn => {
+        btn.classList.toggle('tabs__button--active', btn.dataset.tab === tabName);
     });
 }
 
@@ -85,7 +106,7 @@ function updateFab(viewName) {
 
 function setupNavigation() {
     // Barra lateral escritorio
-    document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+    document.querySelectorAll('.sidebar .nav__item').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const view = item.dataset.view;
@@ -94,7 +115,7 @@ function setupNavigation() {
     });
 
     // Navegación móvil
-    document.querySelectorAll('.mobile-nav .nav-item').forEach(item => {
+    document.querySelectorAll('.nav--mobile .nav__item').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const view = item.dataset.view;
@@ -103,7 +124,7 @@ function setupNavigation() {
     });
 
     // Botones de pestañas
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('.tabs__button').forEach(btn => {
         btn.addEventListener('click', () => {
             const tab = btn.dataset.tab;
             if (tab) cambiarPestana(tab);

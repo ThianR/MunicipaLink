@@ -1,0 +1,65 @@
+.view--active {
+    display: flex !important;
+    flex-direction: column;
+}
+
+#view-map {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+.floating-map-tools {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+.muni-selector-compact {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius);
+    background: white;
+    box-shadow: var(--shadow);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    pointer-events: auto;
+    width: 100%;
+}
+
+.map-action-group {
+    display: flex;
+    gap: 0.5rem;
+    pointer-events: auto;
+}
+
+.btn-map-float {
+    background: white;
+    border: 2px solid #e5e7eb;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    color: var(--text-main);
+}
+
+.btn-map-float:hover {
+    background: var(--bg-light);
+    color: var(--primary);
+}

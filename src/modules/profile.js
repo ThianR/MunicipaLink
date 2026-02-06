@@ -56,18 +56,18 @@ function setupListeners() {
 
     const btnClosePublic = document.getElementById('btn-close-public-profile');
     if (btnClosePublic) btnClosePublic.addEventListener('click', () => {
-        document.getElementById('modal-public-profile').classList.remove('active');
+        document.getElementById('modal-public-profile').classList.remove('modal--active');
     });
 
     // Guía de XP
     const btnOpenXP = document.getElementById('btn-open-xp-guide');
     if (btnOpenXP) btnOpenXP.addEventListener('click', () => {
-        document.getElementById('modal-xp-guide').classList.add('active');
+        document.getElementById('modal-xp-guide').classList.add('modal--active');
         lucide.createIcons();
     });
 
     document.getElementById('btn-close-xp-guide')?.addEventListener('click', () => {
-        document.getElementById('modal-xp-guide').classList.remove('active');
+        document.getElementById('modal-xp-guide').classList.remove('modal--active');
     });
 
     // Volver del perfil
@@ -79,6 +79,13 @@ function setupListeners() {
     document.getElementById('btn-my-history')?.addEventListener('click', () => {
         UIModule.changeView('reports');
         UIModule.changeTab('my-requests');
+    });
+
+    // Limpiar estado al navegar a 'Mi Perfil' desde el sidebar
+    document.querySelectorAll('.nav__item[data-view="profile"]').forEach(item => {
+        item.addEventListener('click', () => {
+            ProfileModule.currentUserViewing = null;
+        });
     });
 }
 
@@ -365,7 +372,7 @@ async function abrirPerfilPublico(userId) {
     // ... logic to open modal and load public stats ...
     // Using simple implementation similar to app.js
     const modal = document.getElementById('modal-public-profile');
-    modal.classList.add('active');
+    modal.classList.add('modal--active');
 
     const content = document.getElementById('public-profile-content');
     content.innerHTML = 'Cargando...';

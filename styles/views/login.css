@@ -1,0 +1,14 @@
+/* ============================================
+   LOGIN VIEW - MunicipaLink
+   ============================================ */
+
+.login-screen {
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary) 0%, #064e3b 100%);
+}
+
+.auth-form {
+    margin-top: var(--spacing-md);
+    text-align: left;
+}

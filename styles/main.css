@@ -1,0 +1,39 @@
+/* ============================================
+   MUNICIPALINK - MAIN STYLESHEET
+   ============================================ */
+
+/* Base */
+@import "./base/variables.css";
+@import "./base/reset.css";
+
+/* Components */
+@import "./components/logo.css";
+@import "./components/buttons.css";
+@import "./components/forms.css";
+@import "./components/cards.css";
+@import "./components/modals.css";
+@import "./components/badges.css";
+@import "./components/toasts.css";
+@import "./components/tabs.css";
+@import "./components/navigation.css";
+@import "./components/lightbox.css";
+@import "./components/comments.css";
+@import "./components/gamification.css";
+
+/* Layout */
+@import "./layout/screens.css";
+@import "./layout/header.css";
+@import "./layout/sidebar.css";
+@import "./layout/mobile-nav.css";
+
+/* Views */
+@import "./views/login.css";
+@import "./views/map.css";
+@import "./views/reports.css";
+@import "./views/report-detail.css";
+@import "./views/profile.css";
+
+/* Utilities */
+@import "./utilities/responsive.css";
+@import "./utilities/helpers.css";
+@import "./utilities/rbac.css";

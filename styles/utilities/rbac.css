@@ -1,0 +1,23 @@
+/* ============================================
+   RBAC - Role-Based Access Control
+   ============================================ */
+
+/* Por defecto ocultamos todo lo restringido */
+.role-restricted,
+.admin-only {
+    display: none;
+}
+
+/* Solo usuarios autenticados con roles específicos ven botones de reporte/acción */
+body.role-admin .role-restricted,
+body.role-municipal .role-restricted,
+body.role-citizen .role-restricted {
+    display: block;
+}
+
+/* Solo los administradores ven el panel de administración */
+body.role-admin .admin-only {
+    display: block;
+}
+
+/* El invitado (role-guest) NO tiene ninguna regla que ponga display: block, por lo que permanecerá oculto. */

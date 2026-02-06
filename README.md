@@ -60,29 +60,19 @@ MunicipaLink es una aplicación web que empodera a los ciudadanos para reportar 
 ```
 MunicipaLink/
 ├── index.html              # Punto de entrada (Single Page App)
-├── style.css               # Estilos globales y específicos de vistas
 ├── main.js                 # Inicialización y orquestación
-├── sql/                    # Scripts de base de datos
+├── styles/                 # Sistema de diseño CSS (Metodología BEM)
+├── sql/                    # Scripts de base de datos (vistas, funciones)
 │   ├── vistas/             # Vistas SQL (reportes_final_v1, etc.)
 │   └── funciones/          # Funciones RPC (calcular_xp, gamificacion)
-├── src/
-│   ├── config.js           # Configuración global (Supabase, coordenadas)
-│   ├── services/
-│   │   └── supabase.js     # Cliente de Supabase configurado
-│   ├── modules/            # Lógica de negocio por dominio
-│   │   ├── auth.js         # Gestión de sesión (Login, Registro, Invitado)
-│   │   ├── map.js          # Integración con Leaflet y geolocalización
-│   │   ├── reports.js      # Gestión de reportes, comentarios e interacciones
-│   │   ├── profile.js      # Perfil de usuario, gamificación y seguidores
-│   │   ├── ui.js           # Navegación entre vistas y tabs
-│   │   └── municipalities.js # Gestión de selectores y datos municipales
-│   └── utils/              # Utilidades compartidas
-│       ├── helpers.js      # Compresión de imágenes y formatos
-│       ├── logger.js       # Sistema de logs con timestamp
-│       └── ui.js           # Manipulaciones del DOM y toasts
+├── src/                    # Lógica de negocio modularizada
+│   ├── modules/            # auth, map, reports, profile, ui, municipalities
+│   ├── services/           # Cliente Supabase
+│   └── utils/              # helpers, logger, ui (toasts)
 ├── tests/                  # Pruebas unitarias y de integración
 ├── AI_CONTEXT.md           # Contexto para agentes de IA
-└── TECHNICAL_REFERENCE.md  # Catálogo de funciones y API interna
+├── ABOUT.md                # Resumen ejecutivo
+└── TECHNICAL_REFERENCE.md  # Catálogo técnico y estándares
 ```
 
 ---

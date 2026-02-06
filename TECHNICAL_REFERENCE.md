@@ -36,7 +36,7 @@ Lógica central de reportes, comentarios y votos.
 | `abrirDetalleReporte(id)` | `id` (String) | Cambia a la vista de detalle y carga datos del reporte. | Inicializa Leaflet y llama a `cargarInteracciones(id)`. |
 | `cargarInteracciones(id)` | `id` (String) | Obtiene conteos de votos y aplica clase `.active` (verde) si el usuario actual ya interactuó. | Gestiona estados de `thumbs-up`, `thumbs-down` y `eye`. |
 | `interactuar(tipo)` | `tipo` (String) | Gestiona Votos (+/-) y Seguir reporte. Refresca UI inmediatamente. | **Validación:** Requiere Login. Es tipo toggle. |
-| `verPerfilCiudadano(e, uid, name, avatar)` | Varios | Abre un modal con el resumen del perfil de un vecino. | Aplica restricciones de privacidad (campos ocultos). |
+| `verPerfilCiudadano(e, uid, name, avatar)` | Varios | Navega a la vista de perfil del ciudadano y carga sus datos. | Redirige a UIModule.changeView('profile') y emite `profile:load-user`. |
 
 ---
 
@@ -75,6 +75,8 @@ Orquestador de navegación y estado visual.
 
 ---
 
+---
+
 ## 6. Utilidades e Infraestructura
 
 ### `src/utils/ui.js`
@@ -85,10 +87,20 @@ Orquestador de navegación y estado visual.
 ### `src/utils/helpers.js`
 - `comprimirImagen(file)`: Retorna Promise con el archivo comprimido (70% calidad, máx 1280px).
 
-### Clases CSS Especiales (`style.css`)
-- `.btn-orange`: Botón de acción destacado en color naranja (#f97316).
-- `.private-field`: Contenedores que se ocultan automáticamente en perfiles ajenos.
-- `.active` (en interacciones): Iconos que se tornan verdes (#10b981) para indicar interacción del usuario actual.
+### 🎨 Arquitectura de Estilos (`/styles`)
+El proyecto ha migrado de un archivo único a un sistema modular basado en **BEM**:
+
+- **Variables (`base/variables.css`)**: Centraliza colores (`--primary`, `--warning`), sombras y espaciados.
+- **Componentes (`components/`)**:
+    - `buttons.css`: Estilos de botones con estados `.active`.
+    - `cards.css`: Tarjetas de reportes y sus elementos BEM.
+    - `gamification.css`: Estilos de niveles, XP y el nuevo perfil de ciudadano circular.
+- **Vistas (`views/`)**: Estilos específicos para cada sección de la app (Mapa, Reportes, Perfil).
+
+### Modificadores y Estados Especiales
+- `.active` (en botones de interacción): Fuerza el color verde (`var(--primary)`) y relleno para indicar interacción del usuario actual.
+- `.private-field`: Contenedores que se ocultan automáticamente en perfiles que no pertenecen al usuario logueado.
+- `.status-badge--[estado]`: Variaciones cromáticas para estados (pending, in_progress, resolved, rejected).
 
 ---
 *Fin del Catálogo Técnico.*

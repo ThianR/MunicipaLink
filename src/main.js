@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         // Trigger secreto para panel de logs
-        const logo = document.querySelector('.logo');
+        const logo = document.querySelector('.header__logo');
         if (logo) {
             let clicks = 0;
             logo.addEventListener('click', () => {
