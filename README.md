@@ -207,9 +207,9 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 
 ## 📞 Contacto y Soporte
 
-- **Issues**: [GitHub Issues](https://github.com/tu-usuario/municipalink/issues)
+- **Issues**: [GitHub Issues](https://github.com/ThianR/MunicipaLink/issues)
 - **Documentación**: Ver `AI_CONTEXT.md` y `TECHNICAL_REFERENCE.md`
-- **Email**: soporte@municipalink.com (ejemplo)
+- **Email**: gabrielrolonth@gmail.com
 
 ---
 
