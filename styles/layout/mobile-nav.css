@@ -7,7 +7,7 @@
 }
 
 @media (max-width: 1100px) {
-    .nav--mobile {
+    #screen-app.screen--active .nav--mobile {
         display: flex !important;
         height: 60px;
         flex-shrink: 0;
@@ -67,7 +67,7 @@
 }
 
 @media (max-width: 1100px) {
-    .fab {
+    #screen-app.screen--active .fab {
         display: flex !important;
     }
 }

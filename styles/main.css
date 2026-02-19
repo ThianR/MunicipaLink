@@ -19,6 +19,7 @@
 @import "./components/lightbox.css";
 @import "./components/comments.css";
 @import "./components/gamification.css";
+@import "./components/tables.css";
 
 /* Layout */
 @import "./layout/screens.css";
@@ -32,6 +33,7 @@
 @import "./views/reports.css";
 @import "./views/report-detail.css";
 @import "./views/profile.css";
+@import "./views/admin.css";
 
 /* Utilities */
 @import "./utilities/responsive.css";

@@ -19,9 +19,24 @@ export const MapModule = {
                 centrarEnMunicipalidad(e.detail.id);
             }
         });
+
+        // Corregir renderizado parcial del mapa al cambiar de vista
+        document.addEventListener('ui:view-changed', (e) => {
+            if (e.detail.view === 'map' && mapa) {
+                setTimeout(() => {
+                    mapa.invalidateSize();
+                }, 100);
+            }
+        });
+
+        // Corregir renderizado al redimensionar ventana
+        window.addEventListener('resize', () => {
+            if (mapa) mapa.invalidateSize();
+        });
     },
     getUbicacion: () => ubicacionUsuario,
-    recenter: centrarEnMunicipalidad
+    recenter: centrarEnMunicipalidad,
+    invalidate: () => mapa ? mapa.invalidateSize() : null
 };
 
 function inicializarMapa() {
@@ -36,6 +51,7 @@ function inicializarMapa() {
     marcadorActual.on('dragend', function (evento) {
         const posicion = evento.target.getLatLng();
         ubicacionUsuario = [posicion.lat, posicion.lng];
+        sessionStorage.setItem('ubicacion_usuario', JSON.stringify({ lat: posicion.lat, lng: posicion.lng }));
         actualizarVisualizacionCoords();
     });
 }
@@ -54,7 +70,8 @@ function centrarEnMunicipalidad(muniId) {
 
     if (!muni) return;
 
-    const datosCentro = muni.centro; // Already an object if coming from Supabase JSON or string if legacy
+    // Usar 'centro' (columna real en la BD)
+    const datosCentro = muni.centro;
     if (!datosCentro) return;
 
     try {
@@ -64,18 +81,35 @@ function centrarEnMunicipalidad(muniId) {
             lng = datosCentro.coordinates[0];
             lat = datosCentro.coordinates[1];
         } else if (typeof datosCentro === 'string') {
-            // Try parsing JSON first
-            try {
-                const geo = JSON.parse(datosCentro);
-                lng = geo.coordinates[0];
-                lat = geo.coordinates[1];
-            } catch {
-                // Regex fallback
-                const coincidencia = datosCentro.match(/\(([^)]+)\)/);
-                if (coincidencia) {
-                    const partes = coincidencia[1].trim().split(/[\s,]+/);
-                    lng = parseFloat(partes[0]);
-                    lat = parseFloat(partes[1]);
+            // Soporte para Formato Hex (WKB/EWKB de PostGIS)
+            if (datosCentro.startsWith('0101')) {
+                try {
+                    const hasSRID = datosCentro.substring(8, 10) === '20';
+                    const offset = hasSRID ? 18 : 10;
+                    const hexToDouble = (hex) => {
+                        const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                        const view = new DataView(bytes.buffer);
+                        return view.getFloat64(0, true);
+                    };
+                    lng = hexToDouble(datosCentro.substring(offset, offset + 16));
+                    lat = hexToDouble(datosCentro.substring(offset + 16, offset + 32));
+                } catch (err) {
+                    console.error('Error parseando Hex de ubicación', err);
+                }
+            } else {
+                // Try parsing JSON first
+                try {
+                    const geo = JSON.parse(datosCentro);
+                    lng = geo.coordinates[0];
+                    lat = geo.coordinates[1];
+                } catch {
+                    // Regex fallback
+                    const coincidencia = datosCentro.match(/\(([^)]+)\)/);
+                    if (coincidencia) {
+                        const partes = coincidencia[1].trim().split(/[\s,]+/);
+                        lng = parseFloat(partes[0]);
+                        lat = parseFloat(partes[1]);
+                    }
                 }
             }
         }
@@ -85,6 +119,7 @@ function centrarEnMunicipalidad(muniId) {
             if (mapa) {
                 mapa.flyTo(ubicacionUsuario, 14);
                 if (marcadorActual) marcadorActual.setLatLng(ubicacionUsuario);
+                sessionStorage.setItem('ubicacion_usuario', JSON.stringify({ lat: lat, lng: lng }));
                 actualizarVisualizacionCoords();
             }
         }
@@ -141,16 +176,15 @@ function setupListeners() {
     const btnLocateMap = document.getElementById('btn-locate-map');
 
     if (btnRecenter) btnRecenter.addEventListener('click', () => {
-        // Recentrar en la municipalidad seleccionada actual
-        const sel = document.getElementById('muni-selector');
-        if (sel && sel.value) centrarEnMunicipalidad(sel.value);
+        const muniId = MunicipalityModule.getSeleccionado();
+        if (muniId) centrarEnMunicipalidad(muniId);
     });
 
     if (btnLocate) btnLocate.addEventListener('click', () => detectarUbicacion(true));
 
     if (btnRecenterMap) btnRecenterMap.addEventListener('click', () => {
-        const sel = document.getElementById('muni-selector');
-        if (sel && sel.value) centrarEnMunicipalidad(sel.value);
+        const muniId = MunicipalityModule.getSeleccionado();
+        if (muniId) centrarEnMunicipalidad(muniId);
     });
 
     if (btnLocateMap) btnLocateMap.addEventListener('click', () => detectarUbicacion(true));

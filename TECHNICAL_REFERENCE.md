@@ -2,6 +2,10 @@
 
 Este documento es la fuente de verdad técnica del proyecto. Detalla cada función, sus parámetros, validaciones y comportamiento esperado para evitar la duplicación de código y errores de sobreescritura.
 
+-   **Gestión de Solicitudes de Rol**: Los ciudadanos pueden solicitar el rol `municipal` adjuntando documentación. Los admins aprueban/rechazan desde el panel.
+-   **Panel Administrativo Centralizado**: Gestión de usuarios, municipalidades, departamentos y solicitudes de rol con diseño premium.
+-   **Consolidación SQL**: Motor de base de datos optimizado e idempotente (scripts 00 a 07).
+
 ## [REGLA DE ORO]
 > [!IMPORTANT]
 > **Antes de implementar una nueva función:** Verifica si ya existe en este catálogo. Si modificas una función existente, **actualiza este documento** inmediatamente.
@@ -47,6 +51,7 @@ Gestión de identidad extendida y gamificación.
 | :--- | :--- | :--- | :--- |
 | `init()` | Ninguno | Configura listeners de perfil y eventos de auth. | Limpia UI al cerrar sesión. |
 | `cargarPerfil(userId?)` | `userId` (opcional) | Carga los datos del perfil en el formulario y stats. | Si no es el perfil propio, oculta elementos con clase `.private-field`. |
+| `enviarSolicitudMunicipal()` | Ninguno | Procesa y envía solicitudes de rol `municipal` con adjuntos. | Requiere login. Adjunta documento de identidad. |
 | `guardarPerfil(event)` | `event` (Submit) | Actualiza datos en tabla `perfiles` y sube nuevo avatar. | **Validación:** Solo para el usuario dueño del perfil. |
 | `actualizarTrustMeter(perfil)`| `perfil` (Object) | Calcula el % de completitud del perfil (1.0x a 2.0x). | Basado en 7 campos clave (alias, contacto, etc). |
 | `cargarEstadisticasGamificacion(uid, isMe)` | `uid` (String), `isMe` (Bool) | Llama a RPC para traer XP, Rango, Nivel e insignias. | Retorna el objeto de estadísticas completo. |
@@ -70,8 +75,21 @@ Orquestador de navegación y estado visual.
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
 | `changeView(name)` | `name` (String) | Cambia entre 'map', 'reports', 'profile', etc. | Dispara `ui:view-changed`. Guarda estado en `localStorage`. |
-| `changeTab(name)` | `name` (String) | Cambia entre 'all-requests' y 'my-requests'. | Dispara `ui:tab-changed`. |
+| `changeTab(name)` | `name` (String) | Cambia entre 'all-requests', 'my-requests', o pestañas de admin. | Dispara `ui:tab-changed`. |
 | `getCurrentView()` | Ninguno | Retorna el nombre de la vista activa. | Útil para recargas condicionales. |
+
+---
+
+## 6. AdminModule (`src/modules/admin.js`)
+Gestión centralizada para administradores.
+
+| Función | Parámetros | Descripción | Validaciones / Notas |
+| :--- | :--- | :--- | :--- |
+| `init()` | Ninguno | Inicializa listeners de búsqueda, pestañas y modales admin. | Solo se carga si el usuario tiene rol `admin`. |
+| `cargarUsuarios()` | Ninguno | Lista usuarios en la tabla premium con filtros de búsqueda. | Obtiene datos de `perfiles`. |
+| `guardarUsuario()` | Ninguno | Actualiza datos (rol, nivel, alias) y estado `activo` (baneo). | Requiere rol `admin`. |
+| `enviarResetPassword()` | Ninguno | Dispara el flujo de recuperación de Supabase para un usuario. | Utiliza `auth.resetPasswordForEmail`. |
+| `cambiarPestanaAdmin(id)` | `id` (String) | Cambia entre Dashboard, Municipalidades y Usuarios. | Gestiona clases `.active` en paneles. |
 
 ---
 
@@ -82,7 +100,7 @@ Orquestador de navegación y estado visual.
 ### `src/utils/ui.js`
 - `mostrarMensaje(msg, tipo)`: Toast notifications (success, error, info).
 - `abrirLightbox(url)`: Modal para ver evidencias/imágenes a tamaño completo.
-- `aplicarRol(rol)`: Cambia clases en el `body` para ocultar/mostrar elementos por CSS.
+- `aplicarRol(rol)`: Cambia clases en el `body` para ocultar/mostrar elementos por CSS. Útil para habilitar el botón de Panel Admin.
 
 ### `src/utils/helpers.js`
 - `comprimirImagen(file)`: Retorna Promise con el archivo comprimido (70% calidad, máx 1280px).
@@ -97,10 +115,16 @@ El proyecto ha migrado de un archivo único a un sistema modular basado en **BEM
     - `gamification.css`: Estilos de niveles, XP y el nuevo perfil de ciudadano circular.
 - **Vistas (`views/`)**: Estilos específicos para cada sección de la app (Mapa, Reportes, Perfil).
 
-### Modificadores y Estados Especiales
-- `.active` (en botones de interacción): Fuerza el color verde (`var(--primary)`) y relleno para indicar interacción del usuario actual.
-- `.private-field`: Contenedores que se ocultan automáticamente en perfiles que no pertenecen al usuario logueado.
-- `.status-badge--[estado]`: Variaciones cromáticas para estados (pending, in_progress, resolved, rejected).
+### 🗄️ Estructura SQL (`/sql`)
+El motor de base de datos está organizado de forma secuencial e idempotente:
+
+- **`00_config.sql`**: Extensiones y secuencias.
+- **`01_tablas.sql`**: Definición de todas las tablas y sus relaciones.
+- **`02_vistas.sql`**: Vista maestra `reportes_final_v1` con cálculos de impacto.
+- **`03_seguridad.sql`**: Políticas RLS unificadas (RBAC incluido).
+- **`04_funciones.sql`**: Triggers y lógica RPC (gamificación, solicitudes).
+- **`05_permisos.sql`**: Grants base para roles de red.
+- **`06_semillas.sql`**: Datos maestros (categorías iniciales).
 
 ---
 *Fin del Catálogo Técnico.*

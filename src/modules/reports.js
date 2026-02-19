@@ -10,6 +10,7 @@ let currentSort = 'recent';
 let currentSearch = '';
 let reporteActualId = null;
 let mapaDetalle = null;
+let marcadorDetalle = null;
 
 export const ReportsModule = {
     init: () => {
@@ -50,6 +51,11 @@ export const ReportsModule = {
             }
         });
         document.addEventListener('ui:tab-changed', (e) => {
+            reloadReports();
+        });
+
+        document.addEventListener('muni:changed', (e) => {
+            Logger.debug('Municipality changed event received', e.detail);
             reloadReports();
         });
 
@@ -259,7 +265,7 @@ async function enviarReporte(e) {
     const cached = sessionStorage.getItem('ubicacion_usuario');
     if (cached) {
         const p = JSON.parse(cached);
-        ubicacion = [p.lat, p.lng];
+        ubicacion = [parseFloat(p.lat), parseFloat(p.lng)];
     }
 
     const ubicacionPoint = `POINT(${ubicacion[1]} ${ubicacion[0]})`;
@@ -501,19 +507,68 @@ async function abrirDetalleReporte(id) {
 
         // Iniciar Mini Mapa
         if (!mapaDetalle) {
-            mapaDetalle = L.map('detail-map').setView([0, 0], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaDetalle);
+            mapaDetalle = L.map('detail-map', {
+                fadeAnimation: false,
+                markerZoomAnimation: false
+            }).setView([0, 0], 15);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap © CartoDB'
+            }).addTo(mapaDetalle);
         }
+
+        // Limpiar marcador previo
+        if (marcadorDetalle) {
+            mapaDetalle.removeLayer(marcadorDetalle);
+            marcadorDetalle = null;
+        }
+
+        const btnGps = document.getElementById('btn-navigate-gps');
+        if (btnGps) btnGps.style.display = 'none';
 
         // Parsear ubicación
         if (data.ubicacion) {
-            // Análisis rápido
-            const match = data.ubicacion.match(/\(([^)]+)\)/);
-            if (match) {
-                const [lng, lat] = match[1].split(' ').map(parseFloat);
+            let lat, lng;
+
+            // Caso 1: String PostGIS representation "POINT(lng lat)" o similar
+            if (typeof data.ubicacion === 'string') {
+                if (data.ubicacion.startsWith('0101')) {
+                    try {
+                        const hasSRID = data.ubicacion.substring(8, 10) === '20';
+                        const offset = hasSRID ? 18 : 10;
+                        const hexToDouble = (hex) => {
+                            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                            const view = new DataView(bytes.buffer);
+                            return view.getFloat64(0, true);
+                        };
+                        lng = hexToDouble(data.ubicacion.substring(offset, offset + 16));
+                        lat = hexToDouble(data.ubicacion.substring(offset + 16, offset + 32));
+                    } catch (err) {
+                        Logger.error('Error parseando Hex de ubicación', err);
+                    }
+                } else {
+                    const match = data.ubicacion.match(/POINT\(([^ ]+) ([^ ]+)\)/) || data.ubicacion.match(/\(([^ ]+) ([^ ]+)\)/);
+                    if (match) {
+                        lng = parseFloat(match[1]);
+                        lat = parseFloat(match[2]);
+                    }
+                }
+            }
+            // Caso 2: Objeto GeoJSON {type: 'Point', coordinates: [lng, lat]}
+            else if (data.ubicacion.coordinates) {
+                lng = data.ubicacion.coordinates[0];
+                lat = data.ubicacion.coordinates[1];
+            }
+
+            if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
                 mapaDetalle.setView([lat, lng], 15);
-                L.marker([lat, lng]).addTo(mapaDetalle);
-                setTimeout(() => { mapaDetalle.invalidateSize(); }, 300); // Arreglar renderizado de mapa
+                marcadorDetalle = L.marker([lat, lng]).addTo(mapaDetalle);
+
+                if (btnGps) {
+                    btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                    btnGps.style.display = 'flex';
+                }
+
+                setTimeout(() => { mapaDetalle.invalidateSize(); }, 300);
             }
         }
 

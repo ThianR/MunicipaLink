@@ -40,3 +40,18 @@
 .modal__header h2 {
     margin: 0;
 }
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    transition: color 0.2s;
+}
+
+.btn-close:hover {
+    color: #0f172a;
+}

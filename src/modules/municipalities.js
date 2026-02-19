@@ -47,8 +47,9 @@ function poblarSelectorMunicipalidad() {
             const opt = document.createElement('option');
             opt.value = m.id;
             opt.textContent = m.nombre;
-            if (m.centro) {
-                const valorCentro = typeof m.centro === 'string' ? m.centro : JSON.stringify(m.centro);
+            const centro = m.centro;
+            if (centro) {
+                const valorCentro = typeof centro === 'string' ? centro : JSON.stringify(centro);
                 opt.setAttribute('data-centro', valorCentro);
             }
             sel.appendChild(opt);

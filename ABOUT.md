@@ -12,7 +12,8 @@ MunicipaLink es una solución de código abierto que transforma la relación ent
 
 ### ¿Qué hace única a MunicipaLink?
 
-1. **Gamificación Inteligente**: Sistema de XP, niveles y rangos que recompensa la participación activa y la calidad de los reportes
+1. **Panel Admin Centralizado**: Gestión avanzada de usuarios, baneo lógico y control de entidades municipales.
+2. **Gamificación Inteligente**: Sistema de XP, niveles y rangos que recompensa la participación activa.
 2. **Trust Meter**: Multiplicador de reputación basado en la completitud del perfil (1.0x - 2.0x)
 3. **Ranking por Impacto**: Algoritmo de relevancia relativa que prioriza reportes según votos de la comunidad
 4. **Privacidad Configurable**: Control granular sobre qué información del perfil es pública

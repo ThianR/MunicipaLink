@@ -60,6 +60,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ReportsModule.init();
         ProfileModule.init();
 
+        // Initialize Admin Module (Lazy load si fuera necesario, pero por ahora directo)
+        import('./modules/admin.js').then(module => module.AdminModule.init());
+
         Logger.info('Todos los módulos inicializados correctamente.');
 
     } catch (e) {

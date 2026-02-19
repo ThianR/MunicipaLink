@@ -2,6 +2,7 @@ import { supabaseClient } from '../services/supabase.js';
 import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { Logger } from '../utils/logger.js';
 
 export const ProfileModule = {
     init: () => {
@@ -44,6 +45,10 @@ function setupListeners() {
     // Previsualización de Avatar
     const inputAvatar = document.getElementById('input-avatar');
     if (inputAvatar) inputAvatar.addEventListener('change', manejarCambioAvatar);
+
+    // Formulario de Solicitud Municipal
+    const formRequest = document.getElementById('form-municipal-request');
+    if (formRequest) formRequest.addEventListener('submit', enviarSolicitudMunicipal);
 
     // Interacciones de perfil público
     document.addEventListener('click', (e) => {
@@ -184,7 +189,10 @@ async function cargarPerfil(explicitUserId) {
         }
 
         actualizarPreviewAvatar(perfil?.avatar_url);
-        if (isMe) actualizarTrustMeter(perfil || {});
+        if (isMe) {
+            actualizarTrustMeter(perfil || {});
+            cargarEstadoSolicitudMunicipal(targetUserId);
+        }
 
     } catch (err) {
         console.error(err);
@@ -411,4 +419,108 @@ async function toggleSeguir(targetId, following) {
         await supabaseClient.from('seguidores').insert({ seguidor_id: user.id, siguiendo_id: targetId });
     }
     abrirPerfilPublico(targetId); // Refresh
+}
+
+async function cargarEstadoSolicitudMunicipal(userId) {
+    const section = document.getElementById('municipal-request-section');
+    if (!section) return;
+
+    try {
+        // 1. Cargar municipalidades para el selector
+        const { data: munis } = await supabaseClient.from('municipalidades').select('id, nombre').order('nombre');
+        const selector = document.getElementById('request-muni-selector');
+        if (selector && selector.children.length <= 1) {
+            munis.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.nombre;
+                selector.appendChild(opt);
+            });
+        }
+
+        // 2. Verificar rol actual
+        const { data: profile } = await supabaseClient.from('perfiles').select('rol').eq('id', userId).single();
+        if (profile.rol === 'admin' || profile.rol === 'municipal') {
+            section.style.display = 'none';
+            return;
+        }
+
+        // 3. Verificar solicitudes previas
+        const { data: req, error } = await supabaseClient
+            .from('solicitudes_municipales')
+            .select('*')
+            .eq('usuario_id', userId)
+            .in('estado', ['pendiente', 'en_revision', 'aprobado'])
+            .order('creado_en', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (req) {
+            const form = document.getElementById('form-municipal-request');
+            if (req.estado === 'pendiente' || req.estado === 'en_revision') {
+                section.innerHTML = `
+                    <div class="status-card status-card--info">
+                        <i data-lucide="clock"></i>
+                        <div>
+                            <h4>Solicitud en curso</h4>
+                            <p>Tu solicitud para ser colaborador municipal está siendo revisada por el equipo de administración.</p>
+                            <small>Estado: <strong>${req.estado.replace('_', ' ').toUpperCase()}</strong></small>
+                        </div>
+                    </div>
+                `;
+            } else if (req.estado === 'aprobado') {
+                section.style.display = 'none';
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+    } catch (err) {
+        Logger.error('Error al cargar estado de solicitud municipal', err);
+    }
+}
+
+async function enviarSolicitudMunicipal(e) {
+    e.preventDefault();
+    const user = AuthModule.getUsuarioActual();
+    if (!user) return;
+
+    const btn = document.getElementById('btn-submit-request');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="spinner"></i> Enviando...';
+
+    const formData = new FormData(e.target);
+    const file = document.getElementById('request-document').files[0];
+
+    try {
+        if (!file) throw new Error('Debes adjuntar un documento de verificación.');
+
+        // Subir documento
+        const fileName = `verificaciones/${user.id}_${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabaseClient.storage.from('evidencias').upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrl } = supabaseClient.storage.from('evidencias').getPublicUrl(fileName);
+
+        // Crear registro
+        const { error: insertError } = await supabaseClient.from('solicitudes_municipales').insert({
+            usuario_id: user.id,
+            municipalidad_id: formData.get('municipalidad_id'),
+            documento_url: publicUrl.publicUrl,
+            comentarios_ciudadano: formData.get('comentarios'),
+            estado: 'pendiente'
+        });
+
+        if (insertError) throw insertError;
+
+        mostrarMensaje('¡Solicitud enviada con éxito! Será revisada pronto.', 'success');
+        cargarEstadoSolicitudMunicipal(user.id);
+
+    } catch (err) {
+        Logger.error('Error al enviar solicitud municipal', err);
+        mostrarMensaje(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send"></i> Enviar Solicitud de Rol';
+        if (window.lucide) lucide.createIcons();
+    }
 }
