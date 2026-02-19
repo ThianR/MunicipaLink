@@ -24,8 +24,23 @@ export const AuthModule = {
                 manejarCierreSesion();
             } else if (evento === 'PASSWORD_RECOVERY') {
                 document.getElementById('modal-update-password').classList.add('modal--active');
+                // Limpiar el hash de la URL para evitar recargas molestas
+                window.history.replaceState(null, null, window.location.pathname);
             }
         });
+
+        // Comprobación manual de hash (por si el evento no dispara a tiempo)
+        if (window.location.hash.includes('type=recovery')) {
+            // Limpiar el hash de la URL inmediatamente
+            window.history.replaceState(null, null, window.location.pathname);
+
+            setTimeout(() => {
+                const modal = document.getElementById('modal-update-password');
+                if (modal && !modal.classList.contains('modal--active')) {
+                    modal.classList.add('modal--active');
+                }
+            }, 500);
+        }
     },
 
     getUsuarioActual: () => usuarioActual,
@@ -107,11 +122,22 @@ function setupListeners() {
         });
     }
 
-    // Lógica para cerrar modales (podría ser genérica en UI)
+    // Lógica para cerrar modales
     document.querySelectorAll('.modal').forEach(modal => {
         const closeBtn = modal.querySelector('.btn-close');
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => modal.classList.remove('modal--active'));
+            closeBtn.addEventListener('click', () => {
+                modal.classList.remove('modal--active');
+            });
+        }
+    });
+
+    // Cerrar con tecla Escape
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal--active').forEach(modal => {
+                modal.classList.remove('modal--active');
+            });
         }
     });
 }
@@ -119,7 +145,7 @@ function setupListeners() {
 async function solicitarResetPassword(email) {
     try {
         const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.href, // Redirects back here
+            redirectTo: window.location.origin, // Redirects back here
         });
         if (error) throw error;
         mostrarMensaje('Enlace de recuperación enviado', 'success');

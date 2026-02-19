@@ -5,6 +5,15 @@ Este documento proporciona el contexto necesario para que cualquier Agente de IA
 ## Propósito del Proyecto
 MunicipaLink es una plataforma de participación ciudadana que permite a los ciudadanos reportar incidencias (baches, luminarias, basura, etc.) en sus municipalidades, realizar seguimientos y fomentar la transparencia gubernamental a través de un sistema de gamificación (XP, niveles, rangos).
 
+### Para Administradores
+- **Gestión de Usuarios**: Listado premium, edición de roles, baneo lógico y reset de contraseña.
+- **Control Municipal**: Creación y edición de municipalidades y departamentos.
+- **Monitorización**: Dashboard de estadísticas rápidas (usuarios, reportes, munis).
+
+### Nuevas Funcionalidades Clave
+1. **Panel Admin de Control**: Gestión integral de usuarios (baneo, edición, reset de password) y municipalidades.
+2. **Gamificación Inteligente**: Sistema de XP, niveles y rangos que recompensa la participación activa.
+
 ## Stack Tecnológico
 - **Frontend**: HTML5, CSS3 (Vanilla), JavaScript (ES6 Modules).
 - **Backend / DB**: Supabase (PostgreSQL + PostGIS).
@@ -18,7 +27,7 @@ El proyecto sigue una estructura modular para facilitar el mantenimiento:
 ```text
 ├── index.html          # Punto de entrada único (Single Page App style)
 ├── main.js             # Inicialización de la aplicación y orquestación
-├── sql/                # Scripts de base de datos, vistas y funciones RPC
+├── sql/                # Engine SQL consolidado (00_config.sql a 06_semillas.sql)
 ├── src/
 │   ├── modules/        # Lógica de negocio (auth, reports, map, profile, ui)
 │   ├── services/       # Clientes externos (supabase)

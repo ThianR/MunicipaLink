@@ -7,6 +7,7 @@
     position: relative;
     flex: 1;
     min-height: 0;
+    overflow: hidden !important;
 }
 
 #map {
@@ -15,51 +16,90 @@
     z-index: 1;
 }
 
+/* --- CONSOLIDATED MAP TOOLS --- */
 .floating-map-tools {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    right: 1rem;
-    z-index: 100;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 12px;
+    align-items: flex-end;
     pointer-events: none;
+    width: auto;
+}
+
+/* Hide on Desktop - The sidebar handles it */
+@media (min-width: 1101px) {
+    .floating-map-tools {
+        display: none !important;
+    }
+}
+
+.floating-map-tools>* {
+    pointer-events: auto;
 }
 
 .muni-selector-compact {
+    display: none !important;
+    /* Hidden on Desktop */
     padding: 0.5rem 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: var(--radius);
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
     background: white;
-    box-shadow: var(--shadow);
-    font-weight: 600;
-    font-size: var(--font-size-sm);
-    pointer-events: auto;
-    width: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    max-width: 160px;
+}
+
+/* Show on Mobile/Tablet */
+@media (max-width: 1100px) {
+    .muni-selector-compact {
+        display: block !important;
+    }
+
+    .floating-map-tools {
+        top: 15px;
+        right: 15px;
+        left: auto !important;
+        /* Force stay on right */
+        align-items: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .muni-selector-compact {
+        max-width: 140px;
+    }
 }
 
 .map-action-group {
     display: flex;
-    gap: 0.5rem;
-    pointer-events: auto;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
 }
 
 .btn-map-float {
     background: white;
-    border: 2px solid #e5e7eb;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius);
+    border: 1px solid #e5e7eb;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     color: var(--text-main);
+    transition: all 0.2s;
 }
 
 .btn-map-float:hover {
-    background: var(--bg-light);
+    transform: translateY(-2px);
+    background: #f8fafc;
     color: var(--primary);
 }

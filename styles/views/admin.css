@@ -1,0 +1,488 @@
+/* ============================================
+   ADMIN VIEW - MunicipaLink
+   ============================================ */
+
+#view-admin {
+    padding: var(--spacing-xl);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 2px;
+}
+
+.admin-tab-btn {
+    background: none;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.admin-tab-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-tab-btn:hover {
+    color: var(--primary);
+}
+
+.admin-tab-btn.active {
+    color: var(--primary);
+}
+
+.admin-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.admin-content-pane {
+    display: none;
+    animation: fadeIn var(--transition-medium);
+}
+
+.admin-content-pane.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 400px;
+}
+
+/* Dashboard Stats */
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.admin-stat-card {
+    background: white;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast);
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+}
+
+.admin-stat-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-stat-icon i {
+    width: 20px;
+    height: 20px;
+}
+
+.admin-stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-stat-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.admin-stat-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-top: 0.125rem;
+}
+
+/* Admin Cards & Tables */
+.admin-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid #e5e7eb;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.admin-card-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-card-header h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* The rest of admin.css remains for specific layout needs not covered by global premium styles */
+
+.admin-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8fafc;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-table th {
+    background: #f8fafc;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-table td {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9375rem;
+}
+
+.admin-table tr:hover {
+    background: #fdfdfd;
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-tabs {
+        overflow-x: auto;
+        padding-bottom: var(--spacing-md);
+    }
+}
+
+/* Departments Modal */
+.modal-lg {
+    max-width: 800px;
+    width: 95%;
+}
+
+/* Override general modal transparency issues if any */
+.modal__content {
+    background: white !important;
+    box-shadow: var(--shadow-lg) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.admin-dept-controls {
+    background: #f8fafc;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid #e2e8f0;
+}
+
+.admin-dept-form {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+    /* Align top due to labels */
+}
+
+.admin-dept-form .input {
+    width: 100%;
+    margin-bottom: 0;
+    min-width: 150px;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    opacity: 1 !important;
+}
+
+.admin-dept-form label {
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    color: #0f172a !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+    display: block !important;
+}
+
+.admin-dept-form .button {
+    white-space: nowrap;
+    height: 38px;
+    /* Match input height approx */
+}
+
+@media (max-width: 600px) {
+    .admin-dept-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-dept-form .input {
+        width: 100%;
+        margin-bottom: var(--spacing-sm);
+    }
+}
+
+.admin-dept-list-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #f1f5f9;
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-md);
+}
+
+.admin-dept-list-wrapper .admin-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Scrollbar clean styling */
+.admin-dept-list-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-dept-list-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.admin-dept-list-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.admin-dept-list-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Municipalities List Scroll (Similar to Depts) */
+.admin-muni-list-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #f1f5f9;
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-md);
+}
+
+.admin-muni-list-wrapper .admin-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Scrollbar clean styling for Munis */
+.admin-muni-list-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-muni-list-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.admin-muni-list-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.admin-muni-list-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Button variants for admin */
+.button.btn-admin-add {
+    width: auto !important;
+    padding: 0.625rem 1.25rem;
+    height: auto;
+    font-size: 0.875rem;
+}
+
+.admin-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+/* Map Container in Modal */
+#muni-map-container {
+    height: 300px;
+    border-radius: var(--radius-md);
+    margin-top: 1rem;
+    border: 1px solid #e2e8f0;
+    z-index: 1;
+}
+
+/* Spinner for Map loading */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -20px;
+    margin-top: -20px;
+    z-index: 10;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* Sidebar Layout Additions */
+.admin-container {
+    display: flex;
+    gap: 2rem;
+    min-height: 60vh;
+    margin-top: 1rem;
+}
+
+.admin-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-right: 1px solid #e2e8f0;
+    padding-right: 1.5rem;
+}
+
+.admin-content {
+    flex: 1;
+    min-width: 0;
+    /* Prevent overflow */
+}
+
+/* Sidebar Navigation Buttons */
+.admin-sidebar .admin-tab-btn {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.admin-sidebar .admin-tab-btn:hover {
+    background-color: #f8fafc;
+    color: #0f172a;
+}
+
+.admin-sidebar .admin-tab-btn.active {
+    background-color: #eff6ff;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.admin-sidebar .admin-tab-btn.active::after {
+    display: none !important;
+    /* Remove the bottom border from default tabs */
+}
+
+.admin-sidebar .admin-tab-btn i {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+}
+
+.admin-sidebar .admin-tab-btn.active i {
+    opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .admin-container {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+        padding-right: 0;
+        padding-bottom: 1rem;
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .admin-sidebar .admin-tab-btn {
+        width: auto;
+        white-space: nowrap;
+    }
+}
+
+/* EOF */

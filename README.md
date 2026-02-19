@@ -26,6 +26,11 @@ MunicipaLink es una aplicación web que empodera a los ciudadanos para reportar 
 - **Seguimiento de Reportes**: Recibe notificaciones sobre reportes que te interesan
 - **Perfiles Públicos**: Visualiza la reputación y contribuciones de otros ciudadanos
 
+### 🛠️ Administración y Control (Nuevo)
+- **Gestión de Usuarios**: Listado premium, edición de datos, baneo lógico y reset de contraseña.
+- **Control Municipal**: Administración de municipalidades y departamentos.
+- **Dashboard**: Estadísticas en tiempo real de la plataforma.
+
 ### 📊 Transparencia y Análisis
 - **Ranking de Impacto**: Los reportes se ordenan por relevancia relativa usando `PERCENT_RANK`
 - **Filtros Avanzados**: Por estado, categoría, fecha y municipalidad
@@ -105,11 +110,7 @@ MunicipaLink/
 
 3. **Configurar la base de datos**
    - Accede al panel de Supabase
-   - Ejecuta los scripts en `sql/` en el siguiente orden:
-     1. Tablas base (municipalidades, perfiles, reportes)
-     2. Vistas (`sql/vistas/`)
-     3. Funciones RPC (`sql/funciones/`)
-     4. Políticas de seguridad (Row Level Security)
+    - Ejecuta los archivos en `sql/` en orden correlativo (00_config.sql hasta 06_semillas.sql).
 
 4. **Iniciar el servidor local**
    ```bash
@@ -185,7 +186,7 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 
 ## 🌟 Roadmap
 
-- [ ] Panel de administración municipal
+- [x] Panel de administración avanzado (Usuarios/Munis)
 - [ ] Notificaciones push en tiempo real
 - [ ] Exportación de reportes a PDF/Excel
 - [ ] Integración con redes sociales

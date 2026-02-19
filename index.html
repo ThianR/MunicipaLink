@@ -19,36 +19,84 @@
 <body class="role-guest">
     <!-- Login Screen -->
     <div id="screen-login" class="screen screen--active login-screen">
-        <div class="login-card">
-            <i data-lucide="map-pin" style="width: 48px; height: 48px; color: #10b981;"></i>
-            <h1 class="login-card__title">MunicipaLink</h1>
-            <p class="login-card__subtitle">Conectando ciudadanos con su ciudad.</p>
-            
-            <form id="form-auth" class="auth-form">
-                <div class="form-group">
-                    <input type="email" id="auth-email" placeholder="Correo electrónico" required class="input">
+        <div class="login-container">
+            <!-- Left Panel: Info & Motivation -->
+            <div class="login-panel-info">
+                <div class="login-panel-info__content">
+                    <div class="login-logo-wrapper">
+                        <i data-lucide="map-pin" class="login-logo-icon"></i>
+                        <span class="login-logo-text">MunicipaLink</span>
+                    </div>
+                    <div class="login-motivation">
+                        <h2 class="login-motivation-title">Juntos construimos el futuro</h2>
+                        <p class="login-motivation-text">
+                            Tu participación es el motor que transforma nuestra comunidad. Al registrar tus solicitudes y colaborar con tus vecinos, construyes un municipio más unido y próspero. La indiferencia nos detiene, pero tu compromiso nos impulsa a seguir adelante.
+                        </p>
+                    </div>
+                    <div class="login-features">
+                        <div class="feature-item">
+                            <i data-lucide="users"></i>
+                            <span>Comunidad Unida</span>
+                        </div>
+                        <div class="feature-item">
+                            <i data-lucide="message-circle"></i>
+                            <span>Comunicación Directa</span>
+                        </div>
+                        <div class="feature-item">
+                            <i data-lucide="shield-check"></i>
+                            <span>Acción Solidaria</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <input type="password" id="auth-password" placeholder="Contraseña" required class="input">
-                </div>
-                <div class="auth-buttons">
-                    <button type="submit" id="btn-login" class="button button--primary">Iniciar Sesión</button>
-                    <button type="button" id="btn-signup" class="button button--secondary" style="margin-top: 1rem;">¿No tienes cuenta? Regístrate</button>
-                </div>
-            </form>
-            
-            <button id="btn-forgot-password" class="btn-guest" style="margin-top: 0.5rem; font-size: 0.875rem;">
-                ¿Olvidaste tu contraseña?
-            </button>
-            
-            <div class="divider"><span>o continuar con</span></div>
-            
-            <button id="btn-login-google" class="button button--google" style="margin-bottom: 1.5rem;">
-                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" alt="G">
-                Google
-            </button>
+                <div class="login-decoration"></div>
+            </div>
 
-            <button id="btn-login-guest" class="btn-guest">Entrar como Invitado</button>
+            <!-- Right Panel: Form -->
+            <div class="login-panel-form">
+                <div class="login-card">
+                    <div class="mobile-logo">
+                        <i data-lucide="map-pin" style="width: 40px; height: 40px; color: #10b981;"></i>
+                        <h1 class="login-card__title">MunicipaLink</h1>
+                    </div>
+                    
+                    <div class="form-header">
+                        <h2 class="form-title">Bienvenido</h2>
+                        <p class="form-subtitle">Inicia sesión para continuar con tus gestiones</p>
+                    </div>
+
+                    <form id="form-auth" class="auth-form">
+                        <div class="form-group">
+                            <label class="input-label">Correo Electrónico</label>
+                            <input type="email" id="auth-email" placeholder="ejemplo@correo.com" required class="input">
+                        </div>
+                        <div class="form-group">
+                            <label class="input-label">Contraseña</label>
+                            <input type="password" id="auth-password" placeholder="********" required class="input">
+                        </div>
+                        <div class="auth-actions">
+                            <button type="submit" id="btn-login" class="button button--primary">Iniciar Sesión</button>
+                            <button type="button" id="btn-signup" class="button button--secondary">¿No tienes cuenta? Regístrate</button>
+                        </div>
+                    </form>
+
+                    <button id="btn-forgot-password" class="btn-forgot">
+                        ¿Olvidaste tu contraseña?
+                    </button>
+
+                    <div class="divider"><span>o continuar con</span></div>
+
+                    <div class="social-login">
+                        <button id="btn-login-google" class="button button--google">
+                            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" alt="G">
+                            Google
+                        </button>
+                    </div>
+
+                    <div class="guest-login">
+                        <button id="btn-login-guest" class="btn-guest">Entrar como Invitado</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -99,7 +147,7 @@
 
                 <div id="admin-panel" class="admin-only" style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
                     <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">ADMIN PANEL</h3>
-                    <button class="button button--action" style="background: #374151;">Gestionar Municipalidades</button>
+                    <button id="btn-admin-panel" class="button button--action" style="background: #374151;">Gestionar Municipalidades</button>
                 </div>
 
                 <div style="margin-top: auto;">
@@ -286,6 +334,111 @@
             </div>
         </div>
     </div>
+    <!-- View: Admin Panel -->
+    <div id="view-admin" class="view">
+        <div class="view-header">
+            <button id="btn-back-admin" class="btn-back">
+                <i data-lucide="arrow-left"></i> Volver al Mapa
+            </button>
+            <h2><i data-lucide="shield"></i> Panel de Administración</h2>
+        </div>
+
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <button class="admin-tab-btn active" data-admin-tab="dashboard">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </button>
+                <button class="admin-tab-btn" data-admin-tab="municipalities">
+                    <i data-lucide="building-2"></i> Municipalidades
+                </button>
+                <button class="admin-tab-btn" data-admin-tab="users">
+                    <i data-lucide="users"></i> Usuarios
+                </button>
+            </div>
+
+            <div class="admin-content">
+                <!-- Dashboard Tab -->
+                <div id="admin-tab-dashboard" class="admin-content-pane active">
+                    <div class="admin-stats-grid">
+                        <div class="stat-card">
+                            <h3>Usuarios Totales</h3>
+                            <p class="stat-number" id="admin-total-users">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Reportes Activos</h3>
+                            <p class="stat-number" id="admin-active-reports">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Municipalidades</h3>
+                            <p class="stat-number" id="admin-total-munis">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Municipalities Tab -->
+                <div id="admin-tab-municipalities" class="admin-content-pane">
+                    <div class="toolbar-premium">
+                        <div class="search-premium">
+                            <input type="text" id="admin-muni-search-input" placeholder="Buscar municipalidad...">
+                        </div>
+                        <button id="btn-new-muni" class="button button--primary btn-admin-add">
+                            <i data-lucide="plus"></i> Nueva Municipalidad
+                        </button>
+                    </div>
+                    <div class="table-container-premium">
+                        <div class="table-wrapper-scroll">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-munis-list">
+                                <!-- JS populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div id="admin-tab-users" class="admin-content-pane">
+                    <div class="toolbar-premium">
+                        <div class="search-premium">
+                            <input type="text" id="admin-users-search-input" placeholder="Buscar usuario (nombre, email, ID)...">
+                        </div>
+                        <div class="admin-stats-mini">
+                            <span>Total: <strong id="stat-total-users">0</strong></span>
+                            <span>Admin: <strong id="stat-admin-users">0</strong></span>
+                            <span>Muni: <strong id="stat-municipal-users">0</strong></span>
+                            <span>Ciudadanos: <strong id="stat-citizen-users">0</strong></span>
+                        </div>
+                    </div>
+                    <div class="table-container-premium">
+                        <div class="table-wrapper-scroll">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>ID</th>
+                                        <th>Rol</th>
+                                        <th>Nivel</th>
+                                        <th>Ingreso</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-users-list">
+                                    <!-- JS populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
             </main>
         </div>
 
@@ -405,41 +558,59 @@
                         </div>
                     </div>
 
-                    <form id="form-profile" class="profile-form">
-                        <div class="profile-grid">
+                    <form id="form-profile" class="card-premium">
+                        <div class="form-grid-premium">
                             <div class="form-group">
                                 <label>Nombre de Usuario (Alias)</label>
-                                <input type="text" name="alias" class="muni-selector" placeholder="@usuario">
+                                <div class="input-with-icon">
+                                    <i data-lucide="at-sign"></i>
+                                    <input type="text" name="alias" class="input" placeholder="@usuario">
+                                </div>
                             </div>
                             <div class="form-group private-field">
                                 <label>Nombre Completo</label>
-                                <input type="text" name="nombre_completo" class="muni-selector" placeholder="Tu nombre">
+                                <div class="input-with-icon">
+                                    <i data-lucide="user"></i>
+                                    <input type="text" name="nombre_completo" class="input" placeholder="Tu nombre">
+                                </div>
                             </div>
                             <div class="form-group private-field">
                                 <label>Fecha de Nacimiento</label>
-                                <input type="date" name="fecha_nacimiento" class="muni-selector">
+                                <div class="input-with-icon">
+                                    <i data-lucide="calendar"></i>
+                                    <input type="date" name="fecha_nacimiento" class="input">
+                                </div>
                                 <small id="display-age" class="text-muted" style="margin-top: 0.25rem; display: block;"></small>
                             </div>
                             <div class="form-group private-field">
                                 <label>Género</label>
-                                <select name="genero" class="muni-selector">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Masculino">Masculino</option>
-                                    <option value="Femenino">Femenino</option>
-                                    <option value="Otro">Otro</option>
-                                </select>
+                                <div class="input-with-icon">
+                                    <i data-lucide="user-check"></i>
+                                    <select name="genero" class="input">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Masculino">Masculino</option>
+                                        <option value="Femenino">Femenino</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-group private-field">
                                 <label>Contacto / WhatsApp</label>
-                                <input type="text" name="contacto" class="muni-selector" placeholder="+595 ...">
+                                <div class="input-with-icon">
+                                    <i data-lucide="phone"></i>
+                                    <input type="text" name="contacto" class="input" placeholder="+595 ...">
+                                </div>
                             </div>
                             <div class="form-group private-field">
                                 <label>Dirección Física</label>
-                                <input type="text" name="direccion" class="muni-selector" placeholder="Barrio, Ciudad...">
+                                <div class="input-with-icon">
+                                    <i data-lucide="map-pin"></i>
+                                    <input type="text" name="direccion" class="input" placeholder="Barrio, Ciudad...">
+                                </div>
                             </div>
                         </div>
                         <div class="form-footer">
-                            <button type="submit" id="btn-save-profile" class="button button--action">Guardar Cambios</button>
+                            <button type="submit" id="btn-save-profile" class="button button--action" style="width: 100%;">Guardar Cambios</button>
                         </div>
                     </form>
                 </div>
@@ -448,23 +619,30 @@
     </div>
     </div>
 
+
     <!-- Modals -->
     <div id="modal-report" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal__content">
+            <div class="modal__header">
                 <h2>Nuevo Reporte</h2>
                 <button id="btn-close-modal" class="btn-close">&times;</button>
             </div>
-            <form id="form-report">
+            <form id="form-report" class="card-premium">
                 <div class="form-group">
                     <label>Categoría</label>
-                    <select name="category_id" id="report-category" class="muni-selector" required>
-                        <option value="">Cargando categorías...</option>
-                    </select>
+                    <div class="input-with-icon">
+                        <i data-lucide="tag"></i>
+                        <select name="category_id" id="report-category" class="input" required>
+                            <option value="">Cargando categorías...</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Descripción</label>
-                    <textarea name="description" id="report-description" class="muni-selector" placeholder="Describe el problema aquí..." required></textarea>
+                    <div class="input-with-icon">
+                        <i data-lucide="message-square" style="top: 0.75rem; transform: none;"></i>
+                        <textarea name="description" id="report-description" class="input" style="min-height: 120px; padding-top: 0.75rem !important;" placeholder="Describe el problema aquí..." required></textarea>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Fotos (Máx. 3)</label>
@@ -493,8 +671,8 @@
 
     <!-- Modal: Request Password Reset -->
     <div id="modal-reset-request" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal__content">
+            <div class="modal__header">
                 <h2>Recuperar Contraseña</h2>
                 <button id="btn-close-reset-request" class="btn-close">&times;</button>
             </div>
@@ -515,8 +693,8 @@
 
     <!-- Modal: XP Guide -->
     <div id="modal-xp-guide" class="modal">
-        <div class="modal-content modal-xp">
-            <div class="modal-header">
+        <div class="modal__content modal-xp">
+            <div class="modal__header">
                 <h2><i data-lucide="award"></i> Guía de Experiencia</h2>
                 <button id="btn-close-xp-guide" class="btn-close">&times;</button>
             </div>
@@ -624,8 +802,8 @@
 
     <!-- Modal: Public Profile -->
     <div id="modal-public-profile" class="modal">
-        <div class="modal-content profile-modal-compact">
-            <div class="modal-header">
+        <div class="modal__content profile-modal-compact">
+            <div class="modal__header">
                 <h2>Perfil del Ciudadano</h2>
                 <button id="btn-close-public-profile" class="btn-close">&times;</button>
             </div>
@@ -639,8 +817,8 @@
 
     <!-- Modal: Update Password -->
     <div id="modal-update-password" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal__content">
+            <div class="modal__header">
                 <h2>Nueva Contraseña</h2>
                 <button id="btn-close-update-password" class="btn-close">&times;</button>
             </div>
@@ -674,6 +852,176 @@
 
 
 
+    <!-- Modal: Admin Municipality -->
+    <div id="modal-admin-municipality" class="modal">
+        <div class="modal__content modal-large">
+            <div class="modal__header">
+                <h2 id="modal-muni-title">Nueva Municipalidad</h2>
+                <button id="btn-close-modal-muni" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body-split">
+                <div class="modal-form-side">
+                    <form id="form-muni">
+                        <div class="form-group">
+                            <label>Nombre de la Municipalidad</label>
+                            <input type="text" id="muni-name" class="muni-selector" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Ubicación (Centro)</label>
+                            <small class="text-muted">Arrastra el marcador en el mapa.</small>
+                            <div class="coords-inputs">
+                                <input type="text" id="muni-lat" placeholder="Latitud" readonly>
+                                <input type="text" id="muni-lng" placeholder="Longitud" readonly>
+                            </div>
+                        </div>
+                        <button type="submit" class="button button--primary" style="width: 100%; margin-top: 1rem;">
+                            Guardar Municipalidad
+                        </button>
+                    </form>
+                </div>
+                <div class="modal-map-side">
+                    <div id="muni-map-container" style="width: 100%; height: 100%; min-height: 300px; border-radius: 8px;"></div>
+                    <div id="muni-map-loader" class="map-loader">
+                        <div class="spinner"></div>
+                        <p>Cargando mapa...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Admin Departments -->
+    <div id="modal-admin-departments" class="modal">
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2>Departamentos de <span id="modal-dept-muni-name" class="text-primary"></span></h2>
+                <button id="btn-close-modal-dept" class="btn-close">&times;</button>
+            </div>
+            
+            <!-- New Dept Form -->
+            <div class="form-header-premium">
+                <h3><i data-lucide="plus-circle"></i> Nuevo Departamento</h3>
+                <p class="text-muted">Agregue unidades organizativas a esta municipalidad.</p>
+            </div>
+            
+            <form id="form-add-dept" class="card-premium">
+                <div class="form-grid-premium">
+                    <div class="form-group">
+                        <label for="new-dept-name">Nombre del Departamento</label>
+                        <div class="input-with-icon">
+                            <i data-lucide="tag"></i>
+                            <input type="text" id="new-dept-name" placeholder="Ej: Tesorería, Obras, etc." required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-dept-contact">Contacto / WhatsApp</label>
+                        <div class="input-with-icon">
+                            <i data-lucide="phone"></i>
+                            <input type="text" id="new-dept-contact" placeholder="+595 ...">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="button button--primary btn-admin-add">
+                        <span id="btn-submit-dept-text"><i data-lucide="save"></i> Guardar Departamento</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="admin-dept-divider">
+                <span>Listado de Departamentos</span>
+            </div>
+
+            <div class="toolbar-premium">
+                <div class="search-premium">
+                    <input type="text" id="admin-dept-search-input" placeholder="Buscar departamento...">
+                </div>
+            </div>
+
+            <div class="table-container-premium">
+                <div class="table-wrapper-scroll" style="max-height: 350px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Contacto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-dept-list">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Admin User Edit -->
+    <div id="modal-admin-user" class="modal">
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2>Editar Usuario</h2>
+                <button id="btn-close-modal-user" class="btn-close">&times;</button>
+            </div>
+            <form id="form-edit-user">
+                <div class="form-group">
+                    <label>Alias</label>
+                    <input type="text" id="edit-user-alias" class="muni-selector">
+                </div>
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="edit-user-fullname" class="muni-selector">
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select id="edit-user-role" class="muni-selector">
+                        <option value="ciudadano">Ciudadano</option>
+                        <option value="municipal">Municipal</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nivel de Vecino</label>
+                    <select id="edit-user-level" class="muni-selector">
+                        <option value="Vecino Novato">Vecino Novato</option>
+                        <option value="Vecino Observador">Vecino Observador</option>
+                        <option value="Vecino Comprometido">Vecino Comprometido</option>
+                        <option value="Vecino Experto">Vecino Experto</option>
+                        <option value="Líder Comunitario">Líder Comunitario</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado de Cuenta</label>
+                    <select id="edit-user-status" class="muni-selector">
+                        <option value="true">Activo</option>
+                        <option value="false">Baneado / Inactivo</option>
+                    </select>
+                </div>
+                <button type="submit" class="button button--primary" style="width: 100%; margin-top: 1rem;">
+                    Guardar Cambios
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Admin Reset Password -->
+    <div id="modal-reset-password" class="modal">
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2>Resetear Contraseña</h2>
+                <button id="btn-close-modal-reset" class="btn-close">&times;</button>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                ¿Estás seguro que deseas enviar un correo de restablecimiento de contraseña a <strong id="reset-user-email-display"></strong>?
+            </p>
+            <div class="modal-footer-actions">
+                <button id="btn-cancel-reset" class="button button--secondary">Cancelar</button>
+                <button id="btn-confirm-reset" class="button button--primary">Confirmar Envío</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Toasts -->
     <div id="toast-container" class="toast-container"></div>
 
@@ -682,6 +1030,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Main Application Script (Modular) -->
+    <script type="module" src="src/modules/admin-view-connector.js"></script>
     <script type="module" src="src/main.js"></script>
 </body>
 </html>

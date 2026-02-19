@@ -70,8 +70,21 @@ Orquestador de navegación y estado visual.
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
 | `changeView(name)` | `name` (String) | Cambia entre 'map', 'reports', 'profile', etc. | Dispara `ui:view-changed`. Guarda estado en `localStorage`. |
-| `changeTab(name)` | `name` (String) | Cambia entre 'all-requests' y 'my-requests'. | Dispara `ui:tab-changed`. |
+| `changeTab(name)` | `name` (String) | Cambia entre 'all-requests', 'my-requests', o pestañas de admin. | Dispara `ui:tab-changed`. |
 | `getCurrentView()` | Ninguno | Retorna el nombre de la vista activa. | Útil para recargas condicionales. |
+
+---
+
+## 6. AdminModule (`src/modules/admin.js`)
+Gestión centralizada para administradores.
+
+| Función | Parámetros | Descripción | Validaciones / Notas |
+| :--- | :--- | :--- | :--- |
+| `init()` | Ninguno | Inicializa listeners de búsqueda, pestañas y modales admin. | Solo se carga si el usuario tiene rol `admin`. |
+| `cargarUsuarios()` | Ninguno | Lista usuarios en la tabla premium con filtros de búsqueda. | Obtiene datos de `perfiles`. |
+| `guardarUsuario()` | Ninguno | Actualiza datos (rol, nivel, alias) y estado `activo` (baneo). | Requiere rol `admin`. |
+| `enviarResetPassword()` | Ninguno | Dispara el flujo de recuperación de Supabase para un usuario. | Utiliza `auth.resetPasswordForEmail`. |
+| `cambiarPestanaAdmin(id)` | `id` (String) | Cambia entre Dashboard, Municipalidades y Usuarios. | Gestiona clases `.active` en paneles. |
 
 ---
 
@@ -82,7 +95,7 @@ Orquestador de navegación y estado visual.
 ### `src/utils/ui.js`
 - `mostrarMensaje(msg, tipo)`: Toast notifications (success, error, info).
 - `abrirLightbox(url)`: Modal para ver evidencias/imágenes a tamaño completo.
-- `aplicarRol(rol)`: Cambia clases en el `body` para ocultar/mostrar elementos por CSS.
+- `aplicarRol(rol)`: Cambia clases en el `body` para ocultar/mostrar elementos por CSS. Útil para habilitar el botón de Panel Admin.
 
 ### `src/utils/helpers.js`
 - `comprimirImagen(file)`: Retorna Promise con el archivo comprimido (70% calidad, máx 1280px).
@@ -97,10 +110,16 @@ El proyecto ha migrado de un archivo único a un sistema modular basado en **BEM
     - `gamification.css`: Estilos de niveles, XP y el nuevo perfil de ciudadano circular.
 - **Vistas (`views/`)**: Estilos específicos para cada sección de la app (Mapa, Reportes, Perfil).
 
-### Modificadores y Estados Especiales
-- `.active` (en botones de interacción): Fuerza el color verde (`var(--primary)`) y relleno para indicar interacción del usuario actual.
-- `.private-field`: Contenedores que se ocultan automáticamente en perfiles que no pertenecen al usuario logueado.
-- `.status-badge--[estado]`: Variaciones cromáticas para estados (pending, in_progress, resolved, rejected).
+### 🗄️ Estructura SQL (`/sql`)
+El motor de base de datos está organizado de forma secuencial e idempotente:
+
+- **`00_config.sql`**: Extensiones y secuencias.
+- **`01_tablas.sql`**: Definición de todas las tablas y sus relaciones.
+- **`02_vistas.sql`**: Vista maestra `reportes_final_v1` con cálculos de impacto.
+- **`03_seguridad.sql`**: Políticas RLS unificadas (RBAC incluido).
+- **`04_funciones.sql`**: Triggers y lógica RPC (gamificación, solicitudes).
+- **`05_permisos.sql`**: Grants base para roles de red.
+- **`06_semillas.sql`**: Datos maestros (categorías iniciales).
 
 ---
 *Fin del Catálogo Técnico.*
