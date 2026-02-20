@@ -1,6 +1,24 @@
 -- 02_vistas.sql
 -- Vistas consolidadas
 
+-- 1. Vista de Perfiles Públicos (Security Barrier View)
+DROP VIEW IF EXISTS perfiles_publicos CASCADE;
+
+CREATE OR REPLACE VIEW perfiles_publicos AS
+SELECT
+    id,
+    nombre_completo,
+    alias,
+    puntos,
+    nivel,
+    rol,
+    avatar_url,
+    creado_en
+FROM perfiles;
+
+ALTER VIEW perfiles_publicos OWNER TO postgres;
+
+-- 2. Vista de Reportes Finales
 DROP VIEW IF EXISTS reportes_final_v1 CASCADE;
 
 CREATE OR REPLACE VIEW reportes_final_v1 AS

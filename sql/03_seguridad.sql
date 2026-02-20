@@ -34,10 +34,21 @@ CREATE POLICY "Admins pueden gestionar municipalidades" ON municipalidades FOR A
 CREATE POLICY "Categorías visibles por todos" ON categorias FOR SELECT USING (true);
 
 -- Perfiles
-CREATE POLICY "Perfiles visibles por todos" ON perfiles FOR SELECT USING (true);
+-- Seguridad: Restringir acceso directo a tabla perfiles (PII)
+-- Solo el dueño puede ver su fila completa
+CREATE POLICY "Ver propio perfil" ON perfiles FOR SELECT USING (auth.uid() = id);
+
+-- Admins pueden ver todo (para gestión)
+CREATE POLICY "Admins ver todo" ON perfiles FOR SELECT
+  USING (EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'admin'));
+
+-- Actualización
 CREATE POLICY "Usuarios pueden actualizar su propio perfil" ON perfiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Admins pueden actualizar cualquier perfil" ON perfiles FOR UPDATE 
   USING (EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'admin'));
+
+-- Permisos sobre la vista pública (definida en 02_vistas.sql)
+GRANT SELECT ON perfiles_publicos TO anon, authenticated;
 
 -- Reportes
 CREATE POLICY "Reportes visibles por todos" ON reportes FOR SELECT USING (true);
