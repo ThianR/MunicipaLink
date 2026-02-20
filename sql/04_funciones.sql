@@ -72,6 +72,7 @@ CREATE TRIGGER al_crear_usuario_auth
   FOR EACH ROW EXECUTE FUNCTION public.manejar_nuevo_usuario();
 
 -- 5. Función de Gamificación
+-- SECURITY DEFINER: Necesario para leer campos privados de perfiles (completitud) y calcular XP
 CREATE OR REPLACE FUNCTION obtener_datos_gamificacion(target_user_id UUID, observer_id UUID DEFAULT NULL)
 RETURNS TABLE (
     total_reportes BIGINT,
@@ -157,4 +158,4 @@ BEGIN
     RETURN QUERY SELECT 
         rep_count, com_count, int_count, xp_total, lvl, rng, ins, next_xp, prog_pct, f_count, fing_count, am_i_following;
 END;
-$$ LANGUAGE plpgsql STABLE;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;

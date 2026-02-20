@@ -1,5 +1,15 @@
 // --- Funciones de Ayuda Generales ---
 
+export function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 export async function comprimirImagen(archivo) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -38,12 +48,11 @@ export async function comprimirImagen(archivo) {
     });
 }
 
-export function formatDate(isoString) {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleDateString();
-}
-
 export function truncateText(text, length = 100) {
     if (!text) return '';
     return text.length > length ? text.substring(0, length) + '...' : text;
+}
+
+export function normalizeString(str) {
+    return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
 }

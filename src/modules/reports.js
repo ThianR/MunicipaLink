@@ -161,6 +161,12 @@ function setupListeners() {
 
     // Delegación para tarjetas de reporte (Click al detalle)
     document.addEventListener('click', (e) => {
+        const profileBtn = e.target.closest('.js-view-profile');
+        if (profileBtn && profileBtn.dataset.userId) {
+            verPerfilCiudadano(profileBtn.dataset.userId);
+            return;
+        }
+
         const card = e.target.closest('.report-card');
         if (card && card.dataset.id) {
             abrirDetalleReporte(card.dataset.id);
@@ -349,7 +355,7 @@ async function cargarTodasLasSolicitudes(muniId, estado) {
 
         renderizarReportes(data, 'all-reports-list');
     } catch (err) {
-        console.error(err);
+        Logger.error('Error al cargar todas las solicitudes', err);
         list.innerHTML = '<p class="error">Error al cargar.</p>';
     }
 }
@@ -376,7 +382,7 @@ async function cargarMisReportes(muniId, estado) {
 
         renderizarReportes(data, 'my-reports-list');
     } catch (err) {
-        console.error(err);
+        Logger.error('Error al cargar mis reportes', err);
         list.innerHTML = '<p class="error">Error al cargar.</p>';
     }
 }
@@ -422,7 +428,7 @@ async function renderizarReportes(reportes, containerId) {
                 <p class="report-card__description">${r.descripcion}</p>
                 
                 <div class="report-card__stats">
-                     <div class="report-card__author" title="Ver perfil del ciudadano" onclick="window.verPerfilCiudadano(event, '${r.usuario_id}', '${author.nombre.replace(/'/g, "\\'")}', '${author.avatar_url || ''}')">
+                     <div class="report-card__author js-view-profile" title="Ver perfil del ciudadano" data-user-id="${r.usuario_id}">
                         <i data-lucide="user"></i> Ver Ciudadano
                     </div>
                     
@@ -698,7 +704,7 @@ async function cargarComentarios(id) {
 
         if (userIds.length > 0) {
             const { data: profiles } = await supabaseClient
-                .from('perfiles')
+                .from('perfiles_publicos')
                 .select('id, nombre_completo, alias, avatar_url')
                 .in('id', userIds);
 
@@ -997,9 +1003,7 @@ async function cargarEvidenciasCierre(reporteId, estado, observacion) {
 }
 
 // Función para navegar al perfil de un ciudadano
-async function verPerfilCiudadano(e, userId, userName, userAvatar) {
-    if (e) e.stopPropagation();
-
+async function verPerfilCiudadano(userId) {
     // Navegar a la vista de perfil
     UIModule.changeView('profile');
 
@@ -1008,7 +1012,3 @@ async function verPerfilCiudadano(e, userId, userName, userAvatar) {
         detail: { userId: userId }
     }));
 }
-
-// Hacerlo global para que funcione el onclick inline
-// O adjuntar listeners de eventos en renderizarReportes.
-window.verPerfilCiudadano = verPerfilCiudadano;
