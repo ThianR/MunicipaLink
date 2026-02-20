@@ -47,3 +47,17 @@ export function truncateText(text, length = 100) {
     if (!text) return '';
     return text.length > length ? text.substring(0, length) + '...' : text;
 }
+
+export function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(m) {
+        switch (m) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case "'": return '&#39;';
+            default: return m;
+        }
+    });
+}
