@@ -16,23 +16,8 @@ export const UIModule = {
     },
     changeView: cambiarVista,
     changeTab: cambiarPestana,
-    changeScreen: cambiarPantalla,
     getCurrentView: () => currentView
 };
-
-function cambiarPantalla(pantallaId) {
-    const screens = document.querySelectorAll('.screen');
-    screens.forEach(s => {
-        s.classList.remove('active'); // Legacy
-        s.classList.remove('screen--active');
-    });
-
-    const targetScreen = document.getElementById(pantallaId);
-    if (targetScreen) {
-        targetScreen.classList.add('screen--active');
-        document.dispatchEvent(new CustomEvent('ui:screen-changed', { detail: { screen: pantallaId } }));
-    }
-}
 
 function cambiarVista(viewName) {
     const views = document.querySelectorAll('.view');
