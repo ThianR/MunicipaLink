@@ -3,7 +3,7 @@ import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { MunicipalityModule } from './municipalities.js'; // Assuming we might need this
 import { mostrarMensaje, abrirLightbox } from '../utils/ui.js';
-import { comprimirImagen } from '../utils/helpers.js';
+import { comprimirImagen, hexToDouble } from '../utils/helpers.js';
 import { Logger } from '../utils/logger.js';
 
 let currentSort = 'recent';
@@ -161,6 +161,12 @@ function setupListeners() {
 
     // Delegación para tarjetas de reporte (Click al detalle)
     document.addEventListener('click', (e) => {
+        const profileBtn = e.target.closest('.js-view-profile');
+        if (profileBtn && profileBtn.dataset.userId) {
+            verPerfilCiudadano(profileBtn.dataset.userId);
+            return;
+        }
+
         const card = e.target.closest('.report-card');
         if (card && card.dataset.id) {
             abrirDetalleReporte(card.dataset.id);
@@ -286,21 +292,34 @@ async function enviarReporte(e) {
 
         if (error) throw error;
 
-        // Subir Imágenes
+        // Subir Imágenes en paralelo
         if (archivos && archivos.length > 0) {
-            for (const archivo of archivos) {
-                const nombre = `${Date.now()}_${Math.floor(Math.random() * 1000)}_${archivo.name}`;
+            const uploadPromises = Array.from(archivos).map(async (archivo, index) => {
+                const timestamp = Date.now();
+                const randomPart = Math.floor(Math.random() * 1000);
+                const nombre = `${timestamp}_${index}_${randomPart}_${archivo.name}`;
                 const ruta = `${user.id}/${nombre}`;
 
-                await supabaseClient.storage.from('evidencias').upload(ruta, archivo);
+                const { error: uploadError } = await supabaseClient.storage.from('evidencias').upload(ruta, archivo);
+                if (uploadError) {
+                    Logger.error(`Error al subir imagen ${archivo.name}`, uploadError);
+                    return;
+                }
+
                 const { data: publicUrl } = supabaseClient.storage.from('evidencias').getPublicUrl(ruta);
 
-                await supabaseClient.from('evidencias').insert([{
+                const { error: dbError } = await supabaseClient.from('evidencias').insert([{
                     reporte_id: reporte.id,
                     imagen_url: publicUrl.publicUrl,
                     tipo_evidencia: 'reporte'
                 }]);
-            }
+
+                if (dbError) {
+                    Logger.error(`Error al registrar evidencia en BD: ${archivo.name}`, dbError);
+                }
+            });
+
+            await Promise.all(uploadPromises);
         }
 
         mostrarMensaje('¡Reporte enviado!', 'success');
@@ -336,7 +355,7 @@ async function cargarTodasLasSolicitudes(muniId, estado) {
 
         renderizarReportes(data, 'all-reports-list');
     } catch (err) {
-        console.error(err);
+        Logger.error('Error al cargar todas las solicitudes', err);
         list.innerHTML = '<p class="error">Error al cargar.</p>';
     }
 }
@@ -363,7 +382,7 @@ async function cargarMisReportes(muniId, estado) {
 
         renderizarReportes(data, 'my-reports-list');
     } catch (err) {
-        console.error(err);
+        Logger.error('Error al cargar mis reportes', err);
         list.innerHTML = '<p class="error">Error al cargar.</p>';
     }
 }
@@ -409,7 +428,7 @@ async function renderizarReportes(reportes, containerId) {
                 <p class="report-card__description">${r.descripcion}</p>
                 
                 <div class="report-card__stats">
-                     <div class="report-card__author" title="Ver perfil del ciudadano" onclick="window.verPerfilCiudadano(event, '${r.usuario_id}', '${author.nombre.replace(/'/g, "\\'")}', '${author.avatar_url || ''}')">
+                     <div class="report-card__author js-view-profile" title="Ver perfil del ciudadano" data-user-id="${r.usuario_id}">
                         <i data-lucide="user"></i> Ver Ciudadano
                     </div>
                     
@@ -565,11 +584,6 @@ async function abrirDetalleReporte(id) {
                     try {
                         const hasSRID = data.ubicacion.substring(8, 10) === '20';
                         const offset = hasSRID ? 18 : 10;
-                        const hexToDouble = (hex) => {
-                            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                            const view = new DataView(bytes.buffer);
-                            return view.getFloat64(0, true);
-                        };
                         lng = hexToDouble(data.ubicacion.substring(offset, offset + 16));
                         lat = hexToDouble(data.ubicacion.substring(offset + 16, offset + 32));
                     } catch (err) {
@@ -685,7 +699,7 @@ async function cargarComentarios(id) {
 
         if (userIds.length > 0) {
             const { data: profiles } = await supabaseClient
-                .from('perfiles')
+                .from('perfiles_publicos')
                 .select('id, nombre_completo, alias, avatar_url')
                 .in('id', userIds);
 
@@ -984,9 +998,7 @@ async function cargarEvidenciasCierre(reporteId, estado, observacion) {
 }
 
 // Función para navegar al perfil de un ciudadano
-async function verPerfilCiudadano(e, userId, userName, userAvatar) {
-    if (e) e.stopPropagation();
-
+async function verPerfilCiudadano(userId) {
     // Navegar a la vista de perfil
     UIModule.changeView('profile');
 
@@ -995,7 +1007,3 @@ async function verPerfilCiudadano(e, userId, userName, userAvatar) {
         detail: { userId: userId }
     }));
 }
-
-// Hacerlo global para que funcione el onclick inline
-// O adjuntar listeners de eventos en renderizarReportes.
-window.verPerfilCiudadano = verPerfilCiudadano;

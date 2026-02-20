@@ -108,3 +108,16 @@ CREATE TABLE IF NOT EXISTS departamentos (
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(municipalidad_id, nombre)
 );
+
+-- 10. Índices para Optimización (Performance)
+CREATE INDEX IF NOT EXISTS idx_reportes_usuario_id ON reportes(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_reportes_municipalidad_id ON reportes(municipalidad_id);
+CREATE INDEX IF NOT EXISTS idx_reportes_categoria_id ON reportes(categoria_id);
+CREATE INDEX IF NOT EXISTS idx_reportes_ubicacion ON reportes USING GIST (ubicacion);
+
+-- Índices adicionales para FKs comunes
+CREATE INDEX IF NOT EXISTS idx_evidencias_reporte_id ON evidencias(reporte_id);
+CREATE INDEX IF NOT EXISTS idx_interacciones_reporte_id ON interacciones(reporte_id);
+CREATE INDEX IF NOT EXISTS idx_comentarios_reporte_id ON comentarios(reporte_id);
+CREATE INDEX IF NOT EXISTS idx_comentarios_usuario_id ON comentarios(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_seguidores_siguiendo_id ON seguidores(siguiendo_id);

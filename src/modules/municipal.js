@@ -6,7 +6,11 @@
 import { supabaseClient } from '../services/supabase.js';
 
 import { Logger } from '../utils/logger.js';
+import { hexToDouble } from '../utils/helpers.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { comprimirImagen } from '../utils/helpers.js';
+import { parseUbicacion } from '../utils/location.js';
+import { escapeHtml } from '../utils/helpers.js';
 
 // Estado interno del módulo
 const state = {
@@ -15,35 +19,6 @@ const state = {
     reporteActual: null,
     departamentos: [],
 };
-
-/**
- * Comprime un archivo de imagen usando canvas para reducir el tamaño antes de subir.
- * @param {File} archivo
- * @returns {Promise<Blob>}
- */
-async function comprimirImagen(archivo) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(archivo);
-        img.onload = () => {
-            const MAX = 1024;
-            let { width, height } = img;
-            if (width > MAX || height > MAX) {
-                const ratio = Math.min(MAX / width, MAX / height);
-                width = Math.round(width * ratio);
-                height = Math.round(height * ratio);
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = width; canvas.height = height;
-            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-            URL.revokeObjectURL(url);
-            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')),
-                'image/webp', 0.8);
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
-        img.src = url;
-    });
-}
 
 /**
  * Obtiene el municipalidad_id del usuario autenticado.
@@ -225,16 +200,23 @@ function renderReportes(data) {
     lista.innerHTML = data.map(r => {
         const prio = prioridadConfig[r.prioridad_gestion] || prioridadConfig.media;
         const est = estadoConfig[r.estado] || estadoConfig['Pendiente'];
-        const ciudadano = r.perfiles?.alias || r.perfiles?.nombre_completo || '—';
-        const depto = r.departamentos?.nombre || '<span style="color:var(--text-muted)">Sin asignar</span>';
+
+        const alias = r.perfiles?.alias ? escapeHtml(r.perfiles.alias) : null;
+        const nombre = r.perfiles?.nombre_completo ? escapeHtml(r.perfiles.nombre_completo) : null;
+        const ciudadano = alias || nombre || '—';
+
+        const depto = r.departamentos?.nombre
+            ? escapeHtml(r.departamentos.nombre)
+            : '<span style="color:var(--text-muted)">Sin asignar</span>';
+
         const fecha = r.creado_en ? new Date(r.creado_en).toLocaleDateString('es-PY') : '—';
 
         return `<tr>
             <td>
-                <span style="font-weight:600; font-size:0.75rem; color: var(--primary);">${r.numero_solicitud || r.id.slice(0, 8)}</span><br>
+                <span style="font-weight:600; font-size:0.75rem; color: var(--primary);">${escapeHtml(r.numero_solicitud) || r.id.slice(0, 8)}</span><br>
                 <span style="font-size:0.75rem; color: var(--text-muted);">${fecha}</span>
             </td>
-            <td style="max-width: 200px; font-size:0.85rem;">${r.descripcion || '—'}</td>
+            <td style="max-width: 200px; font-size:0.85rem;">${escapeHtml(r.descripcion) || '—'}</td>
             <td>${ciudadano}</td>
             <td>${depto}</td>
             <td>
@@ -386,11 +368,6 @@ function parseUbicacion(ubicacion) {
             if (ubicacion.startsWith('0101')) {
                 const hasSRID = ubicacion.substring(8, 10) === '20';
                 const offset = hasSRID ? 18 : 10;
-                const hexToDouble = (hex) => {
-                    const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                    const view = new DataView(bytes.buffer);
-                    return view.getFloat64(0, true);
-                };
                 lng = hexToDouble(ubicacion.substring(offset, offset + 16));
                 lat = hexToDouble(ubicacion.substring(offset + 16, offset + 32));
             } else {
@@ -439,7 +416,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
                         background:#d1fae5; border-radius:8px; border:1px solid #6ee7b7;">
                 <i data-lucide="check-circle" style="width:14px;height:14px;color:#059669;flex-shrink:0;"></i>
                 <span style="font-size:0.875rem; font-weight:600; color:#065f46; flex:1;">
-                    ${a.departamentos?.nombre || 'Departamento'}
+                    ${escapeHtml(a.departamentos?.nombre) || 'Departamento'}
                 </span>
                 <span style="font-size:0.7rem; color:#6ee7b7; white-space:nowrap;">
                     <i data-lucide="lock" style="width:10px;height:10px;"></i> Asignado
@@ -463,7 +440,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
                    onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='transparent'">
                 <input type="checkbox" name="depto-nuevo" value="${d.id}"
                        style="width:16px;height:16px;accent-color:var(--primary,#10b981);cursor:pointer;">
-                <span style="font-size:0.875rem; color:var(--text-main);">${d.nombre}</span>
+                <span style="font-size:0.875rem; color:var(--text-main);">${escapeHtml(d.nombre)}</span>
             </label>
         `).join('');
     } else if (reporteCerrado && disponibles.length > 0) {
@@ -472,7 +449,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
             <label style="display:flex; align-items:center; gap:0.6rem; padding:0.45rem 0.5rem; opacity:0.45;">
                 <input type="checkbox" name="depto-nuevo" value="${d.id}" disabled
                        style="width:16px;height:16px;">
-                <span style="font-size:0.875rem; color:var(--text-muted);">${d.nombre}</span>
+                <span style="font-size:0.875rem; color:var(--text-muted);">${escapeHtml(d.nombre)}</span>
             </label>
         `).join('');
     }
@@ -599,17 +576,17 @@ async function subirEvidenciasCierre(reporteId, archivos, tipo) {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    for (const archivo of Array.from(archivos)) {
+    const uploadPromises = Array.from(archivos).map(async (archivo, index) => {
         try {
-            const comprimido = await comprimirImagen(archivo);
+            const comprimido = await comprimirImagen(archivo, { maxDimension: 1024, quality: 0.8, type: 'image/webp' });
             const nombreArchivo = `cierre/${reporteId}/${Date.now()}_${archivo.name}`;
             const { data: uploadData, error: uploadError } = await supabaseClient.storage
                 .from('evidencias')
-                .upload(nombreArchivo, comprimido, { upsert: false, contentType: archivo.type });
+                .upload(nombreArchivo, comprimido, { upsert: false, contentType: comprimido.type });
 
             if (uploadError) {
                 Logger.error('MunicipalModule: Error subiendo evidencia de cierre', uploadError);
-                continue;
+                return;
             }
 
             const { data: pub } = supabaseClient.storage.from('evidencias').getPublicUrl(nombreArchivo);
@@ -623,7 +600,9 @@ async function subirEvidenciasCierre(reporteId, archivos, tipo) {
         } catch (e) {
             Logger.error('MunicipalModule: Excepción al subir evidencia de cierre', e);
         }
-    }
+    });
+
+    await Promise.all(uploadPromises);
 }
 
 /**
