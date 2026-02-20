@@ -288,8 +288,8 @@ async function enviarReporte(e) {
 
         // Subir Imágenes
         if (archivos && archivos.length > 0) {
-            for (const archivo of archivos) {
-                const nombre = `${Date.now()}_${Math.floor(Math.random() * 1000)}_${archivo.name}`;
+            await Promise.all(Array.from(archivos).map(async (archivo, index) => {
+                const nombre = `${Date.now()}_${index}_${Math.floor(Math.random() * 1000)}_${archivo.name}`;
                 const ruta = `${user.id}/${nombre}`;
 
                 await supabaseClient.storage.from('evidencias').upload(ruta, archivo);
@@ -300,7 +300,7 @@ async function enviarReporte(e) {
                     imagen_url: publicUrl.publicUrl,
                     tipo_evidencia: 'reporte'
                 }]);
-            }
+            }));
         }
 
         mostrarMensaje('¡Reporte enviado!', 'success');
