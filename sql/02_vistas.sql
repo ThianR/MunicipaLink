@@ -27,11 +27,18 @@ SELECT
     p.nombre_completo as autor_nombre,
     p.alias as autor_alias,
     p.avatar_url as autor_avatar,
-    (SELECT COUNT(*) FROM interacciones i WHERE i.reporte_id = r.id AND i.tipo = 'voto_positivo') as votos_positivos,
-    (SELECT COUNT(*) FROM comentarios com WHERE com.reporte_id = r.id) as total_comentarios
+    COUNT(DISTINCT CASE WHEN i.tipo = 'voto_positivo' THEN i.id END) as votos_positivos,
+    COUNT(DISTINCT com.id) as total_comentarios
 FROM reportes r
 JOIN municipalidades m ON r.municipalidad_id = m.id
 JOIN categorias c ON r.categoria_id = c.id
-LEFT JOIN perfiles p ON r.usuario_id = p.id;
+LEFT JOIN perfiles p ON r.usuario_id = p.id
+LEFT JOIN interacciones i ON r.id = i.reporte_id
+LEFT JOIN comentarios com ON r.id = com.reporte_id
+GROUP BY
+    r.id,
+    m.id,
+    c.id,
+    p.id;
 
 ALTER VIEW reportes_final_v1 OWNER TO postgres;
