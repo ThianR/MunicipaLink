@@ -104,4 +104,3 @@ class LoggerService {
 }
 
 export const Logger = new LoggerService();
-window.Logger = Logger; // Acceso global para debug rápido

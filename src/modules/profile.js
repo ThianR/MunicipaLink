@@ -190,11 +190,29 @@ async function cargarPerfil(explicitUserId) {
     }
 
     try {
-        const { data: perfil, error } = await supabaseClient
+        // Intentar cargar perfil completo (para dueño o admin)
+        let { data: perfil, error } = await supabaseClient
             .from('perfiles')
             .select('*')
             .eq('id', targetUserId)
             .maybeSingle();
+
+        // Si no se encuentra (por RLS o no existe), y no somos nosotros, intentar vista pública
+        if ((!perfil || error) && !isMe) {
+             const { data: publicPerfil, error: publicError } = await supabaseClient
+                .from('perfiles_publicos')
+                .select('*')
+                .eq('id', targetUserId)
+                .maybeSingle();
+
+             if (publicPerfil && !publicError) {
+                 perfil = publicPerfil;
+                 error = null;
+             } else if (publicError) {
+                 // Si falla también la vista pública, mantenemos el error original o el nuevo
+                 error = error || publicError;
+             }
+        }
 
         if (error) throw error;
 
@@ -414,7 +432,7 @@ async function abrirPerfilPublico(userId) {
     content.innerHTML = 'Cargando...';
 
     try {
-        const { data: perfil } = await supabaseClient.from('perfiles').select('*').eq('id', userId).single();
+        const { data: perfil } = await supabaseClient.from('perfiles_publicos').select('*').eq('id', userId).single();
         const stats = await cargarEstadisticasGamificacion(userId, false);
 
         // Render content (HTML generation as in app.js)

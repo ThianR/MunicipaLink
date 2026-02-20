@@ -1,5 +1,15 @@
 // --- Funciones de Ayuda Generales ---
 
+export function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 export async function comprimirImagen(archivo) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -38,11 +48,6 @@ export async function comprimirImagen(archivo) {
     });
 }
 
-export function formatDate(isoString) {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleDateString();
-}
-
 export function truncateText(text, length = 100) {
     if (!text) return '';
     return text.length > length ? text.substring(0, length) + '...' : text;
@@ -52,4 +57,16 @@ export function hexToDouble(hex) {
     const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
     const view = new DataView(bytes.buffer);
     return view.getFloat64(0, true);
+export function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(m) {
+        switch (m) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case "'": return '&#39;';
+            default: return m;
+        }
+    });
 }
