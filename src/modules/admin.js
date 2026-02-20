@@ -1196,5 +1196,3 @@ async function gestionarSolicitudRol(id, estado, comentarios = '') {
     }
 }
 
-// Exponer globalmente como respaldo para los onclick del HTML generado
-window.gestionarSolicitudRol = gestionarSolicitudRol;
