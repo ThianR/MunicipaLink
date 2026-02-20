@@ -189,6 +189,84 @@ export function abrirLightbox(url) {
     };
 }
 
+/**
+ * Muestra un modal de confirmación personalizado.
+ * @param {string} mensaje - El mensaje principal de la confirmación.
+ * @param {string} titulo - (Opcional) El título del modal.
+ * @returns {Promise<boolean>} - Promesa que se resuelve a true si el usuario confirma, false si cancela.
+ */
+export function confirmarAccion(mensaje, titulo = '¿Estás seguro?') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modal-confirm');
+        const titleEl = document.getElementById('modal-confirm-title');
+        const msgEl = document.getElementById('modal-confirm-message');
+        const btnOk = document.getElementById('btn-confirm-ok');
+        const btnCancel = document.getElementById('btn-confirm-cancel');
+
+        if (!modal || !btnOk || !btnCancel) {
+            // Fallback si no existe el modal en el DOM
+            const result = window.confirm(`${titulo}\n\n${mensaje}`);
+            resolve(result);
+            return;
+        }
+
+        if (titleEl) titleEl.textContent = titulo;
+        if (msgEl) msgEl.textContent = mensaje;
+
+        // Limpiar listeners anteriores clonando los botones
+        const newBtnOk = btnOk.cloneNode(true);
+        const newBtnCancel = btnCancel.cloneNode(true);
+        btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+        btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+        const cerrar = (valor) => {
+            modal.classList.remove('modal--active');
+            resolve(valor);
+        };
+
+        newBtnOk.onclick = () => cerrar(true);
+        newBtnCancel.onclick = () => cerrar(false);
+
+        // Cerrar al hacer click fuera
+        modal.onclick = (e) => {
+             if (e.target === modal) cerrar(false);
+        };
+
+        modal.classList.add('modal--active');
+    });
+}
+
+/**
+ * Utilidad centralizada para renderizar estados de tablas (Cargando, Error, Vacío)
+ */
+export const TableRenderer = {
+    /**
+     * Muestra fila de carga
+     * @param {string} tbodyId - ID del tbody
+     * @param {number} colspan - Número de columnas
+     * @param {string} [message] - Mensaje opcional
+     */
+    showLoading(tbodyId, colspan = 1, message = 'Cargando...') {
+        const el = document.getElementById(tbodyId);
+        if (!el) return;
+        el.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i data-lucide="loader-2" style="animation: spin 1s linear infinite; margin-right: 0.5rem; vertical-align: middle;"></i>${message}</td></tr>`;
+        if (window.lucide) window.lucide.createIcons();
+    },
+
+    showError(tbodyId, colspan = 1, message = 'Error al cargar datos.') {
+        const el = document.getElementById(tbodyId);
+        if (!el) return;
+        el.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center; padding: 2rem; color: var(--danger);"><i data-lucide="alert-circle" style="margin-right: 0.5rem; vertical-align: middle;"></i>${message}</td></tr>`;
+        if (window.lucide) window.lucide.createIcons();
+    },
+
+    showEmpty(tbodyId, colspan = 1, message = 'No hay resultados.') {
+        const el = document.getElementById(tbodyId);
+        if (!el) return;
+        el.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center; padding: 2rem; color: var(--text-muted);">${message}</td></tr>`;
+    }
+};
+
 function renderLogsContent(logs) {
     if (logs.length === 0) return '<div class="no-logs">No hay logs registrados.</div>';
 

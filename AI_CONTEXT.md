@@ -13,6 +13,7 @@ MunicipaLink es una plataforma de participación ciudadana que permite a los ciu
 1. **Panel Admin de Control**: Gestión integral de usuarios (baneo, edición, reset de password) y municipalidades.
 2. **Gestión Municipal Pro**: Flujo completo de asignación de múltiples departamentos, priorización interna y resolución con evidencias fotográficas obligatorias.
 3. **Línea de Tiempo y GPS**: Seguimiento visual del progreso del reporte para el ciudadano y navegación GPS para el operario.
+4. **Infinite Scroll**: Carga de reportes optimizada mediante paginación en scroll.
 
 ## Stack Tecnológico
 - **Frontend**: HTML5, CSS3 (Vanilla), JavaScript (ES6 Modules).
@@ -29,9 +30,10 @@ El proyecto sigue una estructura modular para facilitar el mantenimiento:
 ├── main.js             # Inicialización de la aplicación y orquestación
 ├── sql/                # Engine SQL consolidado (00_config.sql a 06_semillas.sql)
 ├── src/
-│   ├── modules/        # Lógica (auth, reports, map, profile, ui, admin, municipal)
-│   ├── services/       # Clientes externos (supabase)
-│   └── utils/          # Utilidades (helpers, logger, ui)
+│   ├── components/     # Componentes UI reutilizables (ReportCard.js)
+│   ├── modules/        # Controladores de Vistas (auth, reports, map, profile, ui, admin, municipal)
+│   ├── services/       # Capa de Acceso a Datos (ReportsService, supabaseClient)
+│   └── utils/          # Utilidades (helpers, logger, ui, TableRenderer)
 └── styles/             # CSS Modularizado (Metodología BEM)
     ├── base/           # Variables, Reset, Tipografía
     ├── components/     # Botones, Cards, Modales, Gamificación
@@ -51,12 +53,11 @@ El proyecto sigue una estructura modular para facilitar el mantenimiento:
 ## Guía para el Agente IA (REGLAS DE ORO)
 1. **No Duplicar**: Antes de crear una función, consulta `TECHNICAL_REFERENCE.md`.
 2. **Estandar BEM**: El CSS **DEBE** seguir fielmente la convención `Bloque__Elemento--Modificador`.
-3. **Estilos Modulares**: No agregues estilos a `style.css` (está en desuso). Usa el archivo correspondiente en `/styles`.
-4. **Modularidad JS**: Mantén la lógica dentro del módulo correspondiente. No pongas lógica de mapas en `reports.js`.
-5. **Database First**: Muchas validaciones y cálculos (XP, búsqueda, prioridad) ocurren en Supabase vía Vistas o Funciones RPC. Consulta `sql/`.
-6. **Logs**: Usa `Logger.info`, `Logger.warn`, `Logger.error` para trazabilidad.
-7. **Aesthetics**: El diseño es premium. Respeta las variables de color en `styles/base/variables.css` y el uso de Lucide icons.
-    - **NUEVO ESTÁNDAR**: Para modales informativos y de gestión, se debe usar el patrón "Premium V2" (Header gradiente con curva/onda SVG, avatar de cabecera y estructura de tarjetas internas). Consulta `UI_GUIDELINES.md` para detalles técnicos.
+3. **Database First**: Muchas validaciones y cálculos (XP, búsqueda, prioridad) ocurren en Supabase vía Vistas o Funciones RPC. Consulta `sql/`.
+4. **Logs**: Usa `Logger.info`, `Logger.warn`, `Logger.error` para trazabilidad. *Evita console.log en producción*.
+5. **Seguridad XSS**: **SIEMPRE** usa `escapeHtml` (de `src/utils/helpers.js`) al inyectar contenido dinámico en el DOM.
+6. **Evitar innerHTML**: Prefiere `textContent` o el uso de `<template>` clonado (ver `src/components/ReportCard.js`) en lugar de concatenar strings HTML.
+7. **UX Premium**: No uses `alert()` ni `confirm()`. Usa `mostrarMensaje()` o `confirmarAccion()` (de `src/utils/ui.js`).
 8. **Feedback de Usuario**: Toda acción crítica (rechazo, eliminación) debe requerir un motivo obligatorio y mostrarse claramente al usuario final en su panel correspondiente (ej. motivo de rechazo en perfil).
 
 ---

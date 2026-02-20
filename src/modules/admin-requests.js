@@ -1,7 +1,8 @@
 import { supabaseClient } from '../services/supabase.js';
 import { AuthModule } from './auth.js';
 import { Logger } from '../utils/logger.js';
-import { mostrarMensaje } from '../utils/ui.js';
+import { mostrarMensaje, confirmarAccion, TableRenderer } from '../utils/ui.js';
+import { escapeHtml } from '../utils/helpers.js';
 import { cargarDashboard } from './admin-dashboard.js';
 
 let allSolicitudes = [];
@@ -23,10 +24,10 @@ export function setupRequestsListeners() {
 }
 
 export async function cargarSolicitudesRol() {
-    const listEl = document.getElementById('admin-solicitudes-list');
-    if (!listEl) return;
+    const listId = 'admin-solicitudes-list';
+    if (!document.getElementById(listId)) return;
 
-    listEl.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">Cargando solicitudes...</td></tr>';
+    TableRenderer.showLoading(listId, 4, 'Cargando solicitudes...');
 
     try {
         // Obtenemos solicitudes con datos del perfil
@@ -62,7 +63,7 @@ export async function cargarSolicitudesRol() {
         renderSolicitudes(enrichedData);
     } catch (err) {
         Logger.error('Error al cargar solicitudes de rol:', err);
-        listEl.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Error al cargar datos.</td></tr>';
+        TableRenderer.showError(listId, 4);
     }
 }
 
@@ -79,11 +80,12 @@ export function filtrarSolicitudes(query) {
 }
 
 function renderSolicitudes(data) {
-    const listEl = document.getElementById('admin-solicitudes-list');
+    const listId = 'admin-solicitudes-list';
+    const listEl = document.getElementById(listId);
     if (!listEl) return;
 
     if (data.length === 0) {
-        listEl.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">No hay solicitudes registradas.</td></tr>';
+        TableRenderer.showEmpty(listId, 4, 'No hay solicitudes registradas.');
         return;
     }
 
@@ -93,6 +95,11 @@ function renderSolicitudes(data) {
     listEl.innerHTML = data.map(s => {
         const estadoKey = s.estado || 'pendiente';
         const badgeClass = estadoKey === 'aprobado' ? 'status-active' : estadoKey === 'rechazado' ? 'status-danger' : 'status-pending';
+
+        const alias = escapeHtml(s.perfiles?.alias || 'S/A');
+        const nombreCompleto = escapeHtml(s.perfiles?.nombre_completo || '');
+        const nombreMuni = escapeHtml(s.municipalidades?.nombre || '-');
+
         return `
             <tr>
                 <td>
@@ -101,15 +108,15 @@ function renderSolicitudes(data) {
                             <i data-lucide="user" style="width:16px;height:16px;color:var(--primary);"></i>
                         </div>
                         <div>
-                            <strong>${s.perfiles?.alias || 'S/A'}</strong><br>
-                            <small class="text-muted">${s.perfiles?.nombre_completo || ''}</small>
+                            <strong>${alias}</strong><br>
+                            <small class="text-muted">${nombreCompleto}</small>
                         </div>
                     </div>
                 </td>
                 <td>
                     <div style="display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="building-2" style="width:14px;height:14px;color:var(--text-muted);"></i>
-                        ${s.municipalidades?.nombre || '-'}
+                        ${nombreMuni}
                     </div>
                 </td>
                 <td>
@@ -155,7 +162,7 @@ function abrirModalDetallesSolicitud(id) {
     const commentEl = document.getElementById('detail-user-comment');
     const comentario = solicitud.comentarios_ciudadano;
     commentEl.innerHTML = comentario
-        ? `<span>${comentario}</span>`
+        ? `<span>${escapeHtml(comentario)}</span>`
         : '<em style="color:var(--text-muted);">Sin comentarios adicionales.</em>';
 
     const docLink = document.getElementById('detail-doc-link');
@@ -173,8 +180,9 @@ function abrirModalDetallesSolicitud(id) {
         actionArea.style.display = 'block';
 
         // Setup botones
-        document.getElementById('btn-modal-approve').onclick = () => {
-            if (confirm('¿Aprobar esta solicitud?')) {
+        document.getElementById('btn-modal-approve').onclick = async () => {
+            const confirmado = await confirmarAccion('¿Estás seguro de aprobar esta solicitud de rol municipal?', 'Aprobar Solicitud');
+            if (confirmado) {
                 gestionarSolicitudRol(id, 'aprobado');
                 document.getElementById('modal-role-request-details').classList.remove('modal--active');
             }
@@ -198,7 +206,7 @@ function abrirModalDetallesSolicitud(id) {
         btnConfirmReject.onclick = () => {
             const motivo = rejectInput.value.trim();
             if (!motivo) {
-                alert('Debes ingresar un motivo para rechazar la solicitud.');
+                mostrarMensaje('Debes ingresar un motivo para rechazar la solicitud.', 'error');
                 return;
             }
             gestionarSolicitudRol(id, 'rechazado', motivo);
@@ -214,8 +222,11 @@ function abrirModalDetallesSolicitud(id) {
 }
 
 // Función para gestionar la aprobación/rechazo de solicitudes
-export async function gestionarSolicitudRol(id, estado, comentarios = '') {
-    console.log('Ejecutando gestionarSolicitudRol:', { id, estado });
+// Nota: Cuando se llama desde los botones del modal, la confirmación ya se hizo.
+// Si se llama directamente (e.g. consola), se salta la confirmación visual pero se ejecuta la acción.
+// Se recomienda usar la UI para flujos normales.
+export async function gestionarSolicitudRol(id, estado, comentarios = '', skipConfirmation = true) {
+    Logger.debug('Ejecutando gestionarSolicitudRol:', { id, estado });
 
     try {
         const user = AuthModule.getUsuarioActual();
@@ -224,11 +235,16 @@ export async function gestionarSolicitudRol(id, estado, comentarios = '') {
             return;
         }
 
-        const confirmacion = estado === 'aprobado' ?
-            '¿Estás seguro de aprobar esta solicitud de rol municipal?' :
-            '¿Estás seguro de rechazar esta solicitud?';
+        if (!skipConfirmation) {
+             const confirmed = await confirmarAccion(`¿Estás seguro de marcar como ${estado}?`, 'Confirmar Acción');
+             if (!confirmed) return;
+        }
 
-        if (!confirm(confirmacion)) return;
+        // Si el comentario viene vacío y es rechazo, validar (aunque ya se valida en UI)
+        if (estado === 'rechazado' && !comentarios) {
+             mostrarMensaje('Se requiere un motivo para rechazar.', 'error');
+             return;
+        }
 
         Logger.info(`Procesando ${estado} para solicitud ${id}...`);
 

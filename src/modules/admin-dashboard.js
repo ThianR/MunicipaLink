@@ -32,7 +32,14 @@ export async function cargarDashboard() {
             badge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
         } else if (pendingCount > 0) {
             const btn = document.querySelector('.admin-tab-btn[data-admin-tab="solicitudes"]');
-            if (btn) btn.innerHTML += ` <span class="tab-badge" style="background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; margin-left: 5px;">${pendingCount}</span>`;
+            // Usamos textContent para evitar inyección en pendingCount aunque sea numérico por seguridad
+            if (btn) {
+                const badge = document.createElement('span');
+                badge.className = 'tab-badge';
+                badge.style.cssText = 'background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; margin-left: 5px;';
+                badge.textContent = pendingCount;
+                btn.appendChild(badge);
+            }
         }
 
     } catch (err) {

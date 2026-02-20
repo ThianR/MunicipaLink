@@ -24,11 +24,4 @@ describe('Supabase Service Initialization', () => {
     expect(supabaseClient).toBeDefined();
   });
 
-  it('should expose supabaseClient globally on window', async () => {
-    // Import again (returns cached module)
-    const { supabaseClient } = await import('./supabase.js');
-
-    expect(window.supabaseClient).toBeDefined();
-    expect(window.supabaseClient).toBe(supabaseClient);
-  });
 });

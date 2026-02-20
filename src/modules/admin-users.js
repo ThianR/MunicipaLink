@@ -1,6 +1,7 @@
 import { supabaseClient } from '../services/supabase.js';
 import { Logger } from '../utils/logger.js';
-import { mostrarMensaje } from '../utils/ui.js';
+import { mostrarMensaje, confirmarAccion, TableRenderer } from '../utils/ui.js';
+import { escapeHtml } from '../utils/helpers.js';
 
 let allUsers = [];
 let currentEditingUserId = null;
@@ -47,10 +48,10 @@ export function setupUsersListeners() {
 }
 
 export async function cargarUsuarios() {
-    const listEl = document.getElementById('admin-users-list');
-    if (!listEl) return;
+    const listId = 'admin-users-list';
+    if (!document.getElementById(listId)) return;
 
-    listEl.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Cargando...</td></tr>';
+    TableRenderer.showLoading(listId, 6);
 
     try {
         const { data, error } = await supabaseClient
@@ -84,7 +85,7 @@ export async function cargarUsuarios() {
         renderUsuarios(data);
     } catch (err) {
         Logger.error('Error al cargar usuarios:', err);
-        listEl.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Error al cargar datos.</td></tr>';
+        TableRenderer.showError(listId, 6);
     }
 }
 
@@ -101,11 +102,12 @@ export function filtrarUsuarios(query) {
 }
 
 function renderUsuarios(data) {
-    const listEl = document.getElementById('admin-users-list');
+    const listId = 'admin-users-list';
+    const listEl = document.getElementById(listId);
     if (!listEl) return;
 
     if (data.length === 0) {
-        listEl.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">No hay usuarios que coincidan.</td></tr>';
+        TableRenderer.showEmpty(listId, 6, 'No hay usuarios que coincidan.');
         return;
     }
 
@@ -116,36 +118,44 @@ function renderUsuarios(data) {
         const estatusClase = u.activo === false ? 'status-danger' : 'status-active';
         const estatusTexto = u.activo === false ? 'Baneado' : 'Activo';
 
+        const alias = escapeHtml(u.alias || 'Sin alias');
+        const nombre = escapeHtml(u.nombre_completo || 'Sin nombre');
+        const userId = escapeHtml(u.id.substring(0, 8));
+        const userRol = escapeHtml(u.rol);
+        const userNivel = escapeHtml(u.nivel || 'Vecino Novato');
+        // JSON stringify es seguro para el data-obj si se hace correctamente, pero reemplazamos comillas simples para evitar romper el atributo HTML
+        const safeUserObj = JSON.stringify(u).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+
         return `
             <tr>
                 <td>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8125rem; flex-shrink: 0;">
-                            ${initial}
+                            ${escapeHtml(initial)}
                         </div>
                         <div style="min-width: 0;">
-                            <strong style="display: block; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${u.alias || 'Sin alias'}</strong>
-                            <small class="text-muted desktop-only" style="font-size: 0.75rem;">${u.nombre_completo || 'Sin nombre'}</small>
+                            <strong style="display: block; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${alias}</strong>
+                            <small class="text-muted desktop-only" style="font-size: 0.75rem;">${nombre}</small>
                         </div>
                     </div>
                 </td>
-                <td class="desktop-only"><small style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${u.id.substring(0, 8)}...</small></td>
+                <td class="desktop-only"><small style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${userId}...</small></td>
                 <td>
-                    <span style="display: inline-block; padding: 0.25rem 0.625rem; border-radius: 10px; font-size: 0.6875rem; font-weight: 600; background: ${roleColor}15; color: ${roleColor};">${u.rol}</span>
+                    <span style="display: inline-block; padding: 0.25rem 0.625rem; border-radius: 10px; font-size: 0.6875rem; font-weight: 600; background: ${roleColor}15; color: ${roleColor};">${userRol}</span>
                     <br>
                     <span class="status-badge-premium ${estatusClase}" style="margin-top: 4px; font-size: 10px;">${estatusTexto}</span>
                 </td>
                 <td>
-                    <span class="desktop-only">${u.nivel || 'Vecino Novato'} </span>
+                    <span class="desktop-only">${userNivel} </span>
                     <small style="color: var(--text-muted);">${u.puntos || 0} XP</small>
                 </td>
                 <td class="desktop-only" style="font-size: 0.8125rem; color: var(--text-muted);">${fecha}</td>
                 <td>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="button button--secondary btn-sm btn-edit-user" data-id="${u.id}" data-obj='${JSON.stringify(u).replace(/'/g, "&#39;")}' title="Editar" style="width: auto;">
+                        <button class="button button--secondary btn-sm btn-edit-user" data-id="${u.id}" data-obj='${safeUserObj}' title="Editar" style="width: auto;">
                             <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
                         </button>
-                        <button class="button btn-sm btn-reset-password" data-id="${u.id}" data-email="${u.email}" data-alias="${u.alias || u.nombre_completo}" title="Resetear Contraseña" style="background: #fbbf24; color: white; width: auto;">
+                        <button class="button btn-sm btn-reset-password" data-id="${u.id}" data-email="${escapeHtml(u.email || '')}" data-alias="${escapeHtml(u.alias || u.nombre_completo || '')}" title="Resetear Contraseña" style="background: #fbbf24; color: white; width: auto;">
                             <i data-lucide="key" style="width: 14px; height: 14px;"></i>
                         </button>
                         <button class="button button--danger btn-sm btn-ban-user" data-id="${u.id}" data-activo="${u.activo !== false}" title="${u.activo === false ? 'Desbanear' : 'Banear'}" style="width: auto;">
@@ -160,7 +170,7 @@ function renderUsuarios(data) {
     // Listeners dinámicos
     document.querySelectorAll('.btn-edit-user').forEach(btn => {
         btn.onclick = () => {
-            const user = JSON.parse(btn.dataset.obj.replace(/&#39;/g, "'"));
+            const user = JSON.parse(btn.dataset.obj.replace(/&#39;/g, "'").replace(/&quot;/g, '"'));
             abrirModalEditarUsuario(user);
         };
     });
@@ -236,7 +246,7 @@ export async function guardarUsuario() {
 
 async function cambiarEstadoUsuario(id, activo) {
     const confirmacion = activo ? '¿Deseas reactivar a este usuario?' : '¿Estás seguro de que deseas banear a este usuario?';
-    if (!confirm(confirmacion)) return;
+    if (!await confirmarAccion(confirmacion)) return;
 
     try {
         const { error } = await supabaseClient
