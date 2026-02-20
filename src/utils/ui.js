@@ -1,4 +1,5 @@
 // --- UI Utilities ---
+import { Logger } from './logger.js';
 
 export const DOM = {
     toastContainer: document.getElementById('toast-container'),
@@ -78,7 +79,7 @@ export function toggleLogsPanel() {
         return;
     }
 
-    const logs = window.Logger?.getLogs() || [];
+    const logs = Logger?.getLogs() || [];
 
     logsPanel = document.createElement('div');
     logsPanel.id = 'debug-logs-panel';
@@ -101,10 +102,10 @@ export function toggleLogsPanel() {
     // Listeners
     document.getElementById('btn-close-logs').onclick = toggleLogsPanel;
     document.getElementById('btn-clear-logs').onclick = () => {
-        window.Logger?.clear();
+        Logger?.clear();
     };
     document.getElementById('btn-copy-logs').onclick = () => {
-        const text = window.Logger?.exportLogs();
+        const text = Logger?.exportLogs();
         navigator.clipboard.writeText(text);
         mostrarMensaje('Logs copiados al portapapeles', 'success');
     };
@@ -115,7 +116,7 @@ export function toggleLogsPanel() {
 
     // Escuchar nuevos logs mientras está abierto
     const onNewLog = (e) => {
-        container.innerHTML = renderLogsContent(window.Logger.getLogs());
+        container.innerHTML = renderLogsContent(Logger.getLogs());
     };
     document.addEventListener('logger:new-entry', onNewLog);
     document.addEventListener('logger:cleared', onNewLog);
