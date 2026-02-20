@@ -123,7 +123,9 @@ Gestión de incidencias para funcionarios municipales.
 ### `src/utils/helpers.js`
 - `comprimirImagen(file)`: Retorna Promise con el archivo comprimido (70% calidad, máx 1280px).
 - `formatFecha(isoString)`: Formatea fechas a LocalDateString (es-ES).
-- `parseUbicacion(ubicacion)`: Convierte formatos PostGIS (Hex/WKT) o GeoJSON a `{lat, lng}`. (Consolidado en `municipal.js` temporalmente).
+
+### `src/utils/location.js`
+- `parseUbicacion(ubicacion)`: Convierte formatos PostGIS (Hex/WKT) o GeoJSON a `{lat, lng}`.
 
 ### 🎨 Arquitectura de Estilos (`/styles`)
 El proyecto ha migrado de un archivo único a un sistema modular basado en **BEM**:

@@ -8,6 +8,7 @@ import { supabaseClient } from '../services/supabase.js';
 import { Logger } from '../utils/logger.js';
 import { hexToDouble } from '../utils/helpers.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { parseUbicacion } from '../utils/location.js';
 import { escapeHtml } from '../utils/helpers.js';
 
 // Estado interno del módulo
