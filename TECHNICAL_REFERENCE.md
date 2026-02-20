@@ -41,7 +41,7 @@ Lógica central de reportes, comentarios y votos.
 | `renderTimeline(reporte)` | `reporte` (Object) | Genera la línea de tiempo visual (Creación → Asignación → Resolución). | Calcula tiempos transcurridos entre hitos de tiempo. |
 | `cargarEvidenciasCierre(id, e, obs)` | `id, estado, obs` | Muestra fotos de resolución/rechazo y observaciones del funcionario. | Solo se activa si el estado es final. |
 | `interactuar(tipo)` | `tipo` (String) | Gestiona Votos (+/-) y Seguir reporte. Refresca UI inmediatamente. | **Validación:** Requiere Login. Es tipo toggle. |
-| `verPerfilCiudadano(e, uid, name, avatar)` | Varios | Navega a la vista de perfil del ciudadano y carga sus datos. | Redirige a UIModule.changeView('profile') y emite `profile:load-user`. |
+| `verPerfilCiudadano(uid)` | Internal (Event Delegation) | Navega a la vista de perfil del ciudadano y carga sus datos. | Redirige a UIModule.changeView('profile') y emite `profile:load-user`. |
 
 ---
 
