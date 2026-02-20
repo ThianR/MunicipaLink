@@ -1,40 +1,47 @@
 // --- Funciones de Ayuda Generales ---
 
-export async function comprimirImagen(archivo) {
+export async function comprimirImagen(archivo, { maxDimension = 1024, quality = 0.8, type = 'image/jpeg' } = {}) {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(archivo);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const maxWidth = 1280; // Limitar resolución
-                const scaleSize = maxWidth / img.width;
-                const newWidth = scaleSize < 1 ? maxWidth : img.width;
-                const newHeight = scaleSize < 1 ? img.height * scaleSize : img.height;
+        const url = URL.createObjectURL(archivo);
+        const img = new Image();
 
-                canvas.width = newWidth;
-                canvas.height = newHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, newWidth, newHeight);
+        img.onload = () => {
+            let { width, height } = img;
 
-                canvas.toBlob((blob) => {
-                    if (!blob) {
-                        reject(new Error('Error compressing image'));
-                        return;
-                    }
-                    // Crear nuevo archivo desde blob con metadatos originales
-                    const compressedFile = new File([blob], archivo.name, {
-                        type: 'image/jpeg',
-                        lastModified: Date.now(),
-                    });
-                    resolve(compressedFile);
-                }, 'image/jpeg', 0.7); // 70% Calidad
-            };
-            img.onerror = (err) => reject(err);
+            if (width > maxDimension || height > maxDimension) {
+                const ratio = Math.min(maxDimension / width, maxDimension / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            URL.revokeObjectURL(url);
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    reject(new Error('Canvas toBlob failed'));
+                    return;
+                }
+                // Crear nuevo archivo desde blob con metadatos originales
+                const compressedFile = new File([blob], archivo.name, {
+                    type: type,
+                    lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+            }, type, quality);
         };
-        reader.onerror = (err) => reject(err);
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Image load failed'));
+        };
+
+        img.src = url;
     });
 }
 

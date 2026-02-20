@@ -3,7 +3,6 @@ import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { MunicipalityModule } from './municipalities.js'; // Assuming we might need this
 import { mostrarMensaje, abrirLightbox } from '../utils/ui.js';
-import { comprimirImagen } from '../utils/helpers.js';
 import { Logger } from '../utils/logger.js';
 
 let currentSort = 'recent';
