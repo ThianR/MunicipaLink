@@ -1,0 +1,158 @@
+/* ============================================
+   FORMS - MunicipaLink
+   ============================================ */
+
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: var(--spacing-sm);
+}
+
+.input,
+.select,
+.textarea,
+.muni-selector {
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius);
+    width: 100%;
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    background: #f9fafb;
+    transition: all var(--transition-fast);
+    display: block;
+    margin-bottom: var(--spacing-md);
+}
+
+.input--sm,
+.select--sm {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus,
+.muni-selector:focus {
+    background: white;
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.select {
+    cursor: pointer;
+    padding-right: 2rem;
+}
+
+/* Search Input */
+.search {
+    position: relative;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+}
+
+.search__input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 2.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    background: #f9fafb;
+    font-family: inherit;
+}
+
+.search__input:focus {
+    background: white;
+    border-color: var(--primary);
+    outline: none;
+}
+
+.search__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+}
+
+/* Privacy Fields */
+.form-group--private.hidden {
+    display: none;
+}
+
+/* Premium Form Design System */
+.card-premium {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 2rem;
+}
+
+.form-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .form-grid-premium {
+        grid-template-columns: 1fr;
+    }
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 1rem;
+    color: #94a3b8;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.input-with-icon .input,
+.input-with-icon .muni-selector,
+.input-with-icon select {
+    padding-left: 2.75rem !important;
+}
+
+.input-with-icon .muni-selector {
+    margin-bottom: 0;
+}
+
+.form-header-premium {
+    margin-bottom: 1.5rem;
+}
+
+.form-header-premium h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-main);
+}

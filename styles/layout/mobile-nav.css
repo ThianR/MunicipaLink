@@ -1,0 +1,73 @@
+/* ============================================
+   MOBILE NAVIGATION - MunicipaLink
+   ============================================ */
+
+.nav--mobile {
+    display: none !important;
+}
+
+@media (max-width: 1100px) {
+    #screen-app.screen--active .nav--mobile {
+        display: flex !important;
+        height: 60px;
+        flex-shrink: 0;
+        background: var(--card-bg);
+        border-top: 1px solid #e5e7eb;
+        justify-content: space-around;
+        align-items: center;
+        z-index: var(--z-toast);
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+    }
+
+    .nav--mobile .nav__item {
+        flex: 1;
+        flex-direction: column;
+        gap: 2px;
+        padding: 4px 0;
+        margin-bottom: 0;
+        border-radius: 0;
+        height: 100%;
+        font-size: var(--font-size-xs);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .nav--mobile .nav__item i {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* FAB - Floating Action Button */
+.fab {
+    display: none !important;
+    position: fixed;
+    bottom: 75px;
+    right: 15px;
+    width: 60px;
+    height: 60px;
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius-full);
+    box-shadow: 0 8px 15px rgba(16, 185, 129, 0.4);
+    align-items: center;
+    justify-content: center;
+    z-index: calc(var(--z-sticky) + 1);
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.fab i {
+    width: 30px;
+    height: 30px;
+}
+
+@media (max-width: 1100px) {
+    #screen-app.screen--active .fab {
+        display: flex !important;
+    }
+}

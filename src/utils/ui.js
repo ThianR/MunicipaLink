@@ -16,7 +16,7 @@ let logsPanel = null;
 export function mostrarMensaje(mensaje, tipo = 'info') {
     if (!DOM.toastContainer) return;
     const toast = document.createElement('div');
-    toast.className = `toast ${tipo}`;
+    toast.className = `toast toast--${tipo}`;
 
     let icono = 'info';
     if (tipo === 'success') icono = 'check-circle';
@@ -31,7 +31,7 @@ export function mostrarMensaje(mensaje, tipo = 'info') {
     if (window.lucide) window.lucide.createIcons();
 
     setTimeout(() => {
-        toast.classList.add('fade-out');
+        toast.classList.add('toast--fade-out');
         setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
@@ -39,11 +39,24 @@ export function mostrarMensaje(mensaje, tipo = 'info') {
 export function cambiarPantalla(pantallaId) {
     if (!DOM.screens.login || !DOM.screens.app) return;
 
-    // Remove active from all
-    Object.values(DOM.screens).forEach(s => s?.classList.remove('active'));
+    // Reducir impacto de errores silenciados
+    try {
+        // Remove active from all screens (BEM)
+        Object.values(DOM.screens).forEach(s => {
+            if (s) {
+                s.classList.remove('active'); // Legacy support
+                s.classList.remove('screen--active');
+            }
+        });
 
-    if (pantallaId === 'login') DOM.screens.login.classList.add('active');
-    if (pantallaId === 'app') DOM.screens.app.classList.add('active');
+        if (pantallaId === 'login') {
+            DOM.screens.login.classList.add('screen--active');
+        } else if (pantallaId === 'app') {
+            DOM.screens.app.classList.add('screen--active');
+        }
+    } catch (e) {
+        console.error('Error al cambiar pantalla:', e);
+    }
 }
 
 export function aplicarRol(rol) {
@@ -163,15 +176,15 @@ export function abrirLightbox(url) {
         };
     }
 
-    modal.classList.add('active');
+    modal.classList.add('lightbox--active');
 
     const closeBtn = document.getElementById('btn-close-lightbox');
     if (closeBtn) {
-        closeBtn.onclick = () => modal.classList.remove('active');
+        closeBtn.onclick = () => modal.classList.remove('lightbox--active');
     }
 
     modal.onclick = (e) => {
-        if (e.target === modal) modal.classList.remove('active');
+        if (e.target === modal) modal.classList.remove('lightbox--active');
     };
 }
 

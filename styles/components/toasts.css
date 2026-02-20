@@ -1,0 +1,62 @@
+/* ============================================
+   TOASTS - MunicipaLink
+   ============================================ */
+
+.toast-container {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 90%;
+    max-width: 400px;
+}
+
+.toast {
+    background: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    animation: slideIn var(--transition-base) cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    border-left: 6px solid var(--primary);
+    color: var(--text-main);
+}
+
+.toast--error {
+    border-left-color: #ef4444;
+}
+
+.toast--success {
+    border-left-color: var(--primary);
+}
+
+.toast--fade-out {
+    animation: fadeOut var(--transition-base) ease-in forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-2rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-2rem);
+    }
+}

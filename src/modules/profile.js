@@ -2,6 +2,7 @@ import { supabaseClient } from '../services/supabase.js';
 import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { Logger } from '../utils/logger.js';
 
 export const ProfileModule = {
     init: () => {
@@ -45,6 +46,19 @@ function setupListeners() {
     const inputAvatar = document.getElementById('input-avatar');
     if (inputAvatar) inputAvatar.addEventListener('change', manejarCambioAvatar);
 
+    // Formulario de Solicitud Municipal
+    const formRequest = document.getElementById('form-municipal-request');
+    if (formRequest) formRequest.addEventListener('submit', enviarSolicitudMunicipal);
+
+    // Pestañeo de Perfil
+    const tabBtns = document.querySelectorAll('.profile-tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.profileTab;
+            cambiarPestanaPerfil(tabId);
+        });
+    });
+
     // Interacciones de perfil público
     document.addEventListener('click', (e) => {
         if (e.target.matches('.user-link') || e.target.closest('.user-link')) {
@@ -56,18 +70,18 @@ function setupListeners() {
 
     const btnClosePublic = document.getElementById('btn-close-public-profile');
     if (btnClosePublic) btnClosePublic.addEventListener('click', () => {
-        document.getElementById('modal-public-profile').classList.remove('active');
+        document.getElementById('modal-public-profile').classList.remove('modal--active');
     });
 
     // Guía de XP
     const btnOpenXP = document.getElementById('btn-open-xp-guide');
     if (btnOpenXP) btnOpenXP.addEventListener('click', () => {
-        document.getElementById('modal-xp-guide').classList.add('active');
+        document.getElementById('modal-xp-guide').classList.add('modal--active');
         lucide.createIcons();
     });
 
     document.getElementById('btn-close-xp-guide')?.addEventListener('click', () => {
-        document.getElementById('modal-xp-guide').classList.remove('active');
+        document.getElementById('modal-xp-guide').classList.remove('modal--active');
     });
 
     // Volver del perfil
@@ -79,6 +93,25 @@ function setupListeners() {
     document.getElementById('btn-my-history')?.addEventListener('click', () => {
         UIModule.changeView('reports');
         UIModule.changeTab('my-requests');
+    });
+
+    // Limpiar estado al navegar a 'Mi Perfil' desde el sidebar
+    document.querySelectorAll('.nav__item[data-view="profile"]').forEach(item => {
+        item.addEventListener('click', () => {
+            ProfileModule.currentUserViewing = null;
+        });
+    });
+}
+
+function cambiarPestanaPerfil(tabId) {
+    // Botones
+    document.querySelectorAll('.profile-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.profileTab === tabId);
+    });
+
+    // Paneles
+    document.querySelectorAll('.profile-tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === `profile-pane-${tabId}`);
     });
 }
 
@@ -100,6 +133,9 @@ async function cargarPerfil(explicitUserId) {
     const profileMain = document.querySelector('.profile-main');
     if (profileMain) profileMain.style.display = 'block';
 
+    const tabsNav = document.querySelector('.profile-tabs-nav');
+    if (tabsNav) tabsNav.style.display = 'flex';
+
     const isMe = me && targetUserId === me.id;
 
     // Adaptar UI según si es mi perfil o un perfil ajeno
@@ -113,6 +149,13 @@ async function cargarPerfil(explicitUserId) {
     if (saveBtn) saveBtn.parentElement.style.display = isMe ? 'flex' : 'none';
     if (avatarBtn) avatarBtn.style.display = isMe ? 'block' : 'none';
     if (trustCard) trustCard.style.display = isMe ? 'block' : 'none';
+
+    // Manejo de visibilidad de la pestaña municipal
+    const muniTabBtn = document.querySelector('.profile-tab-btn[data-profile-tab="municipal"]');
+    if (muniTabBtn) muniTabBtn.style.display = isMe ? 'flex' : 'none';
+
+    // Asegurar que empezamos en la pestaña personal al cambiar de usuario o entrar
+    cambiarPestanaPerfil('personal');
 
     // Control de visibilidad de campos privados
     document.querySelectorAll('.private-field').forEach(el => {
@@ -177,7 +220,10 @@ async function cargarPerfil(explicitUserId) {
         }
 
         actualizarPreviewAvatar(perfil?.avatar_url);
-        if (isMe) actualizarTrustMeter(perfil || {});
+        if (isMe) {
+            actualizarTrustMeter(perfil || {});
+            cargarEstadoSolicitudMunicipal(targetUserId);
+        }
 
     } catch (err) {
         console.error(err);
@@ -299,14 +345,11 @@ function limpiarUI() {
 function mostrarMensajeInvitado() {
     const guestMsg = document.getElementById('guest-welcome-message');
     const profileForm = document.getElementById('form-profile');
+    const tabsNav = document.querySelector('.profile-tabs-nav');
 
-    if (guestMsg) {
-        guestMsg.style.display = 'block';
-    }
-
-    if (profileForm) {
-        profileForm.style.display = 'none'; // Ocultar formulario para invitados
-    }
+    if (guestMsg) guestMsg.style.display = 'block';
+    if (profileForm) profileForm.style.display = 'none';
+    if (tabsNav) tabsNav.style.display = 'none';
 }
 
 function actualizarPreviewAvatar(url) {
@@ -365,7 +408,7 @@ async function abrirPerfilPublico(userId) {
     // ... logic to open modal and load public stats ...
     // Using simple implementation similar to app.js
     const modal = document.getElementById('modal-public-profile');
-    modal.classList.add('active');
+    modal.classList.add('modal--active');
 
     const content = document.getElementById('public-profile-content');
     content.innerHTML = 'Cargando...';
@@ -404,4 +447,210 @@ async function toggleSeguir(targetId, following) {
         await supabaseClient.from('seguidores').insert({ seguidor_id: user.id, siguiendo_id: targetId });
     }
     abrirPerfilPublico(targetId); // Refresh
+}
+
+async function cargarEstadoSolicitudMunicipal(userId) {
+    const statusContainer = document.getElementById('municipal-status-container');
+    const formContainer = document.getElementById('municipal-request-form-container');
+    if (!statusContainer || !formContainer) return;
+
+    // Reset inicial
+    statusContainer.innerHTML = '';
+    statusContainer.style.display = 'none';
+    formContainer.style.display = 'block';
+
+    try {
+        // 1. Cargar municipalidades para el selector
+        const { data: munis } = await supabaseClient.from('municipalidades').select('id, nombre').order('nombre');
+        const selector = document.getElementById('request-muni-selector');
+        if (selector && selector.children.length <= 1) {
+            munis.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.nombre;
+                selector.appendChild(opt);
+            });
+        }
+
+        // 2. Verificar rol actual
+        const { data: profile } = await supabaseClient.from('perfiles').select('rol').eq('id', userId).single();
+
+        // 3. Verificar solicitudes previas
+        const { data: req } = await supabaseClient
+            .from('solicitudes_municipales')
+            .select('*')
+            .eq('usuario_id', userId)
+            .in('estado', ['pendiente', 'en_revision', 'aprobado', 'rechazado'])
+            .order('creado_en', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        // Si ya es Admin o Municipal, mostrar Verificado y ocultar formulario
+        if (profile.rol === 'admin' || profile.rol === 'municipal') {
+            formContainer.style.display = 'none';
+            statusContainer.style.display = 'block';
+
+            // Obtener nombre de la municipalidad si aplica
+            let muniNombre = null;
+            if (profile.rol === 'municipal') {
+                // Intentar desde solicitud aprobada
+                const muniId = req?.municipalidad_id;
+                if (muniId) {
+                    const { data: muniData } = await supabaseClient
+                        .from('municipalidades')
+                        .select('nombre')
+                        .eq('id', muniId)
+                        .maybeSingle();
+                    muniNombre = muniData?.nombre || null;
+                }
+                // Fallback: desde perfiles.municipalidad_id
+                if (!muniNombre) {
+                    const { data: perfilMuni } = await supabaseClient
+                        .from('perfiles')
+                        .select('municipalidad_id, municipalidades(nombre)')
+                        .eq('id', userId)
+                        .maybeSingle();
+                    muniNombre = perfilMuni?.municipalidades?.nombre || null;
+                }
+            }
+
+            statusContainer.innerHTML = `
+                <div class="status-card-verified" style="text-align: center; padding: 3rem 1rem;">
+                    <div class="verified-badge-large">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <h3 style="margin-top: 1.5rem; color: var(--text-main);">Perfil Verificado</h3>
+                    <p style="color: var(--text-muted); max-width: 400px; margin: 0.5rem auto 1.5rem;">
+                        Tu cuenta tiene rango de <strong>${profile.rol.toUpperCase()}</strong>. 
+                        Ya puedes gestionar reportes y departamentos desde tu panel correspondiente.
+                    </p>
+                    ${muniNombre ? `
+                        <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem;
+                            background: var(--primary-ultra-light, #ecfdf5); color: var(--primary, #10b981);
+                            border-radius: 999px; font-size: 0.875rem; font-weight: 600; margin-bottom: 1.5rem;
+                            border: 1px solid var(--primary-light, #a7f3d0);">
+                            <i data-lucide="building-2" style="width:16px;height:16px;"></i>
+                            Municipalidad de ${muniNombre}
+                        </div>
+                    ` : ''}
+                    ${profile.rol === 'admin' ?
+                    '<button id="btn-goto-admin-from-profile" class="button button--action">Ir al Panel Admin</button>' :
+                    '<p class="text-success"><i data-lucide="check"></i> Verificación Activa</p>'
+                }
+                </div>
+            `;
+
+            const btnGoAdmin = document.getElementById('btn-goto-admin-from-profile');
+            if (btnGoAdmin) {
+                btnGoAdmin.onclick = () => UIModule.changeView('admin');
+            }
+
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+
+        // Si hay una solicitud en curso (Pendiente o en Revisión)
+        if (req && (req.estado === 'pendiente' || req.estado === 'en_revision')) {
+            formContainer.style.display = 'none';
+            statusContainer.style.display = 'block';
+            statusContainer.innerHTML = `
+                <div class="status-card-info" style="padding: 2.5rem; border-radius: 16px; background: #eff6ff; border: 1px solid #dbeafe;">
+                    <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                        <div style="background: white; padding: 1rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                            <i data-lucide="clock" style="color: #2563eb; width: 32px; height: 32px;"></i>
+                        </div>
+                        <div>
+                            <h4 style="color: #1e40af; font-size: 1.125rem; margin-bottom: 0.5rem;">Solicitud en Revisión</h4>
+                            <p style="color: #1e3a8a; opacity: 0.8; margin-bottom: 1rem;">
+                                Tu petición para ser colaborador municipal está siendo evaluada por nuestro equipo administrativo.
+                            </p>
+                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; background: rgba(37, 99, 235, 0.1); color: #2563eb; border-radius: 20px; font-size: 0.8125rem; font-weight: 700;">
+                                <span class="pulse-indicator"></span>
+                                ESTADO: ${req.estado.toUpperCase()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        // Si la solicitud fue rechazada, mostrar mensaje PERO dejar el formulario visible abajo para reintentar
+        if (req && req.estado === 'rechazado') {
+            statusContainer.style.display = 'block';
+            statusContainer.innerHTML = `
+                <div class="status-card-danger" style="padding: 2rem; border-radius: 12px; background: #FEF2F2; border: 1px solid #FCA5A5; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <div style="background: white; padding: 0.75rem; border-radius: 50%; color: #DC2626;">
+                            <i data-lucide="alert-circle" width="24" height="24"></i>
+                        </div>
+                        <div>
+                            <h4 style="color: #991B1B; font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 700;">Solicitud Rechazada</h4>
+                            <p style="color: #7F1D1D; margin-bottom: 1rem; line-height: 1.5;">
+                                Tu solicitud anterior no fue aprobada. Por favor revisa el motivo y envía una nueva solicitud corrigiendo los puntos mencionados.
+                            </p>
+                            ${req.comentarios_admin ? `
+                                <div style="background: rgba(255,255,255,0.6); padding: 1rem; border-left: 4px solid #DC2626; border-radius: 4px;">
+                                    <span style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #7F1D1D; margin-bottom: 0.25rem; font-weight: 600;">Motivo del Rechazo:</span>
+                                    <span style="color: #450A0A; font-weight: 500;">${req.comentarios_admin}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+        }
+
+    } catch (err) {
+        Logger.error('Error al cargar estado de solicitud municipal', err);
+    }
+}
+
+async function enviarSolicitudMunicipal(e) {
+    e.preventDefault();
+    const user = AuthModule.getUsuarioActual();
+    if (!user) return;
+
+    const btn = document.getElementById('btn-submit-request');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="spinner"></i> Enviando...';
+
+    const formData = new FormData(e.target);
+    const file = document.getElementById('request-document').files[0];
+
+    try {
+        if (!file) throw new Error('Debes adjuntar un documento de verificación.');
+
+        // Subir documento
+        const fileName = `verificaciones/${user.id}_${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabaseClient.storage.from('evidencias').upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrl } = supabaseClient.storage.from('evidencias').getPublicUrl(fileName);
+
+        // Crear registro
+        const { error: insertError } = await supabaseClient.from('solicitudes_municipales').insert({
+            usuario_id: user.id,
+            municipalidad_id: formData.get('municipalidad_id'),
+            documento_url: publicUrl.publicUrl,
+            comentarios_ciudadano: formData.get('comentarios'),
+            estado: 'pendiente'
+        });
+
+        if (insertError) throw insertError;
+
+        mostrarMensaje('¡Solicitud enviada con éxito! Será revisada pronto.', 'success');
+        cargarEstadoSolicitudMunicipal(user.id);
+
+    } catch (err) {
+        Logger.error('Error al enviar solicitud municipal', err);
+        mostrarMensaje(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send"></i> Enviar Solicitud de Rol';
+        if (window.lucide) lucide.createIcons();
+    }
 }

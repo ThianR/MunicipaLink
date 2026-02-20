@@ -23,9 +23,24 @@ export const AuthModule = {
             } else if (evento === 'SIGNED_OUT') {
                 manejarCierreSesion();
             } else if (evento === 'PASSWORD_RECOVERY') {
-                document.getElementById('modal-update-password').classList.add('active');
+                document.getElementById('modal-update-password').classList.add('modal--active');
+                // Limpiar el hash de la URL para evitar recargas molestas
+                window.history.replaceState(null, null, window.location.pathname);
             }
         });
+
+        // Comprobación manual de hash (por si el evento no dispara a tiempo)
+        if (window.location.hash.includes('type=recovery')) {
+            // Limpiar el hash de la URL inmediatamente
+            window.history.replaceState(null, null, window.location.pathname);
+
+            setTimeout(() => {
+                const modal = document.getElementById('modal-update-password');
+                if (modal && !modal.classList.contains('modal--active')) {
+                    modal.classList.add('modal--active');
+                }
+            }, 500);
+        }
     },
 
     getUsuarioActual: () => usuarioActual,
@@ -85,7 +100,7 @@ function setupListeners() {
     // Listeners para restablecer contraseña
     if (btnForgot) {
         btnForgot.addEventListener('click', () => {
-            document.getElementById('modal-reset-request').classList.add('active');
+            document.getElementById('modal-reset-request').classList.add('modal--active');
         });
     }
 
@@ -107,23 +122,34 @@ function setupListeners() {
         });
     }
 
-    // Lógica para cerrar modales (podría ser genérica en UI)
-    document.querySelectorAll('.btn-close').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const modal = e.target.closest('.modal');
-            if (modal) modal.classList.remove('active');
-        });
+    // Lógica para cerrar modales
+    document.querySelectorAll('.modal').forEach(modal => {
+        const closeBtn = modal.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.classList.remove('modal--active');
+            });
+        }
+    });
+
+    // Cerrar con tecla Escape
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal--active').forEach(modal => {
+                modal.classList.remove('modal--active');
+            });
+        }
     });
 }
 
 async function solicitarResetPassword(email) {
     try {
         const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.href, // Redirects back here
+            redirectTo: window.location.origin, // Redirects back here
         });
         if (error) throw error;
         mostrarMensaje('Enlace de recuperación enviado', 'success');
-        document.getElementById('modal-reset-request').classList.remove('active');
+        document.getElementById('modal-reset-request').classList.remove('modal--active');
     } catch (err) {
         mostrarMensaje(err.message, 'error');
     }
@@ -134,7 +160,7 @@ async function actualizarPassword(password) {
         const { error } = await supabaseClient.auth.updateUser({ password });
         if (error) throw error;
         mostrarMensaje('Contraseña actualizada', 'success');
-        document.getElementById('modal-update-password').classList.remove('active');
+        document.getElementById('modal-update-password').classList.remove('modal--active');
     } catch (err) {
         mostrarMensaje(err.message, 'error');
     }
@@ -142,8 +168,10 @@ async function actualizarPassword(password) {
 
 async function manejarAuthUsuario(usuario) {
     usuarioActual = usuario;
+    let perfil = null;
     try {
-        const { data: perfil } = await supabaseClient.from('perfiles').select('rol').eq('id', usuario.id).single();
+        const { data } = await supabaseClient.from('perfiles').select('rol').eq('id', usuario.id).single();
+        perfil = data;
         aplicarRol(perfil ? perfil.rol : 'ciudadano');
     } catch (err) {
         aplicarRol('ciudadano');
@@ -153,8 +181,10 @@ async function manejarAuthUsuario(usuario) {
     cambiarPantalla('app');
     mostrarMensaje(`Bienvenido, ${usuario.email}`, 'success');
 
-    document.dispatchEvent(new CustomEvent('auth:login', { detail: { user: usuario } }));
+    document.dispatchEvent(new CustomEvent('auth:login', { detail: { user: usuario, rol: perfil?.rol || 'ciudadano' } }));
+
 }
+
 
 function manejarLoginInvitado() {
     usuarioActual = null;
@@ -171,3 +201,5 @@ function manejarCierreSesion() {
     cambiarPantalla('login');
     document.dispatchEvent(new CustomEvent('auth:logout'));
 }
+
+window.AuthModule = AuthModule;

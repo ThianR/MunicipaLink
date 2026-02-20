@@ -1,0 +1,173 @@
+/* ============================================
+   REPORTS VIEW - MunicipaLink
+   ============================================ */
+
+.reports-view {
+    background: var(--bg-light);
+    display: flex;
+    flex-direction: column;
+}
+
+.reports__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: white;
+    border-bottom: 1px solid #eee;
+}
+
+.reports__toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: nowrap;
+    /* Force horizontal on desktop */
+}
+
+.reports__select {
+    min-width: 130px;
+    max-width: 180px;
+    margin-bottom: 0 !important;
+    padding: 0.5rem 1.5rem 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    height: 38px;
+}
+
+.reports__search {
+    flex: 1;
+    min-width: 160px;
+    max-width: 280px;
+}
+
+.reports__search .search__input {
+    height: 38px;
+    padding: 0.5rem 0.5rem 0.5rem 2.2rem;
+    font-size: 0.85rem;
+}
+
+.reports__search .search__icon {
+    width: 16px;
+    height: 16px;
+}
+
+.button--clear {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    height: 40px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.button--clear:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.button--clear i {
+    width: 18px;
+    height: 18px;
+}
+
+.filter-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: #f0fdf4;
+    border-bottom: 1px solid #d1fae5;
+    color: var(--primary-dark);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.filter-info i {
+    width: 18px;
+    height: 18px;
+}
+
+.reports-list {
+    padding: var(--spacing-md);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 768px) {
+    .reports-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop: 3 columns */
+@media (min-width: 1024px) {
+    .reports-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem var(--spacing-xl);
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    width: 64px;
+    height: 64px;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.mobile-filter-toggle {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+    .reports__header {
+        padding: var(--spacing-sm) var(--spacing-md);
+        gap: var(--spacing-xs);
+    }
+
+    .reports__toolbar {
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs);
+        background: transparent;
+        border: none;
+    }
+
+    .reports__select,
+    .reports__search {
+        min-width: 120px;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .button--clear {
+        padding: 0 0.5rem;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+}

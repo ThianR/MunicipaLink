@@ -1,0 +1,179 @@
+/* ============================================
+   BUTTONS - MunicipaLink
+   ============================================ */
+
+.button {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.button--primary,
+.button--action {
+    background: var(--primary);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+.button--primary:hover,
+.button--action:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4);
+}
+
+.button--primary:disabled,
+.button--action:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+}
+
+.button--primary.active {
+    background: var(--primary-dark);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button--secondary {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    font-weight: 700;
+}
+
+.button--secondary:hover {
+    background: var(--primary-light);
+    transform: translateY(-1px);
+}
+
+.button--secondary.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.button--google {
+    width: 100%;
+    padding: var(--spacing-md);
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.button--google:hover {
+    background: #f9fafb;
+}
+
+.button--orange {
+    background: #f97316;
+    color: white !important;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    transition: all var(--transition-fast);
+    text-decoration: none;
+}
+
+.button--orange:hover {
+    background: #ea580c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.button--close {
+    background: none;
+    border: none;
+    font-size: var(--font-size-2xl);
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.button--back {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: auto;
+    font-size: var(--font-size-sm);
+    transition: color var(--transition-fast);
+}
+
+.button--back:hover {
+    color: var(--primary);
+}
+
+.button--map-tool {
+    background: white;
+    border: 1px solid #d1d5db;
+    flex: 1;
+    height: 48px;
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: all var(--transition-fast);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.button--map-tool:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8125rem;
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.btn-sm i {
+    width: 14px;
+    height: 14px;
+}
+
+.btn-guest {
+    color: var(--primary);
+    background: none;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+    padding: 0;
+    font-size: var(--font-size-sm);
+}
+
+.btn-guest:hover {
+    color: var(--primary-dark);
+}

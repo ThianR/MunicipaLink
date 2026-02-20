@@ -1,0 +1,32 @@
+/* ============================================
+   SIDEBAR - MunicipaLink
+   ============================================ */
+
+.sidebar {
+    width: 320px;
+    background: var(--card-bg);
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-lg);
+}
+
+.sidebar__controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid #eee;
+}
+
+.sidebar__nav {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive - Hide on mobile */
+@media (max-width: 1100px) {
+    .sidebar {
+        display: none !important;
+    }
+}

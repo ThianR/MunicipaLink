@@ -1,0 +1,72 @@
+/* ============================================
+   RESPONSIVE - Consolidated Media Queries
+   ============================================ */
+
+/* Mobile First Approach - Base styles are for mobile */
+
+/* Tablet: 768px and up */
+@media (min-width: 768px) {
+    .view-header {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+}
+
+/* Desktop: 1024px and up */
+@media (min-width: 1024px) {
+    /* Layout adjustments for desktop */
+}
+
+/* Large Desktop: 1280px and up */
+@media (min-width: 1280px) {
+    /* Large screen optimizations */
+}
+
+/* Mobile specific: max-width 1100px */
+@media (max-width: 1100px) {
+    .app-content {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .view:not(#view-map) {
+        height: 100%;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 90px !important;
+    }
+
+    .view--active {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    #view-map {
+        overflow: hidden !important;
+        padding-bottom: 60px !important;
+    }
+}
+
+/* Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+    .fab {
+        bottom: 10px !important;
+        left: 10px !important;
+        right: auto !important;
+    }
+
+    .floating-map-tools {
+        top: 5px !important;
+    }
+
+    .header {
+        height: 50px;
+    }
+
+    .nav--mobile {
+        height: 50px;
+    }
+}

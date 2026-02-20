@@ -10,6 +10,7 @@ let currentSort = 'recent';
 let currentSearch = '';
 let reporteActualId = null;
 let mapaDetalle = null;
+let marcadorDetalle = null;
 
 export const ReportsModule = {
     init: () => {
@@ -52,12 +53,21 @@ export const ReportsModule = {
         document.addEventListener('ui:tab-changed', (e) => {
             reloadReports();
         });
-        document.addEventListener('muni:changed', () => {
-            // Recargar si estamos en la vista de reportes
-            const view = localStorage.getItem('currentView');
-            if (view === 'reports') reloadReports();
+
+        document.addEventListener('muni:changed', (e) => {
+            Logger.debug('Municipality changed event received', e.detail);
+            reloadReports();
         });
-        // ¿Carga inicial? No, esperar contenido de la vista.
+
+        // Carga inicial si ya estamos en la vista
+        const currentView = localStorage.getItem('currentView');
+        if (currentView === 'reports') {
+            setTimeout(() => {
+                const activeTab = document.querySelector('.tabs__content--active');
+                if (!activeTab) UIModule.changeTab('all-requests');
+                else reloadReports();
+            }, 200);
+        }
     },
     abrirDetalle: abrirDetalleReporte
 };
@@ -79,7 +89,6 @@ function setupListeners() {
         document.getElementById('status-selector-mobile')
     ];
     statusSelectors.forEach(s => {
-        if (s) s.addEventListener('change', reloadReports);
         if (s) s.addEventListener('change', reloadReports);
     });
 
@@ -126,7 +135,7 @@ function setupListeners() {
 
         const modal = document.getElementById('modal-report');
         if (modal) {
-            modal.classList.add('active');
+            modal.classList.add('modal--active');
             cargarCategorias();
             lucide.createIcons();
             Logger.info('Modal de reporte abierto exitosamente');
@@ -188,8 +197,14 @@ function setupListeners() {
 }
 
 function reloadReports() {
-    const activeTab = document.querySelector('.tab-content.active');
-    const tabId = activeTab ? activeTab.id : 'tab-all-requests';
+    const activeTab = document.querySelector('.tabs__content--active') || document.querySelector('.tab-content.active');
+    if (!activeTab) {
+        // Forza selección de tab si no hay ninguno
+        UIModule.changeTab('all-requests');
+        return;
+    }
+
+    const tabId = activeTab.id;
 
     const muniId = document.getElementById('muni-selector-reports')?.value ||
         document.getElementById('muni-selector-mobile')?.value;
@@ -250,7 +265,7 @@ async function enviarReporte(e) {
     const cached = sessionStorage.getItem('ubicacion_usuario');
     if (cached) {
         const p = JSON.parse(cached);
-        ubicacion = [p.lat, p.lng];
+        ubicacion = [parseFloat(p.lat), parseFloat(p.lng)];
     }
 
     const ubicacionPoint = `POINT(${ubicacion[1]} ${ubicacion[0]})`;
@@ -290,7 +305,7 @@ async function enviarReporte(e) {
 
         mostrarMensaje('¡Reporte enviado!', 'success');
         e.target.reset();
-        document.getElementById('modal-report').classList.remove('active');
+        document.getElementById('modal-report').classList.remove('modal--active');
         reloadReports();
 
     } catch (err) {
@@ -386,34 +401,34 @@ async function renderizarReportes(reportes, containerId) {
 
         return `
             <div class="report-card" data-id="${r.id}">
-                <div class="report-card-header">
-                     <span class="report-id-badge">${r.numero_solicitud || 'S/N'}</span>
-                     <span class="category-tag">${r.categoria_nombre || 'General'}</span>
-                     <span class="status-badge status-${(r.estado || 'pending').toLowerCase().replace(' ', '_')}">${r.estado}</span>
+                <div class="report-card__header">
+                     <span class="report-card__id">${r.numero_solicitud || 'S/N'}</span>
+                     <span class="report-card__category">${r.categoria_nombre || 'General'}</span>
+                     <span class="status-badge status-badge--${(r.estado || 'pending').toLowerCase().replace(' ', '_')}">${r.estado}</span>
                 </div>
-                <p class="report-card-desc">${r.descripcion}</p>
+                <p class="report-card__description">${r.descripcion}</p>
                 
-                <div class="report-stats-grid">
-                     <div class="report-author" title="Ver perfil del ciudadano" onclick="window.verPerfilCiudadano(event, '${r.usuario_id}', '${author.nombre.replace(/'/g, "\\'")}', '${author.avatar_url || ''}')">
+                <div class="report-card__stats">
+                     <div class="report-card__author" title="Ver perfil del ciudadano" onclick="window.verPerfilCiudadano(event, '${r.usuario_id}', '${author.nombre.replace(/'/g, "\\'")}', '${author.avatar_url || ''}')">
                         <i data-lucide="user"></i> Ver Ciudadano
                     </div>
                     
-                    <div class="stat-badge" title="Prioridad">
+                    <div class="report-card__priority" title="Prioridad">
                          <div class="priority-stars">${starsHtml}</div>
                     </div>
 
-                    <div class="stat-badge" title="Apoyos">
+                    <div class="report-card__stat" title="Apoyos">
                         <i data-lucide="thumbs-up"></i> ${r.total_votos || r.total_interacciones || 0}
                     </div>
 
-                    <div class="stat-badge" title="Comentarios">
+                    <div class="report-card__stat" title="Comentarios">
                         <i data-lucide="message-square"></i> ${r.total_comentarios || 0}
                     </div>
                 </div>
 
-                <div class="report-meta">
-                    <span><i data-lucide="map-pin"></i> ${r.municipio_nombre}</span>
-                    <span>${new Date(r.creado_en).toLocaleDateString()}</span>
+                <div class="report-card__meta">
+                    <span class="report-card__location"><i data-lucide="map-pin"></i> ${r.municipio_nombre}</span>
+                    <span class="report-card__date">${new Date(r.creado_en).toLocaleDateString()}</span>
                 </div>
             </div>
         `;
@@ -448,56 +463,142 @@ async function abrirDetalleReporte(id) {
     reporteActualId = id;
     UIModule.changeView('report-detail');
 
-    // Lógica de carga de detalles (Fetch único, comentarios, evidencias)
-    // Misma implementación que app.js (omitido por brevedad, asumir actualizado)
-    // Básicamente: Traer reporte, renderizar info, traer comentarios, traer interacciones
+    // Resetear secciones din\u00e1micas para evitar contenido de un reporte anterior
+    const timelineCont = document.getElementById('detail-timeline-container');
+    const cierreCont = document.getElementById('detail-cierre-container');
+    if (timelineCont) timelineCont.style.display = 'none';
+    if (cierreCont) { cierreCont.style.display = 'none'; }
+
     const title = document.getElementById('detail-title');
     if (title) title.textContent = 'Cargando...';
 
+
     try {
         const { data, error } = await supabaseClient
-            .from('reportes')
-            .select('*, categorias(nombre), municipalidades(nombre)')
+            .from('reportes_final_v1')
+            .select('*')
             .eq('id', id)
             .single();
 
         if (error) throw error;
 
-        if (title) title.textContent = `${data.numero_solicitud ? data.numero_solicitud + ' - ' : ''}${data.categorias?.nombre || 'Solicitud'}`;
+        if (title) title.textContent = `${data.numero_solicitud ? data.numero_solicitud + ' - ' : ''}${data.categoria_nombre || 'Solicitud'}`;
         document.getElementById('detail-description').textContent = data.descripcion;
 
         // Llenar nuevos campos
-        document.getElementById('detail-category').textContent = data.categorias?.nombre || 'Sin categoría';
+        document.getElementById('detail-category').textContent = data.categoria_nombre || 'Sin categoría';
         document.getElementById('detail-status').textContent = data.estado || 'Pendiente';
         document.getElementById('detail-date').textContent = new Date(data.creado_en).toLocaleDateString();
+
+        // Renderizar estrellas de prioridad en detalle
+        const detailPriorityEl = document.getElementById('detail-priority');
+        if (detailPriorityEl) {
+            const relevance = data.relevancia_relativa !== undefined ? data.relevancia_relativa : null;
+            detailPriorityEl.innerHTML = renderStars(relevance, data.score_impacto || 0);
+        }
 
         // Actualizar color de badge de estado
         const statusBadge = document.getElementById('detail-status');
         statusBadge.className = 'status-badge'; // reiniciar
-        statusBadge.classList.add(`status-${(data.estado || 'pending').toLowerCase().replace(' ', '_')}`);
+        statusBadge.classList.add(`status-badge--${(data.estado || 'pending').toLowerCase().replace(' ', '_')}`);
 
-        // Cargar evidencias
+        // Cargar evidencias originales
         cargarEvidencias(id);
 
         // Cargar comentarios e interacciones
         cargarComentarios(id);
         cargarInteracciones(id);
 
+        // Obtener timestamps y evidencias de cierre desde la tabla directa
+        (async () => {
+            const { data: extra } = await supabaseClient
+                .from('reportes')
+                .select('fecha_asignacion, actualizado_en, observacion_municipal')
+                .eq('id', id)
+                .maybeSingle();
+
+            // Renderizar timeline siempre que haya al menos la fecha de creación
+            renderTimeline({
+                creado_en: data.creado_en,
+                fecha_asignacion: extra?.fecha_asignacion || null,
+                actualizado_en: extra?.actualizado_en || null,
+                observacion_municipal: extra?.observacion_municipal || null,
+                estado: data.estado,
+            });
+
+            // Evidencias de cierre solo si está resuelto o rechazado
+            if (data.estado === 'Resuelto' || data.estado === 'Rechazado') {
+                cargarEvidenciasCierre(id, data.estado, extra?.observacion_municipal);
+            } else {
+                const cont = document.getElementById('detail-cierre-container');
+                if (cont) cont.style.display = 'none';
+            }
+        })();
+
         // Iniciar Mini Mapa
         if (!mapaDetalle) {
-            mapaDetalle = L.map('detail-map').setView([0, 0], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaDetalle);
+            mapaDetalle = L.map('detail-map', {
+                fadeAnimation: false,
+                markerZoomAnimation: false
+            }).setView([0, 0], 15);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap © CartoDB'
+            }).addTo(mapaDetalle);
         }
+
+        // Limpiar marcador previo
+        if (marcadorDetalle) {
+            mapaDetalle.removeLayer(marcadorDetalle);
+            marcadorDetalle = null;
+        }
+
+        const btnGps = document.getElementById('btn-navigate-gps');
+        if (btnGps) btnGps.style.display = 'none';
 
         // Parsear ubicación
         if (data.ubicacion) {
-            // Análisis rápido
-            const match = data.ubicacion.match(/\(([^)]+)\)/);
-            if (match) {
-                const [lng, lat] = match[1].split(' ').map(parseFloat);
+            let lat, lng;
+
+            // Caso 1: String PostGIS representation "POINT(lng lat)" o similar
+            if (typeof data.ubicacion === 'string') {
+                if (data.ubicacion.startsWith('0101')) {
+                    try {
+                        const hasSRID = data.ubicacion.substring(8, 10) === '20';
+                        const offset = hasSRID ? 18 : 10;
+                        const hexToDouble = (hex) => {
+                            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                            const view = new DataView(bytes.buffer);
+                            return view.getFloat64(0, true);
+                        };
+                        lng = hexToDouble(data.ubicacion.substring(offset, offset + 16));
+                        lat = hexToDouble(data.ubicacion.substring(offset + 16, offset + 32));
+                    } catch (err) {
+                        Logger.error('Error parseando Hex de ubicación', err);
+                    }
+                } else {
+                    const match = data.ubicacion.match(/POINT\(([^ ]+) ([^ ]+)\)/) || data.ubicacion.match(/\(([^ ]+) ([^ ]+)\)/);
+                    if (match) {
+                        lng = parseFloat(match[1]);
+                        lat = parseFloat(match[2]);
+                    }
+                }
+            }
+            // Caso 2: Objeto GeoJSON {type: 'Point', coordinates: [lng, lat]}
+            else if (data.ubicacion.coordinates) {
+                lng = data.ubicacion.coordinates[0];
+                lat = data.ubicacion.coordinates[1];
+            }
+
+            if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
                 mapaDetalle.setView([lat, lng], 15);
-                L.marker([lat, lng]).addTo(mapaDetalle);
-                setTimeout(() => { mapaDetalle.invalidateSize(); }, 300); // Arreglar renderizado de mapa
+                marcadorDetalle = L.marker([lat, lng]).addTo(mapaDetalle);
+
+                if (btnGps) {
+                    btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                    btnGps.style.display = 'flex';
+                }
+
+                setTimeout(() => { mapaDetalle.invalidateSize(); }, 300);
             }
         }
 
@@ -724,119 +825,175 @@ function updateStat(id, val) {
     if (el) el.textContent = val !== undefined && val !== null ? val : 0;
 }
 
-// Función para abrir modal de perfil de ciudadano
+/**
+ * Calcula y muestra la línea de tiempo del reporte en la vista de detalle.
+ * Muestra los intervalos: Creación → Asignación → Cierre.
+ * @param {{ creado_en: string, fecha_asignacion: string|null, actualizado_en: string|null, estado: string }} reporte
+ */
+function renderTimeline(reporte) {
+    const container = document.getElementById('detail-timeline-container');
+    const timeline = document.getElementById('detail-timeline');
+    if (!container || !timeline) return;
+
+    const { creado_en, fecha_asignacion, actualizado_en, estado } = reporte;
+
+    // Función auxiliar: tiempo transcurrido en texto legible
+    function tiempoTranscurrido(desde, hasta) {
+        if (!desde || !hasta) return null;
+        const ms = new Date(hasta) - new Date(desde);
+        if (ms < 0) return null;
+        const minutos = Math.floor(ms / 60000);
+        const horas = Math.floor(minutos / 60);
+        const dias = Math.floor(horas / 24);
+        if (dias >= 1) return `${dias} día${dias > 1 ? 's' : ''}`;
+        if (horas >= 1) return `${horas} hora${horas > 1 ? 's' : ''}`;
+        return `${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+    }
+
+    const oportunidades = [
+        {
+            icono: 'file-plus',
+            etiqueta: 'Creado',
+            fecha: creado_en,
+            activo: true,
+            intervalo: null,
+        },
+        {
+            icono: 'user-check',
+            etiqueta: 'Asignado',
+            fecha: fecha_asignacion,
+            activo: !!fecha_asignacion,
+            intervalo: tiempoTranscurrido(creado_en, fecha_asignacion),
+        },
+        {
+            icono: estado === 'Rechazado' ? 'x-circle' : 'check-circle',
+            etiqueta: estado === 'Rechazado' ? 'Rechazado' : (estado === 'Resuelto' ? 'Resuelto' : estado),
+            fecha: (estado === 'Resuelto' || estado === 'Rechazado') ? actualizado_en : null,
+            activo: estado === 'Resuelto' || estado === 'Rechazado',
+            intervalo: tiempoTranscurrido(fecha_asignacion || creado_en, actualizado_en),
+        },
+    ];
+
+    timeline.innerHTML = oportunidades.map((paso, idx) => `
+        <div class="timeline-step ${paso.activo ? 'timeline-step--active' : 'timeline-step--pending'}"
+             style="display:flex; align-items:flex-start; gap:0.75rem; padding:0.75rem 0; position:relative;">
+            <!-- Conector vertical -->
+            ${idx < oportunidades.length - 1 ? `
+                <div style="position:absolute; left:15px; top:36px; width:2px; height:calc(100% + 0.5rem);
+                    background:${paso.activo && oportunidades[idx + 1].activo ? 'var(--primary,#10b981)' : 'var(--border,#e2e8f0)'};"></div>
+            ` : ''}
+            <!-- Ícono -->
+            <div style="flex-shrink:0; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+                background:${paso.activo ? 'var(--primary,#10b981)' : 'var(--bg-muted,#f1f5f9)'};
+                color:${paso.activo ? '#fff' : 'var(--text-muted,#94a3b8)'}; z-index:1;">
+                <i data-lucide="${paso.icono}" style="width:16px;height:16px;"></i>
+            </div>
+            <!-- Texto -->
+            <div style="flex:1;">
+                <div style="font-weight:600; font-size:0.875rem; color:${paso.activo ? 'var(--text-main)' : 'var(--text-muted)'}">
+                    ${paso.etiqueta}
+                </div>
+                ${paso.fecha
+            ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.125rem;">
+                            ${new Date(paso.fecha).toLocaleString('es-PY', { dateStyle: 'medium', timeStyle: 'short' })}
+                       </div>`
+            : (paso.activo ? '' : '<div style="font-size:0.75rem;color:var(--text-muted);">Pendiente</div>')}
+                ${paso.intervalo
+            ? `<div style="display:inline-block; margin-top:0.25rem; padding:0.125rem 0.5rem;
+                            background:var(--bg-muted,#f1f5f9); border-radius:999px;
+                            font-size:0.7rem; color:var(--text-muted); font-weight:500;">
+                            ⏱ ${paso.intervalo} después
+                       </div>`
+            : ''}
+            </div>
+        </div>
+    `).join('');
+
+    container.style.display = 'block';
+    if (window.lucide) lucide.createIcons();
+}
+
+/**
+ * Carga y muestra las evidencias de cierre (imágenes subidas al resolver/rechazar).
+ * @param {string} reporteId - UUID del reporte
+ * @param {string} estado - 'Resuelto' o 'Rechazado'
+ * @param {string|null} observacion - Observación del funcionario (opcional)
+ */
+async function cargarEvidenciasCierre(reporteId, estado, observacion) {
+    const container = document.getElementById('detail-cierre-container');
+    const carousel = document.getElementById('detail-cierre-carousel');
+    const titleEl = document.getElementById('detail-cierre-title');
+    const obsEl = document.getElementById('detail-observacion');
+    if (!container || !carousel) return;
+
+    // Adaptar título según estado
+    if (titleEl) {
+        const icono = estado === 'Rechazado' ? 'x-circle' : 'check-circle';
+        const color = estado === 'Rechazado' ? '#ef4444' : '#10b981';
+        titleEl.innerHTML = `<i data-lucide="${icono}" style="color:${color};"></i>
+            ${estado === 'Rechazado' ? 'Evidencia de Rechazo' : 'Evidencia de Resolución'}`;
+    }
+
+    // Mostrar observación si la hay
+    if (obsEl && observacion) {
+        obsEl.textContent = `Observación: ${observacion}`;
+        obsEl.style.display = 'block';
+    }
+
+    const tipo = estado === 'Rechazado' ? 'rechazo' : 'resolucion';
+    const { data, error } = await supabaseClient
+        .from('evidencias_cierre')
+        .select('imagen_url, tipo, creado_en')
+        .eq('reporte_id', reporteId)
+        .eq('tipo', tipo)
+        .order('creado_en', { ascending: true });
+
+    if (error) {
+        Logger.error('Error cargando evidencias de cierre', error);
+        return;
+    }
+
+    container.style.display = 'block';
+
+    if (!data || data.length === 0) {
+        carousel.innerHTML = '<p style="font-size:0.8rem;color:var(--text-muted);">No se adjuntaron archivos de cierre.</p>';
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+
+    carousel.innerHTML = data.map(ev => {
+        const esImagen = /\.(jpeg|jpg|gif|png|webp)/i.test(ev.imagen_url);
+        return esImagen
+            ? `<div class="evidence-thumbnail-container" data-url="${ev.imagen_url}">
+                   <img src="${ev.imagen_url}" class="evidence-thumbnail" alt="Evidencia de cierre">
+               </div>`
+            : `<div class="evidence-thumbnail-container" data-url="${ev.imagen_url}">
+                   <div class="evidence-thumbnail-file">
+                       <i data-lucide="file-text"></i>
+                       <span>Documento</span>
+                   </div>
+               </div>`;
+    }).join('');
+
+    // Lightbox para las imágenes de cierre
+    carousel.querySelectorAll('.evidence-thumbnail-container').forEach(el => {
+        el.onclick = () => abrirLightbox(el.dataset.url);
+    });
+
+    if (window.lucide) lucide.createIcons();
+}
+
+// Función para navegar al perfil de un ciudadano
 async function verPerfilCiudadano(e, userId, userName, userAvatar) {
     if (e) e.stopPropagation();
 
-    const modal = document.getElementById('modal-user-profile');
-    if (!modal) return;
+    // Navegar a la vista de perfil
+    UIModule.changeView('profile');
 
-    // Reset y mostrar cargando
-    const handleEl = document.getElementById('modal-user-handle');
-    const avatarEl = document.getElementById('modal-user-avatar');
-    const reportsEl = document.getElementById('modal-user-reports');
-    const commentsEl = document.getElementById('modal-user-comments');
-    const votesEl = document.getElementById('modal-user-votes');
-    const followersEl = document.getElementById('modal-user-followers');
-    const followingEl = document.getElementById('modal-user-following');
-    const rankEl = document.getElementById('modal-user-rank');
-    const xpBarEl = document.getElementById('modal-user-xp-bar');
-    const xpDetailEl = document.getElementById('modal-user-xp-detail');
-    const joinedEl = document.getElementById('modal-user-joined-full');
-
-    handleEl.textContent = userName ? `@${userName.toLowerCase().replace(/\s+/g, '')}` : '@vecino';
-    avatarEl.src = userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'V')}&background=random`;
-
-    // Initial states
-    [reportsEl, commentsEl, votesEl, followersEl, followingEl].forEach(el => {
-        if (el) el.textContent = '-';
-    });
-    if (xpBarEl) xpBarEl.style.width = '0%';
-    if (xpDetailEl) xpDetailEl.textContent = 'Calculando nivel...';
-    if (joinedEl) joinedEl.textContent = 'Cargando datos...';
-
-    modal.classList.add('active');
-
-    if (!userId) return;
-
-    try {
-        // Obtener datos de gamificación y perfil
-        const [gamifRes, profileRes] = await Promise.all([
-            supabaseClient.rpc('obtener_datos_gamificacion', {
-                target_user_id: userId,
-                observer_id: AuthModule.getUsuarioActual()?.id || null
-            }),
-            supabaseClient.from('perfiles').select('*').eq('id', userId).single()
-        ]);
-
-        if (gamifRes.error) throw gamifRes.error;
-        const stats = gamifRes.data[0];
-
-        if (stats) {
-            updateStat('modal-user-reports', stats.total_reportes || 0);
-            updateStat('modal-user-votes', stats.total_interacciones || 0);
-
-            rankEl.textContent = `${stats.rango || 'VECINO NOVATO'} - NIVEL ${stats.nivel || 1}`;
-            xpBarEl.style.width = `${stats.progreso_porcentaje}%`;
-            xpDetailEl.textContent = `${stats.total_xp} / ${stats.proximo_nivel_xp} XP para el siguiente nivel`;
-        }
-
-        if (profileRes.data) {
-            const p = profileRes.data;
-            if (p.alias) {
-                handleEl.textContent = `@${p.alias.toLowerCase().replace(/\s+/g, '')}`;
-            }
-            if (p.avatar_url) {
-                avatarEl.src = p.avatar_url;
-            } else {
-                avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nombre_completo || 'V')}&background=random`;
-            }
-
-            if (p.creado_en) {
-                const date = new Date(p.creado_en);
-                const options = { day: 'numeric', month: 'long', year: 'numeric' };
-                joinedEl.textContent = `Ciudadano desde el ${date.toLocaleDateString('es-ES', options)}`;
-            }
-
-            // Botón ver reportes del usuario
-            const btnViewReports = document.getElementById('btn-view-user-reports');
-            if (btnViewReports) {
-                btnViewReports.onclick = () => {
-                    modal.classList.remove('active');
-                    const searchVal = p.alias || p.nombre_completo || '';
-                    const searchInput = document.getElementById('search-input');
-                    if (searchInput) {
-                        searchInput.value = searchVal;
-                    }
-                    // Actualizamos currentSearch directamente para evitar el delay del debounce al navegar
-                    currentSearch = searchVal;
-
-                    // Cambiar a la pestaña de "Todas las solicitudes"
-                    const allTab = document.querySelector('[data-tab="all-requests"]');
-                    if (allTab) {
-                        allTab.click();
-                    } else {
-                        reloadReports();
-                    }
-                };
-            }
-
-            // Navegación al perfil completo
-            const avatarClick = document.getElementById('modal-user-avatar-click');
-            if (avatarClick) {
-                avatarClick.onclick = () => {
-                    modal.classList.remove('active');
-                    // Disparamos evento de navegación si UIModule lo soporta
-                    document.dispatchEvent(new CustomEvent('ui:request-view', {
-                        detail: { view: 'profile', userId: userId }
-                    }));
-                };
-            }
-        }
-
-    } catch (err) {
-        Logger.warn(`Error al obtener perfil completo de ${userId}`, err);
-    }
+    // Cargar los datos del usuario en esa vista
+    document.dispatchEvent(new CustomEvent('profile:load-user', {
+        detail: { userId: userId }
+    }));
 }
 
 // Hacerlo global para que funcione el onclick inline
