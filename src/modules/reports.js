@@ -342,7 +342,7 @@ async function cargarTodasLasSolicitudes(muniId, estado) {
 
         renderizarReportes(data, 'all-reports-list');
     } catch (err) {
-        console.error(err);
+        Logger.error('Error al cargar todas las solicitudes', err);
         list.innerHTML = '<p class="error">Error al cargar.</p>';
     }
 }
@@ -369,7 +369,7 @@ async function cargarMisReportes(muniId, estado) {
 
         renderizarReportes(data, 'my-reports-list');
     } catch (err) {
-        console.error(err);
+        Logger.error('Error al cargar mis reportes', err);
         list.innerHTML = '<p class="error">Error al cargar.</p>';
     }
 }
