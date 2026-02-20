@@ -8,6 +8,7 @@ import { supabaseClient } from '../services/supabase.js';
 import { Logger } from '../utils/logger.js';
 import { hexToDouble } from '../utils/helpers.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { comprimirImagen } from '../utils/helpers.js';
 import { parseUbicacion } from '../utils/location.js';
 import { escapeHtml } from '../utils/helpers.js';
 
@@ -18,35 +19,6 @@ const state = {
     reporteActual: null,
     departamentos: [],
 };
-
-/**
- * Comprime un archivo de imagen usando canvas para reducir el tamaño antes de subir.
- * @param {File} archivo
- * @returns {Promise<Blob>}
- */
-async function comprimirImagen(archivo) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(archivo);
-        img.onload = () => {
-            const MAX = 1024;
-            let { width, height } = img;
-            if (width > MAX || height > MAX) {
-                const ratio = Math.min(MAX / width, MAX / height);
-                width = Math.round(width * ratio);
-                height = Math.round(height * ratio);
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = width; canvas.height = height;
-            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-            URL.revokeObjectURL(url);
-            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')),
-                'image/webp', 0.8);
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
-        img.src = url;
-    });
-}
 
 /**
  * Obtiene el municipalidad_id del usuario autenticado.
@@ -606,15 +578,11 @@ async function subirEvidenciasCierre(reporteId, archivos, tipo) {
 
     const uploadPromises = Array.from(archivos).map(async (archivo, index) => {
         try {
-            const comprimido = await comprimirImagen(archivo);
-            // Ensure unique filenames for parallel uploads by adding index and random component
-            const timestamp = Date.now();
-            const randomSuffix = Math.floor(Math.random() * 1000);
-            const nombreArchivo = `cierre/${reporteId}/${timestamp}_${index}_${randomSuffix}_${archivo.name}`;
-
+            const comprimido = await comprimirImagen(archivo, { maxDimension: 1024, quality: 0.8, type: 'image/webp' });
+            const nombreArchivo = `cierre/${reporteId}/${Date.now()}_${archivo.name}`;
             const { data: uploadData, error: uploadError } = await supabaseClient.storage
                 .from('evidencias')
-                .upload(nombreArchivo, comprimido, { upsert: false, contentType: archivo.type });
+                .upload(nombreArchivo, comprimido, { upsert: false, contentType: comprimido.type });
 
             if (uploadError) {
                 Logger.error('MunicipalModule: Error subiendo evidencia de cierre', uploadError);
