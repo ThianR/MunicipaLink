@@ -3,7 +3,7 @@ import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { MunicipalityModule } from './municipalities.js'; // Assuming we might need this
 import { mostrarMensaje, abrirLightbox } from '../utils/ui.js';
-import { comprimirImagen } from '../utils/helpers.js';
+import { comprimirImagen, hexToDouble } from '../utils/helpers.js';
 import { Logger } from '../utils/logger.js';
 
 let currentSort = 'recent';
@@ -584,11 +584,6 @@ async function abrirDetalleReporte(id) {
                     try {
                         const hasSRID = data.ubicacion.substring(8, 10) === '20';
                         const offset = hasSRID ? 18 : 10;
-                        const hexToDouble = (hex) => {
-                            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                            const view = new DataView(bytes.buffer);
-                            return view.getFloat64(0, true);
-                        };
                         lng = hexToDouble(data.ubicacion.substring(offset, offset + 16));
                         lat = hexToDouble(data.ubicacion.substring(offset + 16, offset + 32));
                     } catch (err) {
