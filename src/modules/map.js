@@ -1,5 +1,6 @@
 import { APP_CONFIG } from '../config.js';
 import { supabaseClient } from '../services/supabase.js';
+import { hexToDouble } from '../utils/helpers.js';
 import { mostrarMensaje } from '../utils/ui.js';
 import { MunicipalityModule } from './municipalities.js';
 
@@ -86,11 +87,6 @@ function centrarEnMunicipalidad(muniId) {
                 try {
                     const hasSRID = datosCentro.substring(8, 10) === '20';
                     const offset = hasSRID ? 18 : 10;
-                    const hexToDouble = (hex) => {
-                        const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                        const view = new DataView(bytes.buffer);
-                        return view.getFloat64(0, true);
-                    };
                     lng = hexToDouble(datosCentro.substring(offset, offset + 16));
                     lat = hexToDouble(datosCentro.substring(offset + 16, offset + 32));
                 } catch (err) {

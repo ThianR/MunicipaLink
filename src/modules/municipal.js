@@ -6,6 +6,7 @@
 import { supabaseClient } from '../services/supabase.js';
 
 import { Logger } from '../utils/logger.js';
+import { hexToDouble } from '../utils/helpers.js';
 import { mostrarMensaje } from '../utils/ui.js';
 
 // Estado interno del módulo
@@ -386,11 +387,6 @@ function parseUbicacion(ubicacion) {
             if (ubicacion.startsWith('0101')) {
                 const hasSRID = ubicacion.substring(8, 10) === '20';
                 const offset = hasSRID ? 18 : 10;
-                const hexToDouble = (hex) => {
-                    const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                    const view = new DataView(bytes.buffer);
-                    return view.getFloat64(0, true);
-                };
                 lng = hexToDouble(ubicacion.substring(offset, offset + 16));
                 lat = hexToDouble(ubicacion.substring(offset + 16, offset + 32));
             } else {

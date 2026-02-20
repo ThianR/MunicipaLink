@@ -47,3 +47,9 @@ export function truncateText(text, length = 100) {
     if (!text) return '';
     return text.length > length ? text.substring(0, length) + '...' : text;
 }
+
+export function hexToDouble(hex) {
+    const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const view = new DataView(bytes.buffer);
+    return view.getFloat64(0, true);
+}
