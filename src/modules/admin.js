@@ -2,6 +2,7 @@
 import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { normalizeString } from '../utils/helpers.js';
 import { Logger } from '../utils/logger.js';
 
 let allMunicipalities = [];
@@ -205,12 +206,11 @@ async function cargarMunicipalidades() {
 }
 
 function filtrarMunicipalidades(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allMunicipalities.filter(m =>
-        normalizar(m.nombre).includes(term) ||
-        (m.centro && normalizar(JSON.stringify(m.centro)).includes(term))
+        normalizeString(m.nombre).includes(term) ||
+        (m.centro && normalizeString(JSON.stringify(m.centro)).includes(term))
     );
     renderMunicipalidades(filtered);
 }
@@ -559,12 +559,11 @@ function abrirModalDepartamentos(muniId, muniNombre) {
 }
 
 function filtrarDepartamentos(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allDepartments.filter(d =>
-        normalizar(d.nombre).includes(term) ||
-        (d.contacto && normalizar(d.contacto).includes(term))
+        normalizeString(d.nombre).includes(term) ||
+        (d.contacto && normalizeString(d.contacto).includes(term))
     );
     renderDepartamentos(filtered);
 }
@@ -757,13 +756,12 @@ async function cargarUsuarios() {
 }
 
 function filtrarUsuarios(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allUsers.filter(u =>
-        normalizar(u.nombre_completo).includes(term) ||
-        normalizar(u.alias).includes(term) ||
-        normalizar(u.id).includes(term)
+        normalizeString(u.nombre_completo).includes(term) ||
+        normalizeString(u.alias).includes(term) ||
+        normalizeString(u.id).includes(term)
     );
     renderUsuarios(filtered);
 }
@@ -999,13 +997,12 @@ async function cargarSolicitudesRol() {
 }
 
 function filtrarSolicitudes(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allSolicitudes.filter(s =>
-        normalizar(s.perfiles?.alias).includes(term) ||
-        normalizar(s.perfiles?.nombre_completo).includes(term) ||
-        normalizar(s.municipalidades?.nombre).includes(term)
+        normalizeString(s.perfiles?.alias).includes(term) ||
+        normalizeString(s.perfiles?.nombre_completo).includes(term) ||
+        normalizeString(s.municipalidades?.nombre).includes(term)
     );
     renderSolicitudes(filtered);
 }

@@ -47,3 +47,7 @@ export function truncateText(text, length = 100) {
     if (!text) return '';
     return text.length > length ? text.substring(0, length) + '...' : text;
 }
+
+export function normalizeString(str) {
+    return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+}
