@@ -36,7 +36,8 @@ MunicipaLink es una aplicación web que empodera a los ciudadanos para reportar 
 ### 📊 Transparencia y Administración
 - **Panel Admin Central**: Control de usuarios (baneo, edición), municipalidades y solicitudes de rol.
 - **Ranking de Impacto**: Priorización automática basada en algoritmos de relevancia comunitaria.
-- **Ranking de Impacto**: Los reportes se ordenan por relevancia relativa usando `PERCENT_RANK`
+- **Infinite Scroll**: Carga progresiva de reportes para mejorar el rendimiento.
+- **Seguridad Robusta**: Protección contra XSS y validación de roles en UI y BD.
 - **Filtros Avanzados**: Por estado, categoría, fecha y municipalidad
 - **Estadísticas Personales**: Visualiza tu impacto en la comunidad
 - **Privacidad Configurable**: Controla qué información de tu perfil es pública
@@ -48,7 +49,7 @@ MunicipaLink es una aplicación web que empodera a los ciudadanos para reportar 
 ### Frontend
 - **HTML5 + CSS3**: Interfaz moderna con diseño premium y glassmorphism
 - **JavaScript (ES6 Modules)**: Arquitectura modular sin frameworks pesados
-- **Leaflet.js**: Mapas interactivos con OpenStreetMap
+- **Leaflet.js**: Mapas interactivos con OpenStreetMap (Carga Diferida)
 - **Lucide Icons**: Sistema de iconografía consistente
 
 ### Backend y Servicios
@@ -60,7 +61,7 @@ MunicipaLink es una aplicación web que empodera a los ciudadanos para reportar 
 ### Herramientas
 - **Compresión de Imágenes**: Optimización automática al 70% de calidad
 - **Logger Personalizado**: Sistema de trazabilidad con niveles (info, warn, error)
-- **Eventos Personalizados**: Comunicación entre módulos sin acoplamiento
+- **TableRenderer**: Utilidad centralizada para tablas de administración.
 
 ---
 
@@ -72,15 +73,13 @@ MunicipaLink/
 ├── main.js                 # Inicialización y orquestación
 ├── styles/                 # Sistema de diseño CSS (Metodología BEM)
 ├── sql/                    # Scripts de base de datos (vistas, funciones)
-│   ├── vistas/             # Vistas SQL (reportes_final_v1, etc.)
-│   └── funciones/          # Funciones RPC (calcular_xp, gamificacion)
 ├── src/                    # Lógica de negocio modularizada
-│   ├── modules/            # auth, map, reports, profile, ui, admin, municipal
-│   ├── services/           # Cliente Supabase
-│   └── utils/              # helpers, logger, ui (toasts)
+│   ├── components/         # Templates UI (ReportCard)
+│   ├── modules/            # Controladores (auth, map, reports...)
+│   ├── services/           # Acceso a datos (ReportsService)
+│   └── utils/              # helpers, logger, ui (toasts, modal)
 ├── tests/                  # Pruebas unitarias y de integración
 ├── AI_CONTEXT.md           # Contexto para agentes de IA
-├── ABOUT.md                # Resumen ejecutivo
 └── TECHNICAL_REFERENCE.md  # Catálogo técnico y estándares
 ```
 
@@ -118,19 +117,13 @@ MunicipaLink/
 
 4. **Iniciar el servidor local**
    ```bash
-   # Opción 1: Con Live Server (VS Code)
-   # Clic derecho en index.html > Open with Live Server
-   
-   # Opción 2: Con http-server (Node.js)
-   npx http-server -p 8080
-   
-   # Opción 3: Con Python
-   python -m http.server 8080
+   npm install
+   npm run dev
    ```
 
 5. **Acceder a la aplicación**
    ```
-   http://localhost:8080
+   http://localhost:5173
    ```
 
 ---
@@ -216,6 +209,7 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 - [x] Flujo de solicitudes de rol municipal con feedback obligatorio
 - [x] Gestión Municipal con Multi-departamento y Evidencias
 - [x] Navegación GPS e Historial/Timeline visual
+- [x] Mejoras de Seguridad (XSS) y Performance (Infinite Scroll)
 - [ ] Notificaciones push en tiempo real
 - [ ] Exportación de reportes a PDF/Excel
 - [ ] Integración con redes sociales

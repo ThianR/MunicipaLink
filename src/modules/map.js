@@ -45,6 +45,12 @@ function inicializarMapa() {
     const mapElement = document.getElementById('map');
     if (!mapElement) return;
 
+    // Verificar si Leaflet está cargado
+    if (typeof L === 'undefined') {
+        setTimeout(inicializarMapa, 100);
+        return;
+    }
+
     mapa = L.map('map').setView(ubicacionUsuario, 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
     marcadorActual = L.marker(ubicacionUsuario, { draggable: true }).addTo(mapa);

@@ -54,7 +54,9 @@ export function hexToDouble(hex) {
     const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
     const view = new DataView(bytes.buffer);
     return view.getFloat64(0, true);
-export function escapeHTML(str) {
+}
+
+export function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>"']/g, function(m) {
         switch (m) {

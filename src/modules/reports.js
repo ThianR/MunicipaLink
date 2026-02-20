@@ -1,16 +1,25 @@
 import { supabaseClient } from '../services/supabase.js';
 import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
-import { MunicipalityModule } from './municipalities.js'; // Assuming we might need this
+import { MunicipalityModule } from './municipalities.js';
 import { mostrarMensaje, abrirLightbox } from '../utils/ui.js';
-import { comprimirImagen, hexToDouble } from '../utils/helpers.js';
+import { hexToDouble, escapeHtml } from '../utils/helpers.js';
 import { Logger } from '../utils/logger.js';
+import { ReportsService } from '../services/ReportsService.js';
+import { createReportCard } from '../components/ReportCard.js';
 
 let currentSort = 'recent';
 let currentSearch = '';
 let reporteActualId = null;
 let mapaDetalle = null;
 let marcadorDetalle = null;
+
+// Infinite Scroll State
+const PAGE_SIZE = 10;
+let currentPage = 0;
+let isLoadingMore = false;
+let hasMoreReports = true;
+let observer = null;
 
 export const ReportsModule = {
     init: () => {
@@ -200,28 +209,115 @@ function setupListeners() {
 
         reloadReports();
     });
+
+    // Observer setup
+    setupInfiniteScroll();
+}
+
+function setupInfiniteScroll() {
+    const options = {
+        root: null,
+        rootMargin: '100px',
+        threshold: 0.1
+    };
+
+    observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !isLoadingMore && hasMoreReports) {
+                Logger.debug('Infinite scroll trigger');
+                loadNextPage();
+            }
+        });
+    }, options);
 }
 
 function reloadReports() {
+    // Reset pagination state
+    currentPage = 0;
+    hasMoreReports = true;
+    isLoadingMore = false;
+
+    // Clear lists
+    const allList = document.getElementById('all-reports-list');
+    const myList = document.getElementById('my-reports-list');
+    if (allList) allList.innerHTML = '';
+    if (myList) myList.innerHTML = '';
+
+    loadNextPage();
+}
+
+async function loadNextPage() {
+    if (isLoadingMore || !hasMoreReports) return;
+    isLoadingMore = true;
+
     const activeTab = document.querySelector('.tabs__content--active') || document.querySelector('.tab-content.active');
     if (!activeTab) {
-        // Forza selección de tab si no hay ninguno
         UIModule.changeTab('all-requests');
+        isLoadingMore = false;
         return;
     }
 
     const tabId = activeTab.id;
-
     const muniId = document.getElementById('muni-selector-reports')?.value ||
         document.getElementById('muni-selector-mobile')?.value;
-
     const estado = document.getElementById('status-selector-reports')?.value ||
         document.getElementById('status-selector-mobile')?.value;
 
-    if (tabId === 'tab-my-requests') {
-        cargarMisReportes(muniId, estado);
-    } else {
-        cargarTodasLasSolicitudes(muniId, estado);
+    const containerId = tabId === 'tab-my-requests' ? 'my-reports-list' : 'all-reports-list';
+    const container = document.getElementById(containerId);
+
+    // Añadir loader visual al final
+    let loader = document.createElement('div');
+    loader.className = 'infinite-loader';
+    loader.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Cargando más...';
+    loader.style.textAlign = 'center';
+    loader.style.padding = '1rem';
+    loader.style.color = 'var(--text-muted)';
+    container.appendChild(loader);
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const user = AuthModule.getUsuarioActual();
+        const userId = (tabId === 'tab-my-requests' && user) ? user.id : null;
+
+        const { data, count } = await ReportsService.getReportes({
+            muniId,
+            estado,
+            search: currentSearch,
+            sort: currentSort,
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+            userId
+        });
+
+        // Remover loader
+        loader.remove();
+
+        if (data.length < PAGE_SIZE) {
+            hasMoreReports = false;
+        }
+
+        if (currentPage === 0 && data.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>No hay reportes.</p></div>';
+        } else {
+            renderizarReportes(data, containerId);
+            currentPage++;
+        }
+
+    } catch (err) {
+        Logger.error('Error cargando reportes', err);
+        loader.innerHTML = 'Error al cargar más datos.';
+    } finally {
+        isLoadingMore = false;
+        updateObserver(container);
+    }
+}
+
+function updateObserver(container) {
+    // Si hay más reportes, observar el último elemento
+    if (hasMoreReports && container.lastElementChild) {
+        observer.disconnect();
+        observer.observe(container.lastElementChild);
     }
 }
 
@@ -261,12 +357,6 @@ async function enviarReporte(e) {
     const inputFotos = document.getElementById('report-photos');
     const archivos = inputFotos ? inputFotos.files : [];
 
-    // Usando MapModule para obtener ubicación (¿pero necesitamos importar MapModule? ¿Disparar evento?)
-    // Asumamos que MapModule actualiza un estado global o compartido, O lo importamos.
-    // Riesgo de dependencia circular. MapModule no depende de nada. ReportsModule depende de MapModule?
-    // Importemos MapModule dinámicamente o confiemos en sessionStorage/global
-    // Por ahora, asumamos que 'ubicacion_usuario' en sessionStorage es actual
-
     let ubicacion = [-25.2867, -57.6470];
     const cached = sessionStorage.getItem('ubicacion_usuario');
     if (cached) {
@@ -277,49 +367,20 @@ async function enviarReporte(e) {
     const ubicacionPoint = `POINT(${ubicacion[1]} ${ubicacion[0]})`;
 
     try {
-        const { data: reporte, error } = await supabaseClient
-            .from('reportes')
-            .insert([{
-                categoria_id: datosForm.get('category_id'),
-                descripcion: datosForm.get('description'),
-                ubicacion: ubicacionPoint,
-                municipalidad_id: selectorMuni.value,
-                estado: 'Pendiente',
-                usuario_id: user.id
-            }])
-            .select()
-            .single();
+        const payload = {
+            categoria_id: datosForm.get('category_id'),
+            descripcion: datosForm.get('description'),
+            ubicacion: ubicacionPoint,
+            municipalidad_id: selectorMuni.value,
+            estado: 'Pendiente',
+            usuario_id: user.id
+        };
 
-        if (error) throw error;
+        const reporte = await ReportsService.createReporte(payload);
 
-        // Subir Imágenes en paralelo
+        // Subir Imágenes
         if (archivos && archivos.length > 0) {
-            const uploadPromises = Array.from(archivos).map(async (archivo, index) => {
-                const timestamp = Date.now();
-                const randomPart = Math.floor(Math.random() * 1000);
-                const nombre = `${timestamp}_${index}_${randomPart}_${archivo.name}`;
-                const ruta = `${user.id}/${nombre}`;
-
-                const { error: uploadError } = await supabaseClient.storage.from('evidencias').upload(ruta, archivo);
-                if (uploadError) {
-                    Logger.error(`Error al subir imagen ${archivo.name}`, uploadError);
-                    return;
-                }
-
-                const { data: publicUrl } = supabaseClient.storage.from('evidencias').getPublicUrl(ruta);
-
-                const { error: dbError } = await supabaseClient.from('evidencias').insert([{
-                    reporte_id: reporte.id,
-                    imagen_url: publicUrl.publicUrl,
-                    tipo_evidencia: 'reporte'
-                }]);
-
-                if (dbError) {
-                    Logger.error(`Error al registrar evidencia en BD: ${archivo.name}`, dbError);
-                }
-            });
-
-            await Promise.all(uploadPromises);
+            await ReportsService.uploadEvidencias(reporte.id, user.id, archivos);
         }
 
         mostrarMensaje('¡Reporte enviado!', 'success');
@@ -335,123 +396,15 @@ async function enviarReporte(e) {
     }
 }
 
-async function cargarTodasLasSolicitudes(muniId, estado) {
-    const list = document.getElementById('all-reports-list');
-    list.innerHTML = '<div class="loading-spinner">Cargando...</div>';
-
-    try {
-        let query = supabaseClient.from('reportes_final_v1').select('*');
-        if (muniId) query = query.eq('municipalidad_id', muniId);
-        if (estado) query = query.eq('estado', estado);
-
-        if (currentSearch) {
-            // Busqueda por ID, Descripción, Autor o Alias
-            query = query.or(`numero_solicitud.ilike.%${currentSearch}%,descripcion.ilike.%${currentSearch}%,autor_nombre.ilike.%${currentSearch}%,autor_alias.ilike.%${currentSearch}%`);
-        }
-
-        query = aplicarOrdenamiento(query);
-        const { data, error } = await query;
-        if (error) throw error;
-
-        renderizarReportes(data, 'all-reports-list');
-    } catch (err) {
-        Logger.error('Error al cargar todas las solicitudes', err);
-        list.innerHTML = '<p class="error">Error al cargar.</p>';
-    }
-}
-
-async function cargarMisReportes(muniId, estado) {
-    const user = AuthModule.getUsuarioActual();
-    if (!user) return;
-
-    const list = document.getElementById('my-reports-list');
-    list.innerHTML = '<div class="loading-spinner">Cargando...</div>';
-
-    try {
-        let query = supabaseClient.from('reportes_final_v1').select('*').eq('usuario_id', user.id);
-        if (muniId) query = query.eq('municipalidad_id', muniId);
-        if (estado) query = query.eq('estado', estado);
-
-        if (currentSearch) {
-            query = query.or(`numero_solicitud.ilike.%${currentSearch}%,descripcion.ilike.%${currentSearch}%`);
-        }
-
-        query = aplicarOrdenamiento(query);
-        const { data, error } = await query;
-        if (error) throw error;
-
-        renderizarReportes(data, 'my-reports-list');
-    } catch (err) {
-        Logger.error('Error al cargar mis reportes', err);
-        list.innerHTML = '<p class="error">Error al cargar.</p>';
-    }
-}
-
-function aplicarOrdenamiento(query) {
-    if (currentSort === 'recent') return query.order('creado_en', { ascending: false });
-    if (currentSort === 'oldest') return query.order('creado_en', { ascending: true });
-    if (currentSort === 'impact') {
-        // Ordenamos por la relevancia relativa que define las estrellas, 
-        // y usamos el score absoluto como segundo criterio
-        return query
-            .order('relevancia_relativa', { ascending: false })
-            .order('score_impacto', { ascending: false });
-    }
-    return query;
-}
-
 async function renderizarReportes(reportes, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    if (!reportes || reportes.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No hay reportes.</p></div>';
-        return;
-    }
+    reportes.forEach(r => {
+        const card = createReportCard(r);
+        if (card) container.appendChild(card);
+    });
 
-    container.innerHTML = reportes.map(r => {
-        // Usamos los datos ya presentes en la vista reportes_final_v1
-        const authorName = r.autor_nombre || r.autor_alias || 'Vecino';
-        const authorAvatar = r.autor_avatar || null;
-        const author = { nombre: authorName, avatar_url: authorAvatar };
-
-        const relevance = r.relevancia_relativa !== undefined ? r.relevancia_relativa : null;
-        const starsHtml = renderStars(relevance, r.score_impacto);
-
-        return `
-            <div class="report-card" data-id="${r.id}">
-                <div class="report-card__header">
-                     <span class="report-card__id">${r.numero_solicitud || 'S/N'}</span>
-                     <span class="report-card__category">${r.categoria_nombre || 'General'}</span>
-                     <span class="status-badge status-badge--${(r.estado || 'pending').toLowerCase().replace(' ', '_')}">${r.estado}</span>
-                </div>
-                <p class="report-card__description">${r.descripcion}</p>
-                
-                <div class="report-card__stats">
-                     <div class="report-card__author js-view-profile" title="Ver perfil del ciudadano" data-user-id="${r.usuario_id}">
-                        <i data-lucide="user"></i> Ver Ciudadano
-                    </div>
-                    
-                    <div class="report-card__priority" title="Prioridad">
-                         <div class="priority-stars">${starsHtml}</div>
-                    </div>
-
-                    <div class="report-card__stat" title="Apoyos">
-                        <i data-lucide="thumbs-up"></i> ${r.total_votos || r.total_interacciones || 0}
-                    </div>
-
-                    <div class="report-card__stat" title="Comentarios">
-                        <i data-lucide="message-square"></i> ${r.total_comentarios || 0}
-                    </div>
-                </div>
-
-                <div class="report-card__meta">
-                    <span class="report-card__location"><i data-lucide="map-pin"></i> ${r.municipio_nombre}</span>
-                    <span class="report-card__date">${new Date(r.creado_en).toLocaleDateString()}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
     if (window.lucide) lucide.createIcons();
 }
 
@@ -711,9 +664,10 @@ async function cargarComentarios(id) {
         // 3. Renderizar
         container.innerHTML = comments.map(c => {
             const p = profilesMap[c.usuario_id] || {};
-            const authorName = p.nombre_completo || p.alias || 'Vecino';
+            const authorName = escapeHtml(p.nombre_completo || p.alias || 'Vecino');
             const authorAvatar = p.avatar_url || null;
             const author = { nombre: authorName, avatar_url: authorAvatar };
+            const contenido = escapeHtml(c.contenido || '');
 
             const avatar = author.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.nombre)}&background=random`;
 
@@ -725,7 +679,7 @@ async function cargarComentarios(id) {
                             <span class="comment-author">${author.nombre}</span>
                             <span class="comment-date">${new Date(c.creado_en).toLocaleDateString()}</span>
                         </div>
-                        <p class="comment-text">${c.contenido}</p>
+                        <p class="comment-text">${contenido}</p>
                     </div>
                 </div>
             `;
