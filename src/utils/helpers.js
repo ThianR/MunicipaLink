@@ -45,12 +45,25 @@ export async function comprimirImagen(archivo, { maxDimension = 1024, quality = 
     });
 }
 
-export function formatDate(isoString) {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleDateString();
-}
-
 export function truncateText(text, length = 100) {
     if (!text) return '';
     return text.length > length ? text.substring(0, length) + '...' : text;
+}
+
+export function hexToDouble(hex) {
+    const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const view = new DataView(bytes.buffer);
+    return view.getFloat64(0, true);
+export function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(m) {
+        switch (m) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case "'": return '&#39;';
+            default: return m;
+        }
+    });
 }
