@@ -607,17 +607,21 @@ async function subirEvidenciasCierre(reporteId, archivos, tipo) {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    for (const archivo of Array.from(archivos)) {
+    const uploadPromises = Array.from(archivos).map(async (archivo, index) => {
         try {
             const comprimido = await comprimirImagen(archivo);
-            const nombreArchivo = `cierre/${reporteId}/${Date.now()}_${archivo.name}`;
+            // Ensure unique filenames for parallel uploads by adding index and random component
+            const timestamp = Date.now();
+            const randomSuffix = Math.floor(Math.random() * 1000);
+            const nombreArchivo = `cierre/${reporteId}/${timestamp}_${index}_${randomSuffix}_${archivo.name}`;
+
             const { data: uploadData, error: uploadError } = await supabaseClient.storage
                 .from('evidencias')
                 .upload(nombreArchivo, comprimido, { upsert: false, contentType: archivo.type });
 
             if (uploadError) {
                 Logger.error('MunicipalModule: Error subiendo evidencia de cierre', uploadError);
-                continue;
+                return;
             }
 
             const { data: pub } = supabaseClient.storage.from('evidencias').getPublicUrl(nombreArchivo);
@@ -631,7 +635,9 @@ async function subirEvidenciasCierre(reporteId, archivos, tipo) {
         } catch (e) {
             Logger.error('MunicipalModule: Excepción al subir evidencia de cierre', e);
         }
-    }
+    });
+
+    await Promise.all(uploadPromises);
 }
 
 /**
