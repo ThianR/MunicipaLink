@@ -7,6 +7,7 @@ import { supabaseClient } from '../services/supabase.js';
 
 import { Logger } from '../utils/logger.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { escapeHtml } from '../utils/helpers.js';
 
 // Estado interno del módulo
 const state = {
@@ -225,16 +226,23 @@ function renderReportes(data) {
     lista.innerHTML = data.map(r => {
         const prio = prioridadConfig[r.prioridad_gestion] || prioridadConfig.media;
         const est = estadoConfig[r.estado] || estadoConfig['Pendiente'];
-        const ciudadano = r.perfiles?.alias || r.perfiles?.nombre_completo || '—';
-        const depto = r.departamentos?.nombre || '<span style="color:var(--text-muted)">Sin asignar</span>';
+
+        const alias = r.perfiles?.alias ? escapeHtml(r.perfiles.alias) : null;
+        const nombre = r.perfiles?.nombre_completo ? escapeHtml(r.perfiles.nombre_completo) : null;
+        const ciudadano = alias || nombre || '—';
+
+        const depto = r.departamentos?.nombre
+            ? escapeHtml(r.departamentos.nombre)
+            : '<span style="color:var(--text-muted)">Sin asignar</span>';
+
         const fecha = r.creado_en ? new Date(r.creado_en).toLocaleDateString('es-PY') : '—';
 
         return `<tr>
             <td>
-                <span style="font-weight:600; font-size:0.75rem; color: var(--primary);">${r.numero_solicitud || r.id.slice(0, 8)}</span><br>
+                <span style="font-weight:600; font-size:0.75rem; color: var(--primary);">${escapeHtml(r.numero_solicitud) || r.id.slice(0, 8)}</span><br>
                 <span style="font-size:0.75rem; color: var(--text-muted);">${fecha}</span>
             </td>
-            <td style="max-width: 200px; font-size:0.85rem;">${r.descripcion || '—'}</td>
+            <td style="max-width: 200px; font-size:0.85rem;">${escapeHtml(r.descripcion) || '—'}</td>
             <td>${ciudadano}</td>
             <td>${depto}</td>
             <td>
@@ -439,7 +447,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
                         background:#d1fae5; border-radius:8px; border:1px solid #6ee7b7;">
                 <i data-lucide="check-circle" style="width:14px;height:14px;color:#059669;flex-shrink:0;"></i>
                 <span style="font-size:0.875rem; font-weight:600; color:#065f46; flex:1;">
-                    ${a.departamentos?.nombre || 'Departamento'}
+                    ${escapeHtml(a.departamentos?.nombre) || 'Departamento'}
                 </span>
                 <span style="font-size:0.7rem; color:#6ee7b7; white-space:nowrap;">
                     <i data-lucide="lock" style="width:10px;height:10px;"></i> Asignado
@@ -463,7 +471,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
                    onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='transparent'">
                 <input type="checkbox" name="depto-nuevo" value="${d.id}"
                        style="width:16px;height:16px;accent-color:var(--primary,#10b981);cursor:pointer;">
-                <span style="font-size:0.875rem; color:var(--text-main);">${d.nombre}</span>
+                <span style="font-size:0.875rem; color:var(--text-main);">${escapeHtml(d.nombre)}</span>
             </label>
         `).join('');
     } else if (reporteCerrado && disponibles.length > 0) {
@@ -472,7 +480,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
             <label style="display:flex; align-items:center; gap:0.6rem; padding:0.45rem 0.5rem; opacity:0.45;">
                 <input type="checkbox" name="depto-nuevo" value="${d.id}" disabled
                        style="width:16px;height:16px;">
-                <span style="font-size:0.875rem; color:var(--text-muted);">${d.nombre}</span>
+                <span style="font-size:0.875rem; color:var(--text-muted);">${escapeHtml(d.nombre)}</span>
             </label>
         `).join('');
     }
