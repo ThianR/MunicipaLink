@@ -286,21 +286,34 @@ async function enviarReporte(e) {
 
         if (error) throw error;
 
-        // Subir Imágenes
+        // Subir Imágenes en paralelo
         if (archivos && archivos.length > 0) {
-            for (const archivo of archivos) {
-                const nombre = `${Date.now()}_${Math.floor(Math.random() * 1000)}_${archivo.name}`;
+            const uploadPromises = Array.from(archivos).map(async (archivo, index) => {
+                const timestamp = Date.now();
+                const randomPart = Math.floor(Math.random() * 1000);
+                const nombre = `${timestamp}_${index}_${randomPart}_${archivo.name}`;
                 const ruta = `${user.id}/${nombre}`;
 
-                await supabaseClient.storage.from('evidencias').upload(ruta, archivo);
+                const { error: uploadError } = await supabaseClient.storage.from('evidencias').upload(ruta, archivo);
+                if (uploadError) {
+                    Logger.error(`Error al subir imagen ${archivo.name}`, uploadError);
+                    return;
+                }
+
                 const { data: publicUrl } = supabaseClient.storage.from('evidencias').getPublicUrl(ruta);
 
-                await supabaseClient.from('evidencias').insert([{
+                const { error: dbError } = await supabaseClient.from('evidencias').insert([{
                     reporte_id: reporte.id,
                     imagen_url: publicUrl.publicUrl,
                     tipo_evidencia: 'reporte'
                 }]);
-            }
+
+                if (dbError) {
+                    Logger.error(`Error al registrar evidencia en BD: ${archivo.name}`, dbError);
+                }
+            });
+
+            await Promise.all(uploadPromises);
         }
 
         mostrarMensaje('¡Reporte enviado!', 'success');

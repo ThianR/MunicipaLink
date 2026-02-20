@@ -34,7 +34,7 @@ Lógica central de reportes, comentarios y votos.
 | `init()` | Ninguno | Configura listeners de filtros, búsqueda y eventos UI. | Orquesta la recarga de reportes al cambiar de vista. |
 | `reloadReports()` | Ninguno | Recarga los reportes aplicando filtros y orden actual. | Detecta automáticamente qué pestaña está activa. |
 | `aplicarOrdenamiento(query)` | `query` (Supabase) | Aplica orden por fecha o relevancia a la consulta. | El orden 'impact' usa `relevancia_relativa` (estrellas) como criterio principal. |
-| `enviarReporte(event)` | `event` (Submit) | Procesa el formulario de nuevo reporte y sube evidencias. | **Validaciones:** Requiere Login y Municipalidad seleccionada. Comprime imágenes. |
+| `enviarReporte(event)` | `event` (Submit) | Procesa el formulario de nuevo reporte y sube evidencias en paralelo. | **Validaciones:** Requiere Login y Municipalidad seleccionada. Optimizado con Promise.all. |
 | `renderizarReportes(data, id)` | `data` (Array), `id` (String) | Genera el HTML de las tarjetas de reporte en el contenedor. | Utiliza `renderStars` y datos de la vista `reportes_final_v1`. |
 | `renderStars(relevance, score)` | `relevance` (0-1), `score` (Number) | Retorna el HTML de estrellas (1-5) según impacto relativo. | Prioriza `relevancia_relativa` (PERCENT_RANK). Fallback a score absoluto. |
 | `abrirDetalleReporte(id)` | `id` (String) | Cambia a la vista de detalle y carga datos del reporte. | Inicializa Leaflet, `renderTimeline` y `cargarEvidenciasCierre`. |
@@ -107,7 +107,7 @@ Gestión de incidencias para funcionarios municipales.
 | `abrirDetalleGestion(id)` | `id` (String) | Abre el modal premium para gestionar una solicitud específica. | Siempre re-fetcha datos (sin caché) para garantizar frescura. |
 | `renderDepartamentosCheckboxes(asignados, estado)` | `asignados, estado` | Renderiza la lista filtrable de departamentos. | Bloquea (lock) los ya asignados para evitar edición de historial. |
 | `guardarGestion()` | Ninguno | Aplica cambios de prioridad, estado y asignación de departamentos. | **Validación:** Requiere evidencias si el estado es final. |
-| `subirEvidenciasCierre()` | Ninguno | Sube fotos al bucket y registra en `evidencias_cierre`. | Comprime antes de subir. |
+| `subirEvidenciasCierre(id, archivos, tipo)` | `id` (String), `archivos` (FileList), `tipo` (String) | Sube fotos en paralelo al bucket y registra en `evidencias_cierre`. | Comprime antes de subir. Optimizado con Promise.all. |
 
 ---
 
