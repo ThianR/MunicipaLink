@@ -691,7 +691,7 @@ async function cargarComentarios(id) {
 
         if (userIds.length > 0) {
             const { data: profiles } = await supabaseClient
-                .from('perfiles')
+                .from('perfiles_publicos')
                 .select('id, nombre_completo, alias, avatar_url')
                 .in('id', userIds);
 
