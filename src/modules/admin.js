@@ -2,7 +2,9 @@
 import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { hexToDouble } from '../utils/helpers.js';
 import { Logger } from '../utils/logger.js';
+import { escapeHTML } from '../utils/helpers.js';
 
 let allMunicipalities = [];
 let allUsers = [];
@@ -205,12 +207,11 @@ async function cargarMunicipalidades() {
 }
 
 function filtrarMunicipalidades(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allMunicipalities.filter(m =>
-        normalizar(m.nombre).includes(term) ||
-        (m.centro && normalizar(JSON.stringify(m.centro)).includes(term))
+        normalizeString(m.nombre).includes(term) ||
+        (m.centro && normalizeString(JSON.stringify(m.centro)).includes(term))
     );
     renderMunicipalidades(filtered);
 }
@@ -231,7 +232,7 @@ function renderMunicipalidades(data) {
 
         return `
             <tr>
-                <td style="font-weight: 700;">${m.nombre}</td>
+                <td style="font-weight: 700;">${escapeHTML(m.nombre)}</td>
                 <td>
                     <span class="admin-status-badge ${statusClass}">
                         <i data-lucide="${statusIcon}" style="width: 14px; height: 14px;"></i>
@@ -240,10 +241,10 @@ function renderMunicipalidades(data) {
                 </td>
                 <td>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="button button--secondary btn-sm btn-edit-muni" data-id="${m.id}" data-obj='${JSON.stringify(m)}' title="Editar Muni" style="width: auto;">
+                        <button class="button button--secondary btn-sm btn-edit-muni" data-id="${m.id}" data-obj='${escapeHTML(JSON.stringify(m))}' title="Editar Muni" style="width: auto;">
                             <i data-lucide="settings" style="width: 16px; height: 16px;"></i>
                         </button>
-                        <button class="button button--primary btn-sm btn-manage-depts" data-id="${m.id}" data-name="${m.nombre}" title="Gestionar Departamentos" style="width: auto; display: flex; align-items: center; gap: 4px;">
+                        <button class="button button--primary btn-sm btn-manage-depts" data-id="${m.id}" data-name="${escapeHTML(m.nombre)}" title="Gestionar Departamentos" style="width: auto; display: flex; align-items: center; gap: 4px;">
                             <i data-lucide="building" style="width: 16px; height: 16px;"></i> <span class="desktop-only">Deptos</span>
                         </button>
                     </div>
@@ -300,11 +301,6 @@ function abrirModalMuni(muni = null) {
                     try {
                         const hasSRID = muni.centro.substring(8, 10) === '20';
                         const offset = hasSRID ? 18 : 10;
-                        const hexToDouble = (hex) => {
-                            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                            const view = new DataView(bytes.buffer);
-                            return view.getFloat64(0, true);
-                        };
                         lng = hexToDouble(muni.centro.substring(offset, offset + 16));
                         lat = hexToDouble(muni.centro.substring(offset + 16, offset + 32));
                     } catch (err) {
@@ -364,11 +360,6 @@ function initMuniMap(muni) {
                 try {
                     const hasSRID = muni.centro.substring(8, 10) === '20';
                     const offset = hasSRID ? 18 : 10;
-                    const hexToDouble = (hex) => {
-                        const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                        const view = new DataView(bytes.buffer);
-                        return view.getFloat64(0, true);
-                    };
                     lng = hexToDouble(muni.centro.substring(offset, offset + 16));
                     lat = hexToDouble(muni.centro.substring(offset + 16, offset + 32));
                 } catch (err) {
@@ -559,12 +550,11 @@ function abrirModalDepartamentos(muniId, muniNombre) {
 }
 
 function filtrarDepartamentos(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allDepartments.filter(d =>
-        normalizar(d.nombre).includes(term) ||
-        (d.contacto && normalizar(d.contacto).includes(term))
+        normalizeString(d.nombre).includes(term) ||
+        (d.contacto && normalizeString(d.contacto).includes(term))
     );
     renderDepartamentos(filtered);
 }
@@ -602,18 +592,18 @@ function renderDepartamentos(data) {
         <tr>
             <td style="padding: 1rem;">
                 <div style="display: flex; flex-direction: column;">
-                    <strong style="font-size: 0.9375rem; color: var(--text-main);">${d.nombre}</strong>
+                    <strong style="font-size: 0.9375rem; color: var(--text-main);">${escapeHTML(d.nombre)}</strong>
                 </div>
             </td>
             <td style="padding: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
                     <i data-lucide="phone" style="width: 14px; height: 14px;"></i>
-                    ${d.contacto || 'Sin contacto'}
+                    ${escapeHTML(d.contacto || 'Sin contacto')}
                 </div>
             </td>
             <td style="padding: 1rem;">
                 <div style="display: flex; gap: 0.5rem;">
-                    <button class="button button--secondary btn-sm btn-edit-dept" data-id="${d.id}" data-obj='${JSON.stringify(d)}' title="Editar" style="padding: 0.5rem;">
+                    <button class="button button--secondary btn-sm btn-edit-dept" data-id="${d.id}" data-obj='${escapeHTML(JSON.stringify(d))}' title="Editar" style="padding: 0.5rem;">
                         <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
                     </button>
                     <button class="button button--danger btn-sm btn-delete-dept" data-id="${d.id}" title="Eliminar" style="padding: 0.5rem;">
@@ -757,13 +747,12 @@ async function cargarUsuarios() {
 }
 
 function filtrarUsuarios(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allUsers.filter(u =>
-        normalizar(u.nombre_completo).includes(term) ||
-        normalizar(u.alias).includes(term) ||
-        normalizar(u.id).includes(term)
+        normalizeString(u.nombre_completo).includes(term) ||
+        normalizeString(u.alias).includes(term) ||
+        normalizeString(u.id).includes(term)
     );
     renderUsuarios(filtered);
 }
@@ -789,31 +778,31 @@ function renderUsuarios(data) {
                 <td>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8125rem; flex-shrink: 0;">
-                            ${initial}
+                            ${escapeHTML(initial)}
                         </div>
                         <div style="min-width: 0;">
-                            <strong style="display: block; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${u.alias || 'Sin alias'}</strong>
-                            <small class="text-muted desktop-only" style="font-size: 0.75rem;">${u.nombre_completo || 'Sin nombre'}</small>
+                            <strong style="display: block; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(u.alias || 'Sin alias')}</strong>
+                            <small class="text-muted desktop-only" style="font-size: 0.75rem;">${escapeHTML(u.nombre_completo || 'Sin nombre')}</small>
                         </div>
                     </div>
                 </td>
-                <td class="desktop-only"><small style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${u.id.substring(0, 8)}...</small></td>
+                <td class="desktop-only"><small style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(u.id.substring(0, 8))}...</small></td>
                 <td>
-                    <span style="display: inline-block; padding: 0.25rem 0.625rem; border-radius: 10px; font-size: 0.6875rem; font-weight: 600; background: ${roleColor}15; color: ${roleColor};">${u.rol}</span>
+                    <span style="display: inline-block; padding: 0.25rem 0.625rem; border-radius: 10px; font-size: 0.6875rem; font-weight: 600; background: ${roleColor}15; color: ${roleColor};">${escapeHTML(u.rol)}</span>
                     <br>
                     <span class="status-badge-premium ${estatusClase}" style="margin-top: 4px; font-size: 10px;">${estatusTexto}</span>
                 </td>
                 <td>
-                    <span class="desktop-only">${u.nivel || 'Vecino Novato'} </span>
-                    <small style="color: var(--text-muted);">${u.puntos || 0} XP</small>
+                    <span class="desktop-only">${escapeHTML(u.nivel || 'Vecino Novato')} </span>
+                    <small style="color: var(--text-muted);">${escapeHTML(u.puntos || 0)} XP</small>
                 </td>
                 <td class="desktop-only" style="font-size: 0.8125rem; color: var(--text-muted);">${fecha}</td>
                 <td>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="button button--secondary btn-sm btn-edit-user" data-id="${u.id}" data-obj='${JSON.stringify(u).replace(/'/g, "&#39;")}' title="Editar" style="width: auto;">
+                        <button class="button button--secondary btn-sm btn-edit-user" data-id="${u.id}" data-obj='${escapeHTML(JSON.stringify(u))}' title="Editar" style="width: auto;">
                             <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
                         </button>
-                        <button class="button btn-sm btn-reset-password" data-id="${u.id}" data-email="${u.email}" data-alias="${u.alias || u.nombre_completo}" title="Resetear Contrasena" style="background: #fbbf24; color: white; width: auto;">
+                        <button class="button btn-sm btn-reset-password" data-id="${u.id}" data-email="${escapeHTML(u.email)}" data-alias="${escapeHTML(u.alias || u.nombre_completo)}" title="Resetear Contrasena" style="background: #fbbf24; color: white; width: auto;">
                             <i data-lucide="key" style="width: 14px; height: 14px;"></i>
                         </button>
                         <button class="button button--danger btn-sm btn-ban-user" data-id="${u.id}" data-activo="${u.activo !== false}" title="${u.activo === false ? 'Desbanear' : 'Banear'}" style="width: auto;">
@@ -999,13 +988,12 @@ async function cargarSolicitudesRol() {
 }
 
 function filtrarSolicitudes(query) {
-    const normalizar = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const term = normalizar(query);
+    const term = normalizeString(query);
 
     const filtered = allSolicitudes.filter(s =>
-        normalizar(s.perfiles?.alias).includes(term) ||
-        normalizar(s.perfiles?.nombre_completo).includes(term) ||
-        normalizar(s.municipalidades?.nombre).includes(term)
+        normalizeString(s.perfiles?.alias).includes(term) ||
+        normalizeString(s.perfiles?.nombre_completo).includes(term) ||
+        normalizeString(s.municipalidades?.nombre).includes(term)
     );
     renderSolicitudes(filtered);
 }
@@ -1033,21 +1021,21 @@ function renderSolicitudes(data) {
                             <i data-lucide="user" style="width:16px;height:16px;color:var(--primary);"></i>
                         </div>
                         <div>
-                            <strong>${s.perfiles?.alias || 'S/A'}</strong><br>
-                            <small class="text-muted">${s.perfiles?.nombre_completo || ''}</small>
+                            <strong>${escapeHTML(s.perfiles?.alias || 'S/A')}</strong><br>
+                            <small class="text-muted">${escapeHTML(s.perfiles?.nombre_completo || '')}</small>
                         </div>
                     </div>
                 </td>
                 <td>
                     <div style="display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="building-2" style="width:14px;height:14px;color:var(--text-muted);"></i>
-                        ${s.municipalidades?.nombre || '-'}
+                        ${escapeHTML(s.municipalidades?.nombre || '-')}
                     </div>
                 </td>
                 <td>
                     <span class="admin-status-badge ${badgeClass}" style="display:inline-flex; align-items:center; gap:0.3rem;">
                         <i data-lucide="${estadoIcon[estadoKey]}" style="width:12px;height:12px;"></i>
-                        ${estadoLabel[estadoKey] || estadoKey.toUpperCase()}
+                        ${estadoLabel[estadoKey] || escapeHTML(estadoKey.toUpperCase())}
                     </span>
                 </td>
                 <td>
@@ -1196,5 +1184,3 @@ async function gestionarSolicitudRol(id, estado, comentarios = '') {
     }
 }
 
-// Exponer globalmente como respaldo para los onclick del HTML generado
-window.gestionarSolicitudRol = gestionarSolicitudRol;

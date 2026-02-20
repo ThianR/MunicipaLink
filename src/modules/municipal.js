@@ -6,8 +6,10 @@
 import { supabaseClient } from '../services/supabase.js';
 
 import { Logger } from '../utils/logger.js';
+import { hexToDouble } from '../utils/helpers.js';
 import { mostrarMensaje } from '../utils/ui.js';
 import { parseUbicacion } from '../utils/location.js';
+import { escapeHtml } from '../utils/helpers.js';
 
 // Estado interno del módulo
 const state = {
@@ -226,16 +228,23 @@ function renderReportes(data) {
     lista.innerHTML = data.map(r => {
         const prio = prioridadConfig[r.prioridad_gestion] || prioridadConfig.media;
         const est = estadoConfig[r.estado] || estadoConfig['Pendiente'];
-        const ciudadano = r.perfiles?.alias || r.perfiles?.nombre_completo || '—';
-        const depto = r.departamentos?.nombre || '<span style="color:var(--text-muted)">Sin asignar</span>';
+
+        const alias = r.perfiles?.alias ? escapeHtml(r.perfiles.alias) : null;
+        const nombre = r.perfiles?.nombre_completo ? escapeHtml(r.perfiles.nombre_completo) : null;
+        const ciudadano = alias || nombre || '—';
+
+        const depto = r.departamentos?.nombre
+            ? escapeHtml(r.departamentos.nombre)
+            : '<span style="color:var(--text-muted)">Sin asignar</span>';
+
         const fecha = r.creado_en ? new Date(r.creado_en).toLocaleDateString('es-PY') : '—';
 
         return `<tr>
             <td>
-                <span style="font-weight:600; font-size:0.75rem; color: var(--primary);">${r.numero_solicitud || r.id.slice(0, 8)}</span><br>
+                <span style="font-weight:600; font-size:0.75rem; color: var(--primary);">${escapeHtml(r.numero_solicitud) || r.id.slice(0, 8)}</span><br>
                 <span style="font-size:0.75rem; color: var(--text-muted);">${fecha}</span>
             </td>
-            <td style="max-width: 200px; font-size:0.85rem;">${r.descripcion || '—'}</td>
+            <td style="max-width: 200px; font-size:0.85rem;">${escapeHtml(r.descripcion) || '—'}</td>
             <td>${ciudadano}</td>
             <td>${depto}</td>
             <td>
@@ -372,6 +381,45 @@ async function abrirDetalleGestion(reporteId) {
     if (window.lucide) window.lucide.createIcons();
 }
 
+/**
+ * Parsea la ubicación (Hex PostGIS o GeoJSON) para obtener Lat/Lng.
+ * @param {string|object} ubicacion
+ * @returns {{lat: number, lng: number} | null}
+ */
+function parseUbicacion(ubicacion) {
+    if (!ubicacion) return null;
+    let lat, lng;
+
+    try {
+        if (typeof ubicacion === 'string') {
+            // Hex WKB format de Supabase/PostGIS
+            if (ubicacion.startsWith('0101')) {
+                const hasSRID = ubicacion.substring(8, 10) === '20';
+                const offset = hasSRID ? 18 : 10;
+                lng = hexToDouble(ubicacion.substring(offset, offset + 16));
+                lat = hexToDouble(ubicacion.substring(offset + 16, offset + 32));
+            } else {
+                // WKT format "POINT(lng lat)"
+                const match = ubicacion.match(/POINT\(([^ ]+) ([^ ]+)\)/) || ubicacion.match(/\(([^ ]+) ([^ ]+)\)/);
+                if (match) {
+                    lng = parseFloat(match[1]);
+                    lat = parseFloat(match[2]);
+                }
+            }
+        } else if (ubicacion.coordinates) {
+            // GeoJSON format
+            lng = ubicacion.coordinates[0];
+            lat = ubicacion.coordinates[1];
+        }
+
+        if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+            return { lat, lng };
+        }
+    } catch (e) {
+        console.error('Error parseando ubicación:', e);
+    }
+    return null;
+}
 
 /**
  * Renderiza los departamentos en el modal como checkboxes.
@@ -396,7 +444,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
                         background:#d1fae5; border-radius:8px; border:1px solid #6ee7b7;">
                 <i data-lucide="check-circle" style="width:14px;height:14px;color:#059669;flex-shrink:0;"></i>
                 <span style="font-size:0.875rem; font-weight:600; color:#065f46; flex:1;">
-                    ${a.departamentos?.nombre || 'Departamento'}
+                    ${escapeHtml(a.departamentos?.nombre) || 'Departamento'}
                 </span>
                 <span style="font-size:0.7rem; color:#6ee7b7; white-space:nowrap;">
                     <i data-lucide="lock" style="width:10px;height:10px;"></i> Asignado
@@ -420,7 +468,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
                    onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='transparent'">
                 <input type="checkbox" name="depto-nuevo" value="${d.id}"
                        style="width:16px;height:16px;accent-color:var(--primary,#10b981);cursor:pointer;">
-                <span style="font-size:0.875rem; color:var(--text-main);">${d.nombre}</span>
+                <span style="font-size:0.875rem; color:var(--text-main);">${escapeHtml(d.nombre)}</span>
             </label>
         `).join('');
     } else if (reporteCerrado && disponibles.length > 0) {
@@ -429,7 +477,7 @@ function renderDepartamentosCheckboxes(asignados, estadoReporte) {
             <label style="display:flex; align-items:center; gap:0.6rem; padding:0.45rem 0.5rem; opacity:0.45;">
                 <input type="checkbox" name="depto-nuevo" value="${d.id}" disabled
                        style="width:16px;height:16px;">
-                <span style="font-size:0.875rem; color:var(--text-muted);">${d.nombre}</span>
+                <span style="font-size:0.875rem; color:var(--text-muted);">${escapeHtml(d.nombre)}</span>
             </label>
         `).join('');
     }
@@ -556,17 +604,21 @@ async function subirEvidenciasCierre(reporteId, archivos, tipo) {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    for (const archivo of Array.from(archivos)) {
+    const uploadPromises = Array.from(archivos).map(async (archivo, index) => {
         try {
             const comprimido = await comprimirImagen(archivo);
-            const nombreArchivo = `cierre/${reporteId}/${Date.now()}_${archivo.name}`;
+            // Ensure unique filenames for parallel uploads by adding index and random component
+            const timestamp = Date.now();
+            const randomSuffix = Math.floor(Math.random() * 1000);
+            const nombreArchivo = `cierre/${reporteId}/${timestamp}_${index}_${randomSuffix}_${archivo.name}`;
+
             const { data: uploadData, error: uploadError } = await supabaseClient.storage
                 .from('evidencias')
                 .upload(nombreArchivo, comprimido, { upsert: false, contentType: archivo.type });
 
             if (uploadError) {
                 Logger.error('MunicipalModule: Error subiendo evidencia de cierre', uploadError);
-                continue;
+                return;
             }
 
             const { data: pub } = supabaseClient.storage.from('evidencias').getPublicUrl(nombreArchivo);
@@ -580,7 +632,9 @@ async function subirEvidenciasCierre(reporteId, archivos, tipo) {
         } catch (e) {
             Logger.error('MunicipalModule: Excepción al subir evidencia de cierre', e);
         }
-    }
+    });
+
+    await Promise.all(uploadPromises);
 }
 
 /**
