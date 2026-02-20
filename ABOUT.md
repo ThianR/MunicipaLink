@@ -12,12 +12,13 @@ MunicipaLink es una solución de código abierto que transforma la relación ent
 
 ### ¿Qué hace única a MunicipaLink?
 
-1. **Panel Admin Centralizado**: Gestión avanzada de usuarios, baneo lógico y control de entidades municipales.
-2. **Gamificación Inteligente**: Sistema de XP, niveles y rangos que recompensa la participación activa.
-2. **Trust Meter**: Multiplicador de reputación basado en la completitud del perfil (1.0x - 2.0x)
-3. **Ranking por Impacto**: Algoritmo de relevancia relativa que prioriza reportes según votos de la comunidad
-4. **Privacidad Configurable**: Control granular sobre qué información del perfil es pública
-5. **Arquitectura de Vanguardia**: Código modular en JavaScript vanilla y CSS basado en **BEM atomizado** para máximo rendimiento y escalabilidad.
+1.  **Gestión Municipal Pro**: Flujo completo de asignación de múltiples departamentos, priorización interna y resolución con evidencias fotográficas obligatorias.
+2.  **Dashboard & Control**: Gestión integral de usuarios, baneo lógico y control de entidades municipales.
+3.  **Flujo de Solicitudes de Rol**: Gestión de permisos municipales con evidencia digital y feedback obligatorio de rechazo.
+4.  **Gamificación Inteligente**: Sistema de XP, niveles y rangos que recompensa la participación activa.
+5.  **Trust Meter**: Multiplicador de reputación basado en la completitud del perfil (1.0x - 2.0x).
+6.  **Ranking por Impacto**: Algoritmo de relevancia relativa que prioriza reportes según votos de la comunidad.
+7.  **Diseño Premium V2**: Interfaz inmersiva con gradientes, separadores de onda SVG y metodología BEM atomizada.
 
 ### Casos de Uso
 
@@ -51,7 +52,7 @@ open-source
 ## 🌐 Website / Homepage
 
 ```
-https://municipalink.com (ejemplo)
+https://municipalink.com (ejemplo estoy pensando en utilizar vercel para hostear mas adelante)
 ```
 
 ---
@@ -86,5 +87,5 @@ Para el repositorio de GitHub, se recomienda incluir un banner visual que muestr
 ---
 
 <div align="center">
-  <strong>MunicipaLink</strong> - Empoderando ciudadanos, mejorando comunidades
+  <strong>MunicipaLink</strong> - Conectando ciudadanos, mejorando comunidades
 </div>

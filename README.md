@@ -26,12 +26,16 @@ MunicipaLink es una aplicación web que empodera a los ciudadanos para reportar 
 - **Seguimiento de Reportes**: Recibe notificaciones sobre reportes que te interesan
 - **Perfiles Públicos**: Visualiza la reputación y contribuciones de otros ciudadanos
 
-### 🛠️ Administración y Control (Nuevo)
-- **Gestión de Usuarios**: Listado premium, edición de datos, baneo lógico y reset de contraseña.
-- **Control Municipal**: Administración de municipalidades y departamentos.
-- **Dashboard**: Estadísticas en tiempo real de la plataforma.
+### 🛠️ Gestión Municipal Pro (Nuevo)
+- **Panel Municipal**: Vista dedicada para funcionarios con filtrado avanzado por prioridad y estado.
+- **Soporte Multi-departamento**: Asigna múltiples áreas a un mismo reporte. Buscador integrado para gestión rápida.
+- **Navegación GPS**: Botón "Ir al lugar" que vincula directamente con Google Maps Navigation.
+- **Resolución con Evidencia**: Cierre obligatorio de reportes adjuntando fotos de la solución o motivo de rechazo.
+- **Línea de Tiempo**: Visualización de hitos (creado, asignado, resuelto) con cálculo de tiempos para ciudadanos.
 
-### 📊 Transparencia y Análisis
+### 📊 Transparencia y Administración
+- **Panel Admin Central**: Control de usuarios (baneo, edición), municipalidades y solicitudes de rol.
+- **Ranking de Impacto**: Priorización automática basada en algoritmos de relevancia comunitaria.
 - **Ranking de Impacto**: Los reportes se ordenan por relevancia relativa usando `PERCENT_RANK`
 - **Filtros Avanzados**: Por estado, categoría, fecha y municipalidad
 - **Estadísticas Personales**: Visualiza tu impacto en la comunidad
@@ -71,7 +75,7 @@ MunicipaLink/
 │   ├── vistas/             # Vistas SQL (reportes_final_v1, etc.)
 │   └── funciones/          # Funciones RPC (calcular_xp, gamificacion)
 ├── src/                    # Lógica de negocio modularizada
-│   ├── modules/            # auth, map, reports, profile, ui, municipalities
+│   ├── modules/            # auth, map, reports, profile, ui, admin, municipal
 │   ├── services/           # Cliente Supabase
 │   └── utils/              # helpers, logger, ui (toasts)
 ├── tests/                  # Pruebas unitarias y de integración
@@ -93,8 +97,8 @@ MunicipaLink/
 
 1. **Clonar el repositorio**
    ```bash
-   git clone https://github.com/tu-usuario/municipalink.git
-   cd municipalink
+   git clone https://github.com/ThianR/MunicipaLink.git
+   cd MunicipalLink
    ```
 
 2. **Configurar variables de entorno**
@@ -110,7 +114,7 @@ MunicipaLink/
 
 3. **Configurar la base de datos**
    - Accede al panel de Supabase
-    - Ejecuta los archivos en `sql/` en orden correlativo (00_config.sql hasta 06_semillas.sql).
+    - Ejecuta los archivos en `sql/` en orden correlativo (00_config.sql hasta 09_gestion_municipal.sql).
 
 4. **Iniciar el servidor local**
    ```bash
@@ -140,10 +144,14 @@ MunicipaLink/
 4. **Interactúa** votando, comentando y siguiendo reportes relevantes
 5. **Sube de nivel** y desbloquea insignias por tu participación
 
+### Para Funcionarios Municipales
+1. **Accede al Panel Municipal** via "Mi Municipalidad" en el sidebar.
+2. **Gestiona Reportes**: Asigna departamentos, cambia prioridades y añade observaciones.
+3. **Navega al Sitio**: Usa el botón "Ir al lugar" para llegar al punto exacto de la incidencia.
+4. **Resuelve**: Sube evidencias fotográficas finales para cerrar el reporte.
+
 ### Para Administradores
-- Acceso al panel de administración (próximamente)
-- Gestión de reportes y moderación de contenido
-- Estadísticas municipales y reportes de impacto
+- Gestión global de usuarios, baneos y aprobación de nuevos roles municipales.
 
 ---
 
@@ -184,9 +192,30 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 
 ---
 
+### 🛠️ Administración y Control Avanzado
+- **Gestión de Usuarios**: Listado premium con búsqueda, edición de perfiles, baneo lógico y reset de contraseña.
+- **Flujo de Solicitudes de Rol**: Sistema de aprobación/rechazo de roles municipales con:
+    - **Modal Premium V2**: Visualización detallada de evidencias y comentarios.
+    - **Rechazo con Motivo Obligatorio**: Garantiza transparencia y feedback al usuario.
+    - **Resubmisión**: Permite a los usuarios rechazados corregir y reenviar solicitudes.
+- **Control Municipal**: Administración de municipalidades y departamentos asociados.
+- **Dashboard**: Estadísticas en tiempo real sobre la participación y el estado de la comunidad.
+
+---
+
+## 🎨 Principios de Diseño
+- **Premium First**: Diseño moderno con gradientes, glassmorphism, onda SVG en modales y animaciones suaves.
+- **BEM Atomizado**: Metodología CSS para máxima mantenibilidad y rendimiento.
+- **Experiencia Inmersiva**: Uso de micro-interacciones y badges de estado con iconografía Lucide.
+
+---
+
 ## 🌟 Roadmap
 
 - [x] Panel de administración avanzado (Usuarios/Munis)
+- [x] Flujo de solicitudes de rol municipal con feedback obligatorio
+- [x] Gestión Municipal con Multi-departamento y Evidencias
+- [x] Navegación GPS e Historial/Timeline visual
 - [ ] Notificaciones push en tiempo real
 - [ ] Exportación de reportes a PDF/Excel
 - [ ] Integración con redes sociales
@@ -198,7 +227,7 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 
 ## 📞 Contacto y Soporte
 
-- **Issues**: [GitHub Issues](https://github.com/tu-usuario/municipalink/issues)
+- **Issues**: [GitHub Issues](https://github.com/ThianR/MunicipaLink/issues)
 - **Documentación**: Ver `AI_CONTEXT.md` y `TECHNICAL_REFERENCE.md`
 - **Email**: soporte@municipalink.com (ejemplo)
 

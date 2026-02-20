@@ -4,7 +4,7 @@ Este documento es la fuente de verdad técnica del proyecto. Detalla cada funci�
 
 -   **Gestión de Solicitudes de Rol**: Los ciudadanos pueden solicitar el rol `municipal` adjuntando documentación. Los admins aprueban/rechazan desde el panel.
 -   **Panel Administrativo Centralizado**: Gestión de usuarios, municipalidades, departamentos y solicitudes de rol con diseño premium.
--   **Consolidación SQL**: Motor de base de datos optimizado e idempotente (scripts 00 a 07).
+-   **Consolidación SQL**: Motor de base de datos optimizado e idempotente (scripts 00 a 09).
 
 ## [REGLA DE ORO]
 > [!IMPORTANT]
@@ -37,8 +37,9 @@ Lógica central de reportes, comentarios y votos.
 | `enviarReporte(event)` | `event` (Submit) | Procesa el formulario de nuevo reporte y sube evidencias. | **Validaciones:** Requiere Login y Municipalidad seleccionada. Comprime imágenes. |
 | `renderizarReportes(data, id)` | `data` (Array), `id` (String) | Genera el HTML de las tarjetas de reporte en el contenedor. | Utiliza `renderStars` y datos de la vista `reportes_final_v1`. |
 | `renderStars(relevance, score)` | `relevance` (0-1), `score` (Number) | Retorna el HTML de estrellas (1-5) según impacto relativo. | Prioriza `relevancia_relativa` (PERCENT_RANK). Fallback a score absoluto. |
-| `abrirDetalleReporte(id)` | `id` (String) | Cambia a la vista de detalle y carga datos del reporte. | Inicializa Leaflet y llama a `cargarInteracciones(id)`. |
-| `cargarInteracciones(id)` | `id` (String) | Obtiene conteos de votos y aplica clase `.active` (verde) si el usuario actual ya interactuó. | Gestiona estados de `thumbs-up`, `thumbs-down` y `eye`. |
+| `abrirDetalleReporte(id)` | `id` (String) | Cambia a la vista de detalle y carga datos del reporte. | Inicializa Leaflet, `renderTimeline` y `cargarEvidenciasCierre`. |
+| `renderTimeline(reporte)` | `reporte` (Object) | Genera la línea de tiempo visual (Creación → Asignación → Resolución). | Calcula tiempos transcurridos entre hitos de tiempo. |
+| `cargarEvidenciasCierre(id, e, obs)` | `id, estado, obs` | Muestra fotos de resolución/rechazo y observaciones del funcionario. | Solo se activa si el estado es final. |
 | `interactuar(tipo)` | `tipo` (String) | Gestiona Votos (+/-) y Seguir reporte. Refresca UI inmediatamente. | **Validación:** Requiere Login. Es tipo toggle. |
 | `verPerfilCiudadano(e, uid, name, avatar)` | Varios | Navega a la vista de perfil del ciudadano y carga sus datos. | Redirige a UIModule.changeView('profile') y emite `profile:load-user`. |
 
@@ -86,10 +87,27 @@ Gestión centralizada para administradores.
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
 | `init()` | Ninguno | Inicializa listeners de búsqueda, pestañas y modales admin. | Solo se carga si el usuario tiene rol `admin`. |
-| `cargarUsuarios()` | Ninguno | Lista usuarios en la tabla premium con filtros de búsqueda. | Obtiene datos de `perfiles`. |
+| `cargarUsuarios()` | Ninguno | Lista usuarios en la tabla premium con filtros de búsqueda. | Obtiene datos de la vista `v_admin_usuarios`. |
+| `cargarSolicitudesRol()` | Ninguno | Obtiene y renderiza la lista de solicitudes de rol municipal. | Filtra por estado y utiliza la tabla `solicitudes_municipales`. |
+| `gestionarSolicitudRol(id, estado, msj)` | `id`, `estado`, `msj` | Aprueba o rechaza una solicitud de rol. | **Nota:** Dispara trigger SQL para cambiar rol en `perfiles`. |
 | `guardarUsuario()` | Ninguno | Actualiza datos (rol, nivel, alias) y estado `activo` (baneo). | Requiere rol `admin`. |
 | `enviarResetPassword()` | Ninguno | Dispara el flujo de recuperación de Supabase para un usuario. | Utiliza `auth.resetPasswordForEmail`. |
 | `cambiarPestanaAdmin(id)` | `id` (String) | Cambia entre Dashboard, Municipalidades y Usuarios. | Gestiona clases `.active` en paneles. |
+| `exportarReportesCSV()` | Ninguno | Descarga el listado filtrado actual en formato CSV. | Pendiente de implementación (ver Roadmap). |
+
+---
+
+## 7. MunicipalModule (`src/modules/municipal.js`)
+Gestión de incidencias para funcionarios municipales.
+
+| Función | Parámetros | Descripción | Validaciones / Notas |
+| :--- | :--- | :--- | :--- |
+| `init()` | Ninguno | Inicializa el panel, carga departamentos y reportes de la muni asignada. | Requiere que el usuario tenga un `municipalidad_id` en su perfil. |
+| `cargarReportes(filtros)` | `filtros` (Object) | Obtiene reportes filtrados por estado y prioridad. | Usa join explícito a `departamentos!departamento_id`. |
+| `abrirDetalleGestion(id)` | `id` (String) | Abre el modal premium para gestionar una solicitud específica. | Siempre re-fetcha datos (sin caché) para garantizar frescura. |
+| `renderDepartamentosCheckboxes(asignados, estado)` | `asignados, estado` | Renderiza la lista filtrable de departamentos. | Bloquea (lock) los ya asignados para evitar edición de historial. |
+| `guardarGestion()` | Ninguno | Aplica cambios de prioridad, estado y asignación de departamentos. | **Validación:** Requiere evidencias si el estado es final. |
+| `subirEvidenciasCierre()` | Ninguno | Sube fotos al bucket y registra en `evidencias_cierre`. | Comprime antes de subir. |
 
 ---
 
@@ -104,6 +122,8 @@ Gestión centralizada para administradores.
 
 ### `src/utils/helpers.js`
 - `comprimirImagen(file)`: Retorna Promise con el archivo comprimido (70% calidad, máx 1280px).
+- `formatFecha(isoString)`: Formatea fechas a LocalDateString (es-ES).
+- `parseUbicacion(ubicacion)`: Convierte formatos PostGIS (Hex/WKT) o GeoJSON a `{lat, lng}`. (Consolidado en `municipal.js` temporalmente).
 
 ### 🎨 Arquitectura de Estilos (`/styles`)
 El proyecto ha migrado de un archivo único a un sistema modular basado en **BEM**:
@@ -125,6 +145,9 @@ El motor de base de datos está organizado de forma secuencial e idempotente:
 - **`04_funciones.sql`**: Triggers y lógica RPC (gamificación, solicitudes).
 - **`05_permisos.sql`**: Grants base para roles de red.
 - **`06_semillas.sql`**: Datos maestros (categorías iniciales).
+- **`07_solicitudes_rol.sql`**: Sistema de gestión de solicitudes de rol municipal.
+- **`08_vistas_admin.sql`**: Vista `v_admin_usuarios` con cálculos de gamificación para el panel.
+- **`09_gestion_municipal.sql`**: Migración consolidada: Gestión avanzada, Multi-departamento, RLS y Triggers.
 
 ---
 *Fin del Catálogo Técnico.*

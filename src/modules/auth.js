@@ -168,8 +168,10 @@ async function actualizarPassword(password) {
 
 async function manejarAuthUsuario(usuario) {
     usuarioActual = usuario;
+    let perfil = null;
     try {
-        const { data: perfil } = await supabaseClient.from('perfiles').select('rol').eq('id', usuario.id).single();
+        const { data } = await supabaseClient.from('perfiles').select('rol').eq('id', usuario.id).single();
+        perfil = data;
         aplicarRol(perfil ? perfil.rol : 'ciudadano');
     } catch (err) {
         aplicarRol('ciudadano');
@@ -179,8 +181,10 @@ async function manejarAuthUsuario(usuario) {
     cambiarPantalla('app');
     mostrarMensaje(`Bienvenido, ${usuario.email}`, 'success');
 
-    document.dispatchEvent(new CustomEvent('auth:login', { detail: { user: usuario } }));
+    document.dispatchEvent(new CustomEvent('auth:login', { detail: { user: usuario, rol: perfil?.rol || 'ciudadano' } }));
+
 }
+
 
 function manejarLoginInvitado() {
     usuarioActual = null;
@@ -197,3 +201,5 @@ function manejarCierreSesion() {
     cambiarPantalla('login');
     document.dispatchEvent(new CustomEvent('auth:logout'));
 }
+
+window.AuthModule = AuthModule;

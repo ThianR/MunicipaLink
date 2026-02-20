@@ -143,6 +143,11 @@
                     <button class="nav__item" data-view="profile">
                         <i data-lucide="user"></i> Mi Perfil
                     </button>
+                    <!-- Solo visible para rol municipal -->
+                    <button class="nav__item municipal-only" data-view="municipal"
+                            style="display:none; background: linear-gradient(135deg, var(--primary), #059669); color:white;">
+                        <i data-lucide="building-2"></i> Mi Municipalidad
+                    </button>
                 </nav>
 
                 <div id="admin-panel" class="admin-only" style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
@@ -159,6 +164,64 @@
 
             <!-- Main Content Area -->
             <main class="content-view">
+                <!-- Vista Municipal: Gestión de Reportes -->
+                <div id="view-municipal" class="view">
+                    <div class="view-header" style="padding:1.5rem 1.5rem 0;">
+                        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
+                            <i data-lucide="building-2" style="width:22px;height:22px;color:var(--primary);"></i>
+                            <h2 style="margin:0; font-size:1.25rem;">Gestión de Reportes</h2>
+                        </div>
+                        <p style="margin:0 0 1rem; font-size:0.82rem; color:var(--text-muted);">
+                            Municipalidad: <strong id="municipal-panel-titulo">—</strong>
+                        </p>
+                    </div>
+
+                    <!-- Toolbar de Filtros -->
+                    <div class="toolbar-premium" style="padding: 0 1.5rem;">
+                        <div class="search-premium" style="flex:1;">
+                            <i data-lucide="search" style="width:16px;height:16px;"></i>
+                            <input type="text" id="municipal-search" placeholder="Buscar por ID, descripción o ciudadano..." class="search__input">
+                        </div>
+                        <select id="municipal-filtro-estado" class="input" style="width:auto; padding: 0.5rem 1rem;">
+                            <option value="todos">Todos los estados</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En proceso">En proceso</option>
+                            <option value="Resuelto">Resuelto</option>
+                            <option value="Rechazado">Rechazado</option>
+                        </select>
+                        <select id="municipal-filtro-prioridad" class="input" style="width:auto; padding: 0.5rem 1rem;">
+                            <option value="todas">Todas las prioridades</option>
+                            <option value="urgente">Urgente</option>
+                            <option value="alta">Alta</option>
+                            <option value="media">Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                    </div>
+
+                    <!-- Tabla de Reportes -->
+                    <div class="table-container-premium" style="margin:1rem 1.5rem;">
+                        <div class="table-wrapper-scroll" style="max-height: calc(100vh - 260px);">
+                            <table class="table" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th>N° Solicitud</th>
+                                        <th>Descripción</th>
+                                        <th>Ciudadano</th>
+                                        <th>Departamento</th>
+                                        <th>Estado</th>
+                                        <th>Prioridad / Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="municipal-reportes-lista">
+                                    <tr>
+                                        <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">Cargando reportes...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Map View -->
                 <div id="view-map" class="view view--active" style="position: relative;">
                     <div id="map"></div>
@@ -271,8 +334,13 @@
             <div class="detail-view__grid">
                 <!-- Left Column: Map & Info -->
                 <div class="detail-view__left">
-                    <div class="detail-view__map-container">
+                    <div class="detail-view__map-container" style="position:relative;">
                         <div id="detail-map" class="detail-view__map"></div>
+                        <a id="btn-navigate-gps" class="button button--primary" 
+                           style="display:none; position:absolute; bottom:1.25rem; left:50%; transform:translateX(-50%); z-index:400; font-size:0.85rem; padding:0.6rem 1.25rem; border-radius:999px; align-items:center; justify-content:center; gap:0.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.2); text-decoration:none; white-space:nowrap; width:max-content;" 
+                           target="_blank">
+                            <i data-lucide="navigation" style="width:14px;height:14px;"></i> Ir al lugar
+                        </a>
                     </div>
                     
                     <div class="detail-card">
@@ -285,6 +353,12 @@
                         <h3 class="detail-card__title">Descripción</h3>
                         <p id="detail-description" class="detail-card__description"></p>
                     </div>
+
+                    <!-- Línea de tiempo del reporte -->
+                    <div id="detail-timeline-container" class="detail-card" style="display:none;">
+                        <h3 class="detail-card__title"><i data-lucide="clock"></i> Línea de Tiempo</h3>
+                        <div id="detail-timeline"></div>
+                    </div>
                 </div>
 
                 <!-- Right Column: Evidence & Interaction -->
@@ -295,6 +369,13 @@
                         <div id="evidences-carousel" class="evidences-carousel">
                             <!-- Images rendered here -->
                         </div>
+                    </div>
+
+                    <!-- Evidencias de cierre (resolución / rechazo) -->
+                    <div id="detail-cierre-container" class="detail-card" style="display:none;">
+                        <h3 id="detail-cierre-title" class="detail-card__title"><i data-lucide="file-check"></i> Registro de Cierre</h3>
+                        <div id="detail-cierre-carousel" class="evidences-carousel"></div>
+                        <p id="detail-observacion" style="margin-top:0.75rem; font-size:0.875rem; color: var(--text-muted); display:none;"></p>
                     </div>
 
                     <!-- Actions -->
@@ -425,10 +506,10 @@
                                 <thead>
                                     <tr>
                                         <th>Usuario</th>
-                                        <th>ID</th>
+                                        <th class="desktop-only">ID</th>
                                         <th>Rol</th>
                                         <th>Nivel</th>
-                                        <th>Ingreso</th>
+                                        <th class="desktop-only">Ingreso</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -454,9 +535,8 @@
                                     <tr>
                                         <th>Usuario</th>
                                         <th>Municipalidad</th>
-                                        <th>Documento</th>
                                         <th>Estado</th>
-                                        <th>Acciones</th>
+                                        <th>Detalles</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-solicitudes-list">
@@ -577,6 +657,16 @@
                 </div>
 
                 <div class="profile-main">
+                    <!-- Navegación por Pestañas -->
+                    <div class="profile-tabs-nav">
+                        <button class="profile-tab-btn active" data-profile-tab="personal">
+                            <i data-lucide="user"></i> Mis Datos
+                        </button>
+                        <button class="profile-tab-btn" data-profile-tab="municipal">
+                            <i data-lucide="building-2"></i> Solicitud Municipal
+                        </button>
+                    </div>
+
                     <!-- Mensaje para Invitados -->
                     <div id="guest-welcome-message" class="guest-welcome-card" style="display: none;">
                         <div class="guest-msg-content">
@@ -588,103 +678,114 @@
                         </div>
                     </div>
 
-                    <form id="form-profile" class="card-premium">
-                        <div class="form-grid-premium">
-                            <div class="form-group">
-                                <label>Nombre de Usuario (Alias)</label>
-                                <div class="input-with-icon">
-                                    <i data-lucide="at-sign"></i>
-                                    <input type="text" name="alias" class="input" placeholder="@usuario">
-                                </div>
-                            </div>
-                            <div class="form-group private-field">
-                                <label>Nombre Completo</label>
-                                <div class="input-with-icon">
-                                    <i data-lucide="user"></i>
-                                    <input type="text" name="nombre_completo" class="input" placeholder="Tu nombre">
-                                </div>
-                            </div>
-                            <div class="form-group private-field">
-                                <label>Fecha de Nacimiento</label>
-                                <div class="input-with-icon">
-                                    <i data-lucide="calendar"></i>
-                                    <input type="date" name="fecha_nacimiento" class="input">
-                                </div>
-                                <small id="display-age" class="text-muted" style="margin-top: 0.25rem; display: block;"></small>
-                            </div>
-                            <div class="form-group private-field">
-                                <label>Género</label>
-                                <div class="input-with-icon">
-                                    <i data-lucide="user-check"></i>
-                                    <select name="genero" class="input">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Masculino">Masculino</option>
-                                        <option value="Femenino">Femenino</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group private-field">
-                                <label>Contacto / WhatsApp</label>
-                                <div class="input-with-icon">
-                                    <i data-lucide="phone"></i>
-                                    <input type="text" name="contacto" class="input" placeholder="+595 ...">
-                                </div>
-                            </div>
-                            <div class="form-group private-field">
-                                <label>Dirección Física</label>
-                                <div class="input-with-icon">
-                                    <i data-lucide="map-pin"></i>
-                                    <input type="text" name="direccion" class="input" placeholder="Barrio, Ciudad...">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-footer">
-                            <button type="submit" id="btn-save-profile" class="button button--action" style="width: 100%;">Guardar Cambios</button>
-                        </div>
-                    </form>
-
-                    <!-- Municipal Request Section -->
-                    <div id="municipal-request-section" class="card-premium" style="margin-top: 2rem; border-top: 3px solid var(--primary);">
-                        <div class="section-header-premium">
-                            <i data-lucide="building-2"></i>
-                            <h3>Solicitud de Usuario Municipal</h3>
-                        </div>
-                        <p class="text-muted" style="margin-bottom: 1.5rem;">
-                            Si eres funcionario de una municipalidad, puedes solicitar acceso para gestionar los reportes de tu zona. Necesitarás subir una prueba de tu cargo (identificación o decreto).
-                        </p>
-                        
-                        <form id="form-municipal-request">
+                    <!-- Pestaña Datos Personales -->
+                    <div id="profile-pane-personal" class="profile-tab-pane active">
+                        <form id="form-profile" class="card-premium">
                             <div class="form-grid-premium">
                                 <div class="form-group">
-                                    <label>Municipalidad</label>
+                                    <label>Nombre de Usuario (Alias)</label>
                                     <div class="input-with-icon">
-                                        <i data-lucide="map"></i>
-                                        <select name="municipalidad_id" id="request-muni-selector" class="input" required>
-                                            <option value="">Seleccionar Municipalidad...</option>
+                                        <i data-lucide="at-sign"></i>
+                                        <input type="text" name="alias" class="input" placeholder="@usuario">
+                                    </div>
+                                </div>
+                                <div class="form-group private-field">
+                                    <label>Nombre Completo</label>
+                                    <div class="input-with-icon">
+                                        <i data-lucide="user"></i>
+                                        <input type="text" name="nombre_completo" class="input" placeholder="Tu nombre">
+                                    </div>
+                                </div>
+                                <div class="form-group private-field">
+                                    <label>Fecha de Nacimiento</label>
+                                    <div class="input-with-icon">
+                                        <i data-lucide="calendar"></i>
+                                        <input type="date" name="fecha_nacimiento" class="input">
+                                    </div>
+                                    <small id="display-age" class="text-muted" style="margin-top: 0.25rem; display: block;"></small>
+                                </div>
+                                <div class="form-group private-field">
+                                    <label>Género</label>
+                                    <div class="input-with-icon">
+                                        <i data-lucide="user-check"></i>
+                                        <select name="genero" class="input">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Masculino">Masculino</option>
+                                            <option value="Femenino">Femenino</option>
+                                            <option value="Otro">Otro</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label>Documento de Verificación</label>
+                                <div class="form-group private-field">
+                                    <label>Contacto / WhatsApp</label>
                                     <div class="input-with-icon">
-                                        <i data-lucide="file-text"></i>
-                                        <input type="file" id="request-document" name="document" accept="image/*,.pdf" class="input" required>
+                                        <i data-lucide="phone"></i>
+                                        <input type="text" name="contacto" class="input" placeholder="+595 ...">
+                                    </div>
+                                </div>
+                                <div class="form-group private-field">
+                                    <label>Dirección Física</label>
+                                    <div class="input-with-icon">
+                                        <i data-lucide="map-pin"></i>
+                                        <input type="text" name="direccion" class="input" placeholder="Barrio, Ciudad...">
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-group" style="margin-top: 1rem;">
-                                <label>Comentarios adicionales (Opcional)</label>
-                                <textarea name="comentarios" class="input" style="min-height: 80px;" placeholder="Explica brevemente tu cargo o área..."></textarea>
-                            </div>
-                            <div class="form-footer" style="margin-top: 1.5rem;">
-                                <button type="submit" id="btn-submit-request" class="button button--primary" style="width: 100%;">
-                                    <i data-lucide="send"></i> Enviar Solicitud de Rol
-                                </button>
+                            <div class="form-footer">
+                                <button type="submit" id="btn-save-profile" class="button button--action" style="width: 100%;">Guardar Cambios</button>
                             </div>
                         </form>
                     </div>
-                </div>
+
+                    <!-- Pestaña Solicitud Municipal -->
+                    <div id="profile-pane-municipal" class="profile-tab-pane">
+                        <!-- Contenedor de Estado (Pendiente, Aprobado, Rechazado) -->
+                        <div id="municipal-status-container"></div>
+
+                        <!-- Formulario de Solicitud -->
+                        <div id="municipal-request-form-container">
+                            <div id="municipal-request-section" class="card-premium" style="border-top: 3px solid var(--primary);">
+                                <div class="section-header-premium">
+                                    <i data-lucide="building-2"></i>
+                                    <h3>Solicitud de Usuario Municipal</h3>
+                                </div>
+                                <p class="text-muted" style="margin-bottom: 1.5rem;">
+                                    Si eres funcionario de una municipalidad, puedes solicitar acceso para gestionar los reportes de tu zona. Necesitarás subir una prueba de tu cargo (identificación o decreto).
+                                </p>
+                                
+                                <form id="form-municipal-request">
+                                    <div class="form-grid-premium">
+                                        <div class="form-group">
+                                            <label>Municipalidad</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="map"></i>
+                                                <select name="municipalidad_id" id="request-muni-selector" class="input" required>
+                                                    <option value="">Seleccionar Municipalidad...</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Documento de Verificación</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="file-text"></i>
+                                                <input type="file" id="request-document" name="document" accept="image/*,.pdf" class="input" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 1rem;">
+                                        <label>Comentarios adicionales (Opcional)</label>
+                                        <textarea name="comentarios" class="input" style="min-height: 80px;" placeholder="Explica brevemente tu cargo o área..."></textarea>
+                                    </div>
+                                    <div class="form-footer" style="margin-top: 1.5rem;">
+                                        <button type="submit" id="btn-submit-request" class="button button--primary" style="width: 100%;">
+                                            <i data-lucide="send"></i> Enviar Solicitud de Rol
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- .profile-main -->
             </div>
         </div>
     </div>
@@ -1093,7 +1194,262 @@
         </div>
     </div>
 
+    <!-- Modal: Detalles Solicitud Rol -->
+    <div id="modal-role-request-details" class="modal">
+        <div class="modal__content" style="max-width: 580px; border-radius: 20px; overflow:hidden; padding:0;">
+            <!-- Header del Modal -->
+            <div style="background: linear-gradient(135deg, var(--primary) 0%, #059669 100%); padding: 1.75rem 1.75rem 4rem; position:relative;">
+                <button id="btn-close-role-details" class="btn-close" style="position:absolute; top:1rem; right:1rem; color:white; opacity:0.8;">&times;</button>
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <div style="width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+                        <i data-lucide="file-check" style="width:28px; height:28px; color:white;"></i>
+                    </div>
+                    <div>
+                        <p style="color:rgba(255,255,255,0.7); font-size:0.8rem; margin-bottom:0.2rem; text-transform:uppercase; letter-spacing:0.08em;">Solicitud de Rol Municipal</p>
+                        <h2 style="color:white; font-size:1.25rem; margin:0;" id="detail-user-name">—</h2>
+                        <p style="color:rgba(255,255,255,0.75); font-size:0.85rem; margin:0.25rem 0 0;" id="detail-user-email">—</p>
+                    </div>
+                </div>
+                <!-- Wave separator -->
+                <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="position:absolute; bottom:-1px; left:0; width:100%;" preserveAspectRatio="none">
+                    <path d="M0,40 C150,0 450,0 600,40 L600,40 L0,40 Z" fill="white"/>
+                </svg>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div style="padding: 1.5rem 1.75rem 1.75rem; display:flex; flex-direction:column; gap:1.25rem;">
+
+                <!-- Municipalidad -->
+                <div style="display:flex; align-items:center; gap:0.75rem; padding:1rem; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                    <div style="width:36px; height:36px; border-radius:10px; background:#eff6ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="building-2" style="width:18px; height:18px; color:#3b82f6;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin:0 0 0.1rem;">Municipalidad Solicitada</p>
+                        <p style="font-weight:600; color:var(--text-main); margin:0;" id="detail-muni-name">—</p>
+                    </div>
+                </div>
+
+                <!-- Comentario del Usuario -->
+                <div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                        <i data-lucide="message-square" style="width:14px; height:14px; color:var(--text-muted);"></i>
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600;">Comentario del Usuario</span>
+                    </div>
+                    <div id="detail-user-comment" style="background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid var(--primary); border-radius:0 10px 10px 0; padding:1rem; font-size:0.9rem; line-height:1.6; color:var(--text-main); min-height:60px;">—</div>
+                </div>
+
+                <!-- Documento Adjunto -->
+                <div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                        <i data-lucide="paperclip" style="width:14px; height:14px; color:var(--text-muted);"></i>
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600;">Documento de Verificación</span>
+                    </div>
+                    <a id="detail-doc-link" href="#" target="_blank" class="button button--secondary" style="display:flex; align-items:center; justify-content:center; gap:0.5rem; text-decoration:none;">
+                        <i data-lucide="external-link" style="width:16px; height:16px;"></i> Abrir Documento Adjunto
+                    </a>
+                </div>
+
+                <!-- Zona de Acciones -->
+                <div id="action-area-pending" style="border-top: 1px solid #e2e8f0; padding-top:1.25rem;">
+                    <p style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; margin-bottom:0.75rem;">Acción Administrativa</p>
+                    <div style="display:flex; gap:0.75rem;">
+                        <button id="btn-modal-approve" class="button button--primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.75rem;">
+                            <i data-lucide="check-circle" style="width:18px;height:18px;"></i> Aprobar Solicitud
+                        </button>
+                        <button id="btn-modal-reject" class="button button--danger" style="display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.75rem 1.25rem; background:transparent; border:2px solid #dc2626; color:#dc2626;">
+                            <i data-lucide="x-circle" style="width:18px;height:18px;"></i> Rechazar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Zona de Motivo de Rechazo -->
+                <div id="rejection-reason-area" class="hidden" style="border-top:1px solid #e2e8f0; padding-top:1.25rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                        <i data-lucide="alert-triangle" style="width:14px; height:14px; color:#dc2626;"></i>
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:#dc2626; font-weight:600;">Motivo del Rechazo (Obligatorio)</span>
+                    </div>
+                    <textarea id="input-rejection-reason" class="input" rows="3" style="width:100%; resize:none; border-color:#fca5a5;" placeholder="Explica claramente por qué se rechaza la solicitud..."></textarea>
+                    <div style="display:flex; gap:0.75rem; margin-top:0.75rem;">
+                        <button id="btn-confirm-reject" class="button button--danger" style="flex:1;">Confirmar Rechazo</button>
+                        <button id="btn-cancel-reject" class="button button--secondary" style="padding:0.75rem 1.25rem;">Cancelar</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Gestión de Reporte Municipal (Premium V2) -->
+    <div id="modal-gestion-reporte" class="modal" style="display:none;">
+        <div class="modal__content" style="max-width:680px; border-radius:20px; overflow:hidden; padding:0; max-height:90vh; overflow-y:auto;">
+
+            <!-- Header Gradiente Premium -->
+            <div style="background: linear-gradient(135deg, #0f766e 0%, var(--primary) 100%); padding: 1.5rem 1.75rem 4rem; position:relative; flex-shrink:0;">
+                <button id="btn-mgestion-cerrar" class="btn-close" style="position:absolute; top:1rem; right:1rem; color:white; opacity:0.8;">&times;</button>
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <div style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+                        <i data-lucide="clipboard-edit" style="width:26px; height:26px; color:white;"></i>
+                    </div>
+                    <div>
+                        <p style="color:rgba(255,255,255,0.75); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.2rem;">Gestión Municipal</p>
+                        <h2 style="color:white; font-size:1.25rem; margin:0;" id="mgestion-numero">—</h2>
+                    </div>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:0.75rem;">
+                        <a id="btn-mgestion-gps" class="button button--secondary" 
+                           style="display:none; background:rgba(255,255,255,0.2); color:white; border:none; padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:600; backdrop-filter:blur(4px); text-decoration:none; align-items:center; gap:0.4rem; white-space:nowrap;" 
+                           target="_blank">
+                            <i data-lucide="navigation" style="width:14px;height:14px;"></i> Ir al lugar
+                        </a>
+                        <span id="mgestion-estado-badge"
+                              style="background:rgba(255,255,255,0.2); color:white;
+                                     padding:0.35rem 0.85rem; border-radius:999px; font-size:0.8rem; font-weight:600; backdrop-filter:blur(4px);">—</span>
+                    </div>
+                </div>
+                <!-- Wave separator -->
+                <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg"
+                     style="position:absolute; bottom:-1px; left:0; width:100%;" preserveAspectRatio="none">
+                    <path d="M0,40 C150,0 450,0 600,40 L600,40 L0,40 Z" fill="white"/>
+                </svg>
+            </div>
+
+            <!-- Cuerpo -->
+            <div style="padding: 1.5rem 1.75rem 1.75rem; display:flex; flex-direction:column; gap:1.25rem;">
+
+                <!-- Info del Ciudadano -->
+                <div style="display:flex; gap:1rem; align-items:center; padding:1rem; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                    <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg, var(--primary), #059669);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="user" style="width:18px;height:18px;color:white;"></i>
+                    </div>
+                    <div>
+                        <p style="font-weight:600; margin:0; color:var(--text-main);" id="mgestion-ciudadano">—</p>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin:0;" id="mgestion-email">—</p>
+                    </div>
+                    <div style="margin-left:auto; text-align:right;">
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">Creado</p>
+                        <p style="font-size:0.8rem; font-weight:600; color:var(--text-main); margin:0;" id="mgestion-fecha-creacion">—</p>
+                    </div>
+                </div>
+
+                <!-- Descripción y Categoría -->
+                <div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                        <i data-lucide="file-text" style="width:14px;height:14px;color:var(--text-muted);"></i>
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600;">Descripción</span>
+                        <span style="margin-left:auto; font-size:0.75rem; color:var(--primary); font-weight:600; display:flex; align-items:center; gap:0.3rem;">
+                            <i data-lucide="tag" style="width:12px;height:12px;"></i>
+                            <span id="mgestion-categoria">—</span>
+                        </span>
+                    </div>
+                    <div id="mgestion-descripcion"
+                         style="background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid #0f766e;
+                                border-radius:0 10px 10px 0; padding:1rem; font-size:0.9rem; line-height:1.6; color:var(--text-main);">—</div>
+                </div>
+
+                <!-- Asignación de Departamentos (múltiple) -->
+                <div>
+                    <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                        <i data-lucide="git-branch" style="width:13px;height:13px;"></i>
+                        Departamentos Asignados
+                    </label>
+                    
+                    <!-- Filtro de departamentos -->
+                    <div style="position:relative; margin-bottom:0.5rem;">
+                        <i data-lucide="search" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--text-muted);"></i>
+                        <input type="text" id="mgestion-depto-filtro" placeholder="Buscar departamento para asignar..." 
+                               style="width:100%; padding:0.5rem 0.75rem 0.5rem 2.25rem; border-radius:8px; border:1px solid #e2e8f0; font-size:0.85rem; background:white; outline:none;"
+                               autocomplete="off">
+                    </div>
+
+                    <!-- Renderizado dinámico via JS -->
+                    <div id="mgestion-departamentos-lista"
+                         style="display:flex; flex-direction:column; gap:0.5rem; padding:0.75rem;
+                                border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; min-height:48px;">
+                        <span style="font-size:0.82rem; color:var(--text-muted);">Cargando departamentos...</span>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin:0.4rem 0 0; display:flex; align-items:center; gap:0.3rem;">
+                        <i data-lucide="clock" style="width:11px;height:11px;"></i>
+                        Primera asignación: <strong id="mgestion-fecha-asignacion">Pendiente</strong>
+                    </p>
+                </div>
+
+                <!-- Prioridad de Gestión -->
+                <div>
+                    <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                        <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i>
+                        Prioridad de Gestión
+                    </label>
+                    <select id="mgestion-prioridad" class="input">
+                        <option value="baja">🟢 Baja</option>
+                        <option value="media" selected>🟡 Media</option>
+                        <option value="alta">🟠 Alta</option>
+                        <option value="urgente">🔴 Urgente</option>
+                    </select>
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                        <i data-lucide="activity" style="width:13px;height:13px;"></i>
+                        Cambiar Estado
+                    </label>
+                    <select id="mgestion-estado" class="input">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En proceso">En proceso</option>
+                        <option value="Resuelto">Resuelto</option>
+                        <option value="Rechazado">Rechazado</option>
+                    </select>
+                </div>
+
+                <!-- Observación del Funcionario -->
+                <div>
+                    <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                        <i data-lucide="message-circle" style="width:13px;height:13px;"></i>
+                        Observación del Funcionario <span style="font-weight:400;">(opcional)</span>
+                    </label>
+                    <textarea id="mgestion-observacion" class="input" rows="2"
+                              placeholder="Ingrese notas internas sobre la gestión..."
+                              style="resize:vertical; font-size:0.9rem;"></textarea>
+                </div>
+
+                <!-- Zona de Cierre: Solo se muestra si el estado es Resuelto o Rechazado -->
+                <div id="mgestion-zona-cierre" style="display:none;">
+                    <div style="background:#fef3c7; border:1px solid #f59e0b; border-radius:10px; padding:0.75rem 1rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.6rem;">
+                        <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706;flex-shrink:0;"></i>
+                        <p style="margin:0; font-size:0.82rem; color:#92400e;">
+                            Para cerrar esta solicitud debes adjuntar <strong>al menos una evidencia</strong> fotográfica de la resolución o rechazo.
+                        </p>
+                    </div>
+
+                    <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                        <i data-lucide="paperclip" style="width:13px;height:13px;"></i>
+                        Evidencias de Cierre <span style="color:#ef4444;">*</span>
+                    </label>
+
+                    <!-- Dropzone -->
+                    <div id="mgestion-dropzone"
+                         style="border:2px dashed #d1d5db; border-radius:12px; padding:1.5rem; text-align:center;
+                                cursor:pointer; transition:border-color 0.2s; background:#fafafa;">
+                        <i data-lucide="upload-cloud" style="width:28px;height:28px;color:var(--text-muted);margin-bottom:0.35rem;"></i>
+                        <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">Arrastra imágenes aquí o <strong style="color:var(--primary);">haz clic para seleccionar</strong></p>
+                        <p style="margin:0.25rem 0 0; font-size:0.75rem; color:var(--text-muted);">PNG, JPG o WEBP · Máximo 5 archivos</p>
+                        <input type="file" id="mgestion-evidencias" accept="image/*" multiple style="display:none;">
+                    </div>
+                    <div id="mgestion-evidencias-preview" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;"></div>
+                </div>
+
+                <!-- Botón Guardar -->
+                <button id="btn-mgestion-guardar" class="button button--primary"
+                        style="width:100%; padding:0.85rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; font-size:0.95rem;">
+                    <i data-lucide="save" style="width:18px;height:18px;"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Toasts -->
+
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Scripts -->

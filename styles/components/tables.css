@@ -57,6 +57,7 @@
 
 .table-wrapper-scroll {
     overflow-y: auto;
+    overflow-x: auto;
     max-height: 500px;
 }
 
@@ -109,4 +110,79 @@
 .status-danger {
     background: #fef2f2;
     color: #dc2626;
+}
+
+/* ============================================
+   PRIORITY BADGES - Prioridad de Gestión
+   ============================================ */
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.priority-baja {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.priority-media {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.priority-alta {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.priority-urgente {
+    background: #fef2f2;
+    color: #dc2626;
+    animation: pulsate 1.5s ease-in-out infinite;
+}
+
+@keyframes pulsate {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* ============================================
+   VISIBILIDAD POR ROL
+   municipal-only: solo visible con rol municipal
+   admin-only: solo visible con rol admin
+   ============================================ */
+
+/* Ocultar por defecto */
+.municipal-only {
+    display: none !important;
+}
+
+/* Mostrar cuando el body tiene clase role-municipal */
+body.role-municipal .municipal-only {
+    display: flex !important;
+}
+
+/* Ocultar admin-only para rol municipal */
+body.role-municipal .admin-only {
+    display: none !important;
+}
+
+/* Drag-over feedback para dropzone de evidencias */
+#mgestion-dropzone.drag-over {
+    border-color: var(--primary);
+    background: #f0fdf4;
 }

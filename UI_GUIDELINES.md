@@ -56,12 +56,38 @@ Para el Panel Admin y vistas de analítica:
 Utilizado en la parte superior de las tablas para dar contexto rápido.
 - **Estructura:** Flex row con espaciado uniforme y etiquetas en negrita.
 
-## 3. Estados y Badges
+## 4. Modales Premium V2 (Experiencia Inmersiva)
 
-Usa badges redondeados (`.badge-premium`) para estados:
-- **Activo/Éxito:** `.status-active` (Verde)
-- **Pendiente/Alerta:** `.status-pending` (Amarillo/Naranja)
-- **Error/Peligro:** `.status-danger` (Rojo)
+Para modales informativos o de gestión crítica (ej. Detalles de Solicitud), se debe seguir el patrón de "Header Gradiente con Curva":
+
+### Estructura del Modal
+- **Contenedor:** `.modal__content` con `border-radius: 20px` y `overflow: hidden`.
+- **Encabezado:** Gradiente lineal (`linear-gradient(135deg, var(--primary) 0%, #059669 100%)`) con un separador SVG de onda (`wave`) en la base para transicionar al cuerpo blanco.
+- **Icono de Cabecera:** Enmarcado en un círculo con fondo semi-transparente (`backdrop-filter: blur(4px)`).
+- **Cuerpo:** Espaciado generoso (`padding: 1.5rem 1.75rem`) con componentes estructurados:
+    - **Chips de Información:** Flexbox con iconos y etiquetas en gris suave.
+    - **Áreas de Texto:** Bordes acentuados con el color de la marca (ej. `border-left: 3px solid var(--primary)`).
+- **Acciones**: Botones con iconos Lucide que ocupen el ancho completo (`flex: 1`).
+
+### 5. Navegación y Multi-selección
+
+#### Botones de Navegación (GPS)
+- **Capa Flotante**: En mapas, el botón "Ir al lugar" debe estar centrado en la parte inferior (`left: 50%`, `bottom: 1.25rem`) con sombra pronunciada para flotabilidad.
+- **Micro-interactividad**: Uso de `white-space: nowrap` para evitar cortes de texto en dispositivos móviles.
+
+#### Selectores Filtrables
+- **Input de Búsqueda**: Siempre que una lista de selección (checkboxes/radios) tenga más de 5 elementos, debe incluir un campo de búsqueda superior con icono de lupa para filtrado dinámico en tiempo real.
+- **Estados Bloqueados**: Los elementos ya seleccionados que formen parte del historial (ej. departamentos ya asignados) deben renderizarse como badges deshabilitados con icono de candado.
+
+### Ejemplo de Header Premium
+```html
+<div style="background: linear-gradient(135deg, var(--primary) 0%, #059669 100%); padding: 1.75rem; position:relative;">
+    <!-- Contenido y SVG de onda al final -->
+</div>
+```
+
+---
+*Nota: Estos estilos están definidos globalmente en `styles/components/modals.css` (clases base) y se extienden con estilos inline o utilidades en el HTML para máxima flexibilidad.*
 
 ---
 *Nota: Estos estilos están definidos globalmente en `styles/components/forms.css` y `styles/components/tables.css`.*

@@ -463,11 +463,15 @@ async function abrirDetalleReporte(id) {
     reporteActualId = id;
     UIModule.changeView('report-detail');
 
-    // Lógica de carga de detalles (Fetch único, comentarios, evidencias)
-    // Misma implementación que app.js (omitido por brevedad, asumir actualizado)
-    // Básicamente: Traer reporte, renderizar info, traer comentarios, traer interacciones
+    // Resetear secciones din\u00e1micas para evitar contenido de un reporte anterior
+    const timelineCont = document.getElementById('detail-timeline-container');
+    const cierreCont = document.getElementById('detail-cierre-container');
+    if (timelineCont) timelineCont.style.display = 'none';
+    if (cierreCont) { cierreCont.style.display = 'none'; }
+
     const title = document.getElementById('detail-title');
     if (title) title.textContent = 'Cargando...';
+
 
     try {
         const { data, error } = await supabaseClient
@@ -498,12 +502,38 @@ async function abrirDetalleReporte(id) {
         statusBadge.className = 'status-badge'; // reiniciar
         statusBadge.classList.add(`status-badge--${(data.estado || 'pending').toLowerCase().replace(' ', '_')}`);
 
-        // Cargar evidencias
+        // Cargar evidencias originales
         cargarEvidencias(id);
 
         // Cargar comentarios e interacciones
         cargarComentarios(id);
         cargarInteracciones(id);
+
+        // Obtener timestamps y evidencias de cierre desde la tabla directa
+        (async () => {
+            const { data: extra } = await supabaseClient
+                .from('reportes')
+                .select('fecha_asignacion, actualizado_en, observacion_municipal')
+                .eq('id', id)
+                .maybeSingle();
+
+            // Renderizar timeline siempre que haya al menos la fecha de creación
+            renderTimeline({
+                creado_en: data.creado_en,
+                fecha_asignacion: extra?.fecha_asignacion || null,
+                actualizado_en: extra?.actualizado_en || null,
+                observacion_municipal: extra?.observacion_municipal || null,
+                estado: data.estado,
+            });
+
+            // Evidencias de cierre solo si está resuelto o rechazado
+            if (data.estado === 'Resuelto' || data.estado === 'Rechazado') {
+                cargarEvidenciasCierre(id, data.estado, extra?.observacion_municipal);
+            } else {
+                const cont = document.getElementById('detail-cierre-container');
+                if (cont) cont.style.display = 'none';
+            }
+        })();
 
         // Iniciar Mini Mapa
         if (!mapaDetalle) {
@@ -793,6 +823,164 @@ async function interactuar(tipo) {
 function updateStat(id, val) {
     const el = document.getElementById(id);
     if (el) el.textContent = val !== undefined && val !== null ? val : 0;
+}
+
+/**
+ * Calcula y muestra la línea de tiempo del reporte en la vista de detalle.
+ * Muestra los intervalos: Creación → Asignación → Cierre.
+ * @param {{ creado_en: string, fecha_asignacion: string|null, actualizado_en: string|null, estado: string }} reporte
+ */
+function renderTimeline(reporte) {
+    const container = document.getElementById('detail-timeline-container');
+    const timeline = document.getElementById('detail-timeline');
+    if (!container || !timeline) return;
+
+    const { creado_en, fecha_asignacion, actualizado_en, estado } = reporte;
+
+    // Función auxiliar: tiempo transcurrido en texto legible
+    function tiempoTranscurrido(desde, hasta) {
+        if (!desde || !hasta) return null;
+        const ms = new Date(hasta) - new Date(desde);
+        if (ms < 0) return null;
+        const minutos = Math.floor(ms / 60000);
+        const horas = Math.floor(minutos / 60);
+        const dias = Math.floor(horas / 24);
+        if (dias >= 1) return `${dias} día${dias > 1 ? 's' : ''}`;
+        if (horas >= 1) return `${horas} hora${horas > 1 ? 's' : ''}`;
+        return `${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+    }
+
+    const oportunidades = [
+        {
+            icono: 'file-plus',
+            etiqueta: 'Creado',
+            fecha: creado_en,
+            activo: true,
+            intervalo: null,
+        },
+        {
+            icono: 'user-check',
+            etiqueta: 'Asignado',
+            fecha: fecha_asignacion,
+            activo: !!fecha_asignacion,
+            intervalo: tiempoTranscurrido(creado_en, fecha_asignacion),
+        },
+        {
+            icono: estado === 'Rechazado' ? 'x-circle' : 'check-circle',
+            etiqueta: estado === 'Rechazado' ? 'Rechazado' : (estado === 'Resuelto' ? 'Resuelto' : estado),
+            fecha: (estado === 'Resuelto' || estado === 'Rechazado') ? actualizado_en : null,
+            activo: estado === 'Resuelto' || estado === 'Rechazado',
+            intervalo: tiempoTranscurrido(fecha_asignacion || creado_en, actualizado_en),
+        },
+    ];
+
+    timeline.innerHTML = oportunidades.map((paso, idx) => `
+        <div class="timeline-step ${paso.activo ? 'timeline-step--active' : 'timeline-step--pending'}"
+             style="display:flex; align-items:flex-start; gap:0.75rem; padding:0.75rem 0; position:relative;">
+            <!-- Conector vertical -->
+            ${idx < oportunidades.length - 1 ? `
+                <div style="position:absolute; left:15px; top:36px; width:2px; height:calc(100% + 0.5rem);
+                    background:${paso.activo && oportunidades[idx + 1].activo ? 'var(--primary,#10b981)' : 'var(--border,#e2e8f0)'};"></div>
+            ` : ''}
+            <!-- Ícono -->
+            <div style="flex-shrink:0; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+                background:${paso.activo ? 'var(--primary,#10b981)' : 'var(--bg-muted,#f1f5f9)'};
+                color:${paso.activo ? '#fff' : 'var(--text-muted,#94a3b8)'}; z-index:1;">
+                <i data-lucide="${paso.icono}" style="width:16px;height:16px;"></i>
+            </div>
+            <!-- Texto -->
+            <div style="flex:1;">
+                <div style="font-weight:600; font-size:0.875rem; color:${paso.activo ? 'var(--text-main)' : 'var(--text-muted)'}">
+                    ${paso.etiqueta}
+                </div>
+                ${paso.fecha
+            ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.125rem;">
+                            ${new Date(paso.fecha).toLocaleString('es-PY', { dateStyle: 'medium', timeStyle: 'short' })}
+                       </div>`
+            : (paso.activo ? '' : '<div style="font-size:0.75rem;color:var(--text-muted);">Pendiente</div>')}
+                ${paso.intervalo
+            ? `<div style="display:inline-block; margin-top:0.25rem; padding:0.125rem 0.5rem;
+                            background:var(--bg-muted,#f1f5f9); border-radius:999px;
+                            font-size:0.7rem; color:var(--text-muted); font-weight:500;">
+                            ⏱ ${paso.intervalo} después
+                       </div>`
+            : ''}
+            </div>
+        </div>
+    `).join('');
+
+    container.style.display = 'block';
+    if (window.lucide) lucide.createIcons();
+}
+
+/**
+ * Carga y muestra las evidencias de cierre (imágenes subidas al resolver/rechazar).
+ * @param {string} reporteId - UUID del reporte
+ * @param {string} estado - 'Resuelto' o 'Rechazado'
+ * @param {string|null} observacion - Observación del funcionario (opcional)
+ */
+async function cargarEvidenciasCierre(reporteId, estado, observacion) {
+    const container = document.getElementById('detail-cierre-container');
+    const carousel = document.getElementById('detail-cierre-carousel');
+    const titleEl = document.getElementById('detail-cierre-title');
+    const obsEl = document.getElementById('detail-observacion');
+    if (!container || !carousel) return;
+
+    // Adaptar título según estado
+    if (titleEl) {
+        const icono = estado === 'Rechazado' ? 'x-circle' : 'check-circle';
+        const color = estado === 'Rechazado' ? '#ef4444' : '#10b981';
+        titleEl.innerHTML = `<i data-lucide="${icono}" style="color:${color};"></i>
+            ${estado === 'Rechazado' ? 'Evidencia de Rechazo' : 'Evidencia de Resolución'}`;
+    }
+
+    // Mostrar observación si la hay
+    if (obsEl && observacion) {
+        obsEl.textContent = `Observación: ${observacion}`;
+        obsEl.style.display = 'block';
+    }
+
+    const tipo = estado === 'Rechazado' ? 'rechazo' : 'resolucion';
+    const { data, error } = await supabaseClient
+        .from('evidencias_cierre')
+        .select('imagen_url, tipo, creado_en')
+        .eq('reporte_id', reporteId)
+        .eq('tipo', tipo)
+        .order('creado_en', { ascending: true });
+
+    if (error) {
+        Logger.error('Error cargando evidencias de cierre', error);
+        return;
+    }
+
+    container.style.display = 'block';
+
+    if (!data || data.length === 0) {
+        carousel.innerHTML = '<p style="font-size:0.8rem;color:var(--text-muted);">No se adjuntaron archivos de cierre.</p>';
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+
+    carousel.innerHTML = data.map(ev => {
+        const esImagen = /\.(jpeg|jpg|gif|png|webp)/i.test(ev.imagen_url);
+        return esImagen
+            ? `<div class="evidence-thumbnail-container" data-url="${ev.imagen_url}">
+                   <img src="${ev.imagen_url}" class="evidence-thumbnail" alt="Evidencia de cierre">
+               </div>`
+            : `<div class="evidence-thumbnail-container" data-url="${ev.imagen_url}">
+                   <div class="evidence-thumbnail-file">
+                       <i data-lucide="file-text"></i>
+                       <span>Documento</span>
+                   </div>
+               </div>`;
+    }).join('');
+
+    // Lightbox para las imágenes de cierre
+    carousel.querySelectorAll('.evidence-thumbnail-container').forEach(el => {
+        el.onclick = () => abrirLightbox(el.dataset.url);
+    });
+
+    if (window.lucide) lucide.createIcons();
 }
 
 // Función para navegar al perfil de un ciudadano

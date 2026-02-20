@@ -10,3 +10,4 @@ dist/
 build/
 .vscode/
 app.old.js
+TEST_CREDENTIALS.md
