@@ -5,6 +5,8 @@ import { MunicipalityModule } from './modules/municipalities.js';
 import { ReportsModule } from './modules/reports.js';
 import { ProfileModule } from './modules/profile.js';
 import { UIModule } from './modules/ui.js';
+import { setupReportingListeners } from './modules/reporting-ui.js';
+import { setupRankingListeners, initStarButtons } from './modules/ranking.js';
 import { Logger } from './utils/logger.js';
 import { toggleLogsPanel, mostrarMensaje } from './utils/ui.js';
 
@@ -75,6 +77,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         MapModule.init();
         ReportsModule.init();
         ProfileModule.init();
+        setupReportingListeners();
+        setupRankingListeners();
+        initStarButtons();
 
         // Inicializar módulo de administración (solo admin)
         import('./modules/admin.js').then(module => module.AdminModule.init());

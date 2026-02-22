@@ -172,8 +172,10 @@ async function manejarAuthUsuario(usuario) {
     try {
         const { data } = await supabaseClient.from('perfiles').select('rol').eq('id', usuario.id).single();
         perfil = data;
+        Logger.info(`Rol recuperado de BD: ${perfil?.rol}`);
         aplicarRol(perfil ? perfil.rol : 'ciudadano');
     } catch (err) {
+        Logger.error('Error al recuperar perfil:', err);
         aplicarRol('ciudadano');
     }
 

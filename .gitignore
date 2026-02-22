@@ -11,3 +11,5 @@ build/
 .vscode/
 app.old.js
 TEST_CREDENTIALS.md
+# Scripts temporales de migración
+scripts/run-migration.mjs

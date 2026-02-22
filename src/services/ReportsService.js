@@ -13,9 +13,11 @@ export const ReportsService = {
      * @param {number} [params.page=0] - Número de página (base 0)
      * @param {number} [params.pageSize=10] - Tamaño de página
      * @param {string} [params.userId] - ID del usuario para filtrar propios
+     * @param {string} [params.startDate] - Fecha inicio (ISO)
+     * @param {string} [params.endDate] - Fecha fin (ISO)
      * @returns {Promise<{data: Array, count: number}>}
      */
-    async getReportes({ muniId, estado, search, sort, page = 0, pageSize = 10, userId = null }) {
+    async getReportes({ muniId, estado, search, sort, page = 0, pageSize = 10, userId = null, startDate = null, endDate = null }) {
         let query = supabaseClient.from('reportes_final_v1').select('*', { count: 'exact' });
 
         if (userId) {
@@ -30,6 +32,16 @@ export const ReportsService = {
             query = query.eq('estado', estado);
         }
 
+        if (startDate) {
+            query = query.gte('creado_en', startDate);
+        }
+
+        if (endDate) {
+            // Ajustar al final del día si solo viene YYYY-MM-DD
+            const end = endDate.includes('T') ? endDate : `${endDate}T23:59:59Z`;
+            query = query.lte('creado_en', end);
+        }
+
         if (search) {
             query = query.or(`numero_solicitud.ilike.%${search}%,descripcion.ilike.%${search}%,autor_nombre.ilike.%${search}%,autor_alias.ilike.%${search}%`);
         }
@@ -39,7 +51,7 @@ export const ReportsService = {
             query = query.order('creado_en', { ascending: true });
         } else if (sort === 'impact') {
             query = query.order('relevancia_relativa', { ascending: false })
-                         .order('score_impacto', { ascending: false });
+                .order('score_impacto', { ascending: false });
         } else {
             // Default: recent
             query = query.order('creado_en', { ascending: false });
