@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS departamentos (
     nombre TEXT NOT NULL,
     descripcion TEXT,
     contacto TEXT,
+    estado TEXT DEFAULT 'activo' CHECK (estado IN ('activo', 'inactivo')),
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(municipalidad_id, nombre)
 );

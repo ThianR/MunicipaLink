@@ -6,10 +6,72 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--primary);
+    cursor: pointer;
 }
 
-.logo h1 {
-    font-size: 1.25rem;
-    font-weight: 700;
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    transform-origin: 50% 85%;
+    transition: transform 240ms ease;
+}
+
+.logo-icon .pin {
+    transform-origin: 50% 85%;
+    transition: transform 240ms ease, filter 240ms ease;
+}
+
+.logo-icon .py {
+    fill: var(--logo-green);
+    transform-origin: 50% 42%;
+}
+
+/* Hover general */
+.logo:hover .logo-icon {
+    transform: scale(1.05);
+}
+
+.logo:hover .logo-icon .pin {
+    transform: scale(1.03);
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+}
+
+/* Latido Paraguay */
+@keyframes paraguayPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.06);
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.logo:hover .logo-icon .py {
+    animation: paraguayPulse 900ms ease-in-out infinite;
+}
+
+/* Variante Grande (para Login) */
+.logo--large {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.logo--large .logo-icon {
+    width: 140px;
+    height: 140px;
+}
+
+.logo--large .login-logo-text {
+    font-size: 3rem;
+    font-weight: 800;
 }

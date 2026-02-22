@@ -17,6 +17,10 @@ ALTER TABLE reportes ADD COLUMN IF NOT EXISTS fecha_asignacion TIMESTAMPTZ;
 ALTER TABLE reportes ADD COLUMN IF NOT EXISTS ultimo_modificado_por UUID REFERENCES auth.users;
 ALTER TABLE reportes ADD COLUMN IF NOT EXISTS observacion_municipal TEXT;
 
+-- Columna estado en departamentos
+ALTER TABLE departamentos ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'activo' 
+    CHECK (estado IN ('activo', 'inactivo'));
+
 -- ============================================================
 -- 2. Nuevas Tablas
 -- ============================================================

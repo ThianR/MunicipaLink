@@ -12,7 +12,7 @@ export const AuthModule = {
         // Verificar sesión inicial
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
-            manejarAuthUsuario(session.user);
+            await manejarAuthUsuario(session.user);
         }
 
         // Escuchar cambios de autenticación

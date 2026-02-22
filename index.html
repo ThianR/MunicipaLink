@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>MunicipaLink | Gestión Ciudadana</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 48c-88.366 0-160 71.634-160 160 0 118.5 160 256 160 256s160-137.5 160-256 c0-88.366-71.634-160-160-160z' fill='%2310b981'/><circle cx='256' cy='208' r='110' fill='%23ffffff'/><path d='M341.0,234.3 L335.5,252.5 L333.4,270.3 L312.2,290.7 L253.6,288.3 L274.5,252.1 L270.8,244.5 L204.3,216.5 L171.0,184.4 L189.4,131.4 L243.4,125.3 L262.6,142.0 L266.1,181.3 L309.9,185.4 L318.9,219.6 L339.1,221.8 Z' fill='%2310b981'/></svg>">
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +28,18 @@
             <!-- Left Panel: Info & Motivation -->
             <div class="login-panel-info">
                 <div class="login-panel-info__content">
-                    <div class="login-logo-wrapper">
-                        <i data-lucide="map-pin" class="login-logo-icon"></i>
+                    <div class="logo logo--large">
+                        <svg class="logo-icon" viewBox="0 0 512 512">
+                            <defs>
+                                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="var(--logo-green)"/>
+                                    <stop offset="100%" stop-color="var(--logo-blue)"/>
+                                </linearGradient>
+                            </defs>
+                            <path class="pin" d="M256 48c-88.366 0-160 71.634-160 160 0 118.5 160 256 160 256s160-137.5 160-256 c0-88.366-71.634-160-160-160z" fill="url(#logoGradient)"/>
+                            <circle cx="256" cy="208" r="110" fill="#ffffff"/>
+                            <path class="py" d="M341.0,234.3 L335.5,252.5 L333.4,270.3 L312.2,290.7 L253.6,288.3 L274.5,252.1 L270.8,244.5 L204.3,216.5 L171.0,184.4 L189.4,131.4 L243.4,125.3 L262.6,142.0 L266.1,181.3 L309.9,185.4 L318.9,219.6 L339.1,221.8 Z"/>
+                        </svg>
                         <span class="login-logo-text">MunicipaLink</span>
                     </div>
                     <div class="login-motivation">
@@ -56,9 +69,13 @@
             <!-- Right Panel: Form -->
             <div class="login-panel-form">
                 <div class="login-card">
-                    <div class="mobile-logo">
-                        <i data-lucide="map-pin" style="width: 40px; height: 40px; color: #10b981;"></i>
-                        <h1 class="login-card__title">MunicipaLink</h1>
+                    <div class="mobile-logo logo logo--large">
+                        <svg class="logo-icon" viewBox="0 0 512 512">
+                            <path class="pin" d="M256 48c-88.366 0-160 71.634-160 160 0 118.5 160 256 160 256s160-137.5 160-256 c0-88.366-71.634-160-160-160z" fill="var(--primary)"/>
+                            <circle cx="256" cy="208" r="110" fill="#ffffff"/>
+                            <path class="py" d="M341.0,234.3 L335.5,252.5 L333.4,270.3 L312.2,290.7 L253.6,288.3 L274.5,252.1 L270.8,244.5 L204.3,216.5 L171.0,184.4 L189.4,131.4 L243.4,125.3 L262.6,142.0 L266.1,181.3 L309.9,185.4 L318.9,219.6 L339.1,221.8 Z" fill="var(--logo-green)"/>
+                        </svg>
+                        <span class="login-logo-text">MunicipaLink</span>
                     </div>
                     
                     <div class="form-header">
@@ -105,8 +122,12 @@
     <!-- App Screen -->
     <div id="screen-app" class="screen">
         <header class="header">
-            <div class="header__logo">
-                <i data-lucide="map-pin"></i>
+            <div class="header__logo logo">
+                <svg class="logo-icon" viewBox="0 0 512 512" style="width: 28px; height: 28px;">
+                    <path class="pin" d="M256 48c-88.366 0-160 71.634-160 160 0 118.5 160 256 160 256s160-137.5 160-256 c0-88.366-71.634-160-160-160z" fill="var(--primary)"/>
+                    <circle cx="256" cy="208" r="110" fill="#ffffff"/>
+                    <path class="py" d="M341.0,234.3 L335.5,252.5 L333.4,270.3 L312.2,290.7 L253.6,288.3 L274.5,252.1 L270.8,244.5 L204.3,216.5 L171.0,184.4 L189.4,131.4 L243.4,125.3 L262.6,142.0 L266.1,181.3 L309.9,185.4 L318.9,219.6 L339.1,221.8 Z" fill="var(--logo-green)"/>
+                </svg>
                 <h1 class="header__logo-title">MunicipaLink</h1>
             </div>
             <div class="header__user-info">
@@ -178,48 +199,92 @@
                         </p>
                     </div>
 
-                    <!-- Toolbar de Filtros -->
-                    <div class="toolbar-premium" style="padding: 0 1.5rem;">
-                        <div class="search-premium" style="flex:1;">
-                            <i data-lucide="search" style="width:16px;height:16px;"></i>
-                            <input type="text" id="municipal-search" placeholder="Buscar por ID, descripción o ciudadano..." class="search__input">
-                        </div>
-                        <select id="municipal-filtro-estado" class="input" style="width:auto; padding: 0.5rem 1rem;">
-                            <option value="todos">Todos los estados</option>
-                            <option value="Pendiente">Pendiente</option>
-                            <option value="En proceso">En proceso</option>
-                            <option value="Resuelto">Resuelto</option>
-                            <option value="Rechazado">Rechazado</option>
-                        </select>
-                        <select id="municipal-filtro-prioridad" class="input" style="width:auto; padding: 0.5rem 1rem;">
-                            <option value="todas">Todas las prioridades</option>
-                            <option value="urgente">Urgente</option>
-                            <option value="alta">Alta</option>
-                            <option value="media">Media</option>
-                            <option value="baja">Baja</option>
-                        </select>
+                    <!-- Navegación por Pestañas -->
+                    <div class="tabs" style="padding: 0 1.5rem;">
+                        <button class="tabs__button tabs__button--active" data-tab="muni-reportes">
+                            <i data-lucide="clipboard-list"></i> Reportes
+                        </button>
+                        <button class="tabs__button" data-tab="muni-departamentos">
+                            <i data-lucide="building"></i> Departamentos
+                        </button>
                     </div>
 
-                    <!-- Tabla de Reportes -->
-                    <div class="table-container-premium" style="margin:1rem 1.5rem;">
-                        <div class="table-wrapper-scroll" style="max-height: calc(100vh - 260px);">
-                            <table class="table" style="width:100%;">
-                                <thead>
-                                    <tr>
-                                        <th>N° Solicitud</th>
-                                        <th>Descripción</th>
-                                        <th>Ciudadano</th>
-                                        <th>Departamento</th>
-                                        <th>Estado</th>
-                                        <th>Prioridad / Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="municipal-reportes-lista">
-                                    <tr>
-                                        <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">Cargando reportes...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <!-- Pestaña: Gestión de Reportes -->
+                    <div id="tab-muni-reportes" class="tabs__content tabs__content--active">
+                        <!-- Toolbar de Filtros -->
+                        <div class="toolbar-premium" style="padding: 1rem 1.5rem 0;">
+                            <div class="search-premium" style="flex:1;">
+                            <input type="text" id="municipal-search" placeholder="Buscar por ID, descripción o ciudadano..." class="search__input">
+                        </div>
+                            <select id="municipal-filtro-estado" class="input" style="width:auto; padding: 0.5rem 1rem;">
+                                <option value="todos">Todos los estados</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En proceso">En proceso</option>
+                                <option value="Resuelto">Resuelto</option>
+                                <option value="Rechazado">Rechazado</option>
+                            </select>
+                            <select id="municipal-filtro-prioridad" class="input" style="width:auto; padding: 0.5rem 1rem;">
+                                <option value="todas">Todas las prioridades</option>
+                                <option value="urgente">Urgente</option>
+                                <option value="alta">Alta</option>
+                                <option value="media">Media</option>
+                                <option value="baja">Baja</option>
+                            </select>
+                        </div>
+
+                        <!-- Tabla de Reportes -->
+                        <div class="table-container-premium" style="margin:1rem 1.5rem;">
+                            <div class="table-wrapper-scroll" style="max-height: calc(100vh - 320px);">
+                                <table class="table" style="width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>N° Solicitud</th>
+                                            <th>Descripción</th>
+                                            <th>Ciudadano</th>
+                                            <th>Departamento</th>
+                                            <th>Estado</th>
+                                            <th>Prioridad / Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="municipal-reportes-lista">
+                                        <tr>
+                                            <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">Cargando reportes...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña: Gestión de Departamentos -->
+                    <div id="tab-muni-departamentos" class="tabs__content">
+                        <div class="toolbar-premium" style="padding: 1rem 1.5rem 0;">
+                            <div class="search-premium" style="flex:1; min-width: 250px;">
+                            <input type="text" id="muni-dept-search" placeholder="Buscar departamento..." class="search__input" style="width: 100%;">
+                        </div>
+                            <button id="btn-muni-new-dept" class="button button--primary">
+                                <i data-lucide="plus"></i> Nuevo Departamento
+                            </button>
+                        </div>
+
+                        <div class="table-container-premium" style="margin:1rem 1.5rem;">
+                            <div class="table-wrapper-scroll" style="max-height: calc(100vh - 320px);">
+                                <table class="table" style="width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Contacto</th>
+                                            <th>Estado</th>
+                                            <th style="text-align:right;">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="muni-departamentos-lista">
+                                        <tr>
+                                            <td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted);">Cargando departamentos...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -567,6 +632,10 @@
             <button class="nav__item" data-view="profile">
                 <i data-lucide="user"></i>
                 <span>Perfil</span>
+            </button>
+            <button class="nav__item municipal-only" data-view="municipal">
+                <i data-lucide="building-2"></i>
+                <span>Muni</span>
             </button>
         </nav>
 
@@ -1064,68 +1133,89 @@
         </div>
     </div>
 
-    <!-- Modal: Admin Departments -->
+    <!-- Modal: Admin Departments (Premium V2) -->
     <div id="modal-admin-departments" class="modal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2>Departamentos de <span id="modal-dept-muni-name" class="text-primary"></span></h2>
-                <button id="btn-close-modal-dept" class="btn-close">&times;</button>
-            </div>
-            
-            <!-- New Dept Form -->
-            <div class="form-header-premium">
-                <h3><i data-lucide="plus-circle"></i> Nuevo Departamento</h3>
-                <p class="text-muted">Agregue unidades organizativas a esta municipalidad.</p>
-            </div>
-            
-            <form id="form-add-dept" class="card-premium">
-                <div class="form-grid-premium">
-                    <div class="form-group">
-                        <label for="new-dept-name">Nombre del Departamento</label>
-                        <div class="input-with-icon">
-                            <i data-lucide="tag"></i>
-                            <input type="text" id="new-dept-name" placeholder="Ej: Tesorería, Obras, etc." required>
-                        </div>
+        <div class="modal__content" style="max-width:800px; border-radius:20px; overflow:hidden; padding:0;">
+            <!-- Header Gradiente Premium (Slate para Admin) -->
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 1.75rem 1.75rem 4.5rem; position:relative;">
+                <button id="btn-close-modal-dept" class="btn-close" style="position:absolute; top:1rem; right:1rem; color:white; opacity:0.8;">&times;</button>
+                <div style="display:flex; align-items:center; gap:1.25rem;">
+                    <div style="width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.2);">
+                        <i data-lucide="settings" style="width:28px; height:28px; color:white;"></i>
                     </div>
-                    <div class="form-group">
-                        <label for="new-dept-contact">Contacto / WhatsApp</label>
-                        <div class="input-with-icon">
-                            <i data-lucide="phone"></i>
-                            <input type="text" id="new-dept-contact" placeholder="+595 ...">
+                    <div>
+                        <h2 style="color:white; font-size:1.5rem; margin:0;">Gestión de Departamentos</h2>
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;">
+                            <i data-lucide="building-2" style="width:14px; height:14px; color:rgba(255,255,255,0.6);"></i>
+                            <p style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin:0;" id="modal-dept-muni-name">—</p>
                         </div>
                     </div>
                 </div>
-                <div class="form-actions">
-                    <button type="submit" class="button button--primary btn-admin-add">
-                        <span id="btn-submit-dept-text"><i data-lucide="save"></i> Guardar Departamento</span>
-                    </button>
-                </div>
-            </form>
-
-            <div class="admin-dept-divider">
-                <span>Listado de Departamentos</span>
+                <!-- Wave separator -->
+                <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="position:absolute; bottom:-1px; left:0; width:100%;" preserveAspectRatio="none">
+                    <path d="M0,40 C150,0 450,0 600,40 L600,40 L0,40 Z" fill="white"/>
+                </svg>
             </div>
-
-            <div class="toolbar-premium">
-                <div class="search-premium">
-                    <input type="text" id="admin-dept-search-input" placeholder="Buscar departamento...">
+            
+            <div class="modal-dept-layout" style="padding: 0.5rem 1.5rem 1.5rem;">
+                <!-- New Dept Panel (Minimalist) -->
+                <div class="dept-entry-panel">
+                    <form id="form-add-dept" class="dept-form-minimal">
+                        <div class="dept-form-grid">
+                            <div class="form-group-minimal" style="margin-bottom:0.75rem;">
+                                <label for="new-dept-name" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Nombre de la Unidad</label>
+                                <input type="text" id="new-dept-name" class="input-minimal" placeholder="Ej: Obras Públicas" required style="padding:0.6rem; background:#f8fafc;">
+                            </div>
+                            <div class="form-group-minimal" style="margin-bottom:0.75rem;">
+                                <label for="new-dept-contact" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Contacto / WhatsApp</label>
+                                <input type="text" id="new-dept-contact" class="input-minimal" placeholder="+595 ..." style="padding:0.6rem; background:#f8fafc;">
+                            </div>
+                            <div class="form-group-minimal" style="margin-bottom:0.75rem;">
+                                <label for="new-dept-status" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Estado</label>
+                                <select id="new-dept-status" class="input-minimal" style="padding:0.6rem; background:#f8fafc; cursor:pointer;">
+                                    <option value="activo">Activo</option>
+                                    <option value="inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="dept-form-actions">
+                                <button type="submit" class="button button--primary btn-save-dept" style="height:42px; width:100%; justify-content:center; border-radius:8px;">
+                                    <span id="btn-submit-dept-text"><i data-lucide="plus"></i> Agregar</span>
+                                </button>
+                                <button type="button" id="btn-cancel-dept-edit" class="button button--secondary btn-cancel-dept" style="display: none; height:42px; width:100%; justify-content:center; border-radius:8px; margin-top:0.5rem;">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-            </div>
 
-            <div class="table-container-premium">
-                <div class="table-wrapper-scroll" style="max-height: 350px;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Contacto</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-dept-list">
-                            <!-- JS populated -->
-                        </tbody>
-                    </table>
+                <div class="dept-list-section">
+                    <div class="toolbar-premium toolbar--minimal" style="background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; padding:0.75rem 1rem;">
+                        <div class="search-premium-mini">
+                            <i data-lucide="search" class="search-icon-mini"></i>
+                            <input type="text" id="admin-dept-search-input" class="search-input-mini" placeholder="Filtrar departamentos...">
+                        </div>
+                        <div class="dept-count-badge" style="background:var(--primary); color:white; border:none;">
+                            <span id="dept-count">0</span> unidades
+                        </div>
+                    </div>
+
+                    <div class="table-container-minimal" style="margin-top:1rem; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+                        <div class="table-wrapper-scroll" style="max-height: 350px;">
+                            <table class="admin-table table-minimal">
+                                <thead style="background:#f1f5f9;">
+                                    <tr>
+                                        <th style="font-size:0.7rem; text-transform:uppercase; color:#64748b;">Unidad Organizativa</th>
+                                        <th style="font-size:0.7rem; text-transform:uppercase; color:#64748b;">Contacto</th>
+                                        <th style="text-align: right; font-size:0.7rem; text-transform:uppercase; color:#64748b;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-dept-list">
+                                    <!-- JS populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1446,6 +1536,81 @@
                     <i data-lucide="save" style="width:18px;height:18px;"></i>
                     Guardar Cambios
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Gestión de Departamento (Premium V2) -->
+    <div id="modal-muni-departamento" class="modal">
+        <div class="modal__content" style="max-width:550px; border-radius:20px; overflow:hidden; padding:0;">
+            <!-- Header Gradiente Premium -->
+            <div style="background: linear-gradient(135deg, #0f766e 0%, var(--primary) 100%); padding: 1.75rem 1.75rem 4rem; position:relative;">
+                <button id="btn-muni-dept-cerrar" class="btn-close" style="position:absolute; top:1rem; right:1rem; color:white; opacity:0.8;">&times;</button>
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <div style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+                        <i data-lucide="building-2" style="width:26px; height:26px; color:white;"></i>
+                    </div>
+                    <div>
+                        <p style="color:rgba(255,255,255,0.75); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.2rem;">Gestión de Área</p>
+                        <h2 style="color:white; font-size:1.25rem; margin:0;" id="modal-muni-dept-title">Nuevo Departamento</h2>
+                    </div>
+                </div>
+                <!-- Wave separator -->
+                <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="position:absolute; bottom:-1px; left:0; width:100%;" preserveAspectRatio="none">
+                    <path d="M0,40 C150,0 450,0 600,40 L600,40 L0,40 Z" fill="white"/>
+                </svg>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div style="padding: 1.5rem 1.75rem 2rem; display:flex; flex-direction:column; gap:1.5rem;">
+                <form id="form-muni-dept" class="form-standard">
+                    <input type="hidden" id="muni-dept-id">
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                        <div class="form-group">
+                            <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                                <i data-lucide="tag" style="width:13px;height:13px;"></i> Nombre del Departamento
+                            </label>
+                            <div class="input-with-icon">
+                                <i data-lucide="building"></i>
+                                <input type="text" id="muni-dept-nombre" class="input" required placeholder="Ej: Obras Públicas, Tránsito...">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                                <i data-lucide="phone" style="width:13px;height:13px;"></i> Contacto / Información
+                            </label>
+                            <div class="input-with-icon">
+                                <i data-lucide="message-circle"></i>
+                                <input type="text" id="muni-dept-contacto" class="input" placeholder="Teléfono, email o encargado...">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                                <i data-lucide="activity" style="width:13px;height:13px;"></i> Estado Inicial
+                            </label>
+                            <div class="input-with-icon">
+                                <i data-lucide="refresh-ccw"></i>
+                                <select id="muni-dept-estado" class="input">
+                                    <option value="activo">Activo</option>
+                                    <option value="inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <small class="text-muted" style="display: block; margin-top: 0.5rem; font-size: 0.75rem;">
+                                <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                                Los departamentos inactivos no podrán ser asignados a nuevos reportes.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" id="btn-muni-dept-guardar" class="button button--primary" style="width:100%; height:52px; display:flex; align-items:center; justify-content:center; gap:0.75rem; font-weight:600; border-radius:12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                            <i data-lucide="save"></i> Guardar Departamento
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

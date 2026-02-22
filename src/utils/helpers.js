@@ -58,7 +58,7 @@ export function hexToDouble(hex) {
 
 export function escapeHtml(str) {
     if (!str) return '';
-    return String(str).replace(/[&<>"']/g, function(m) {
+    return String(str).replace(/[&<>"']/g, function (m) {
         switch (m) {
             case '&': return '&amp;';
             case '<': return '&lt;';

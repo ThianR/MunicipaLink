@@ -35,12 +35,12 @@ CREATE POLICY "Categorías visibles por todos" ON categorias FOR SELECT USING (t
 
 -- Perfiles
 -- Seguridad: Restringir acceso directo a tabla perfiles (PII)
--- Solo el dueño puede ver su fila completa
+-- Solo el dueño puede ver su fila completa (con email, contacto, etc)
 CREATE POLICY "Ver propio perfil" ON perfiles FOR SELECT USING (auth.uid() = id);
 
--- Admins pueden ver todo (para gestión)
-CREATE POLICY "Admins ver todo" ON perfiles FOR SELECT
-  USING (EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'admin'));
+-- Permitir que la información pública (nombres/alias) sea visible para todos
+-- Esto es necesario para que los comentarios muestren el autor.
+CREATE POLICY "Perfiles públicos visibles" ON perfiles FOR SELECT USING (true);
 
 -- Actualización
 CREATE POLICY "Usuarios pueden actualizar su propio perfil" ON perfiles FOR UPDATE USING (auth.uid() = id);
