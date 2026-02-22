@@ -445,6 +445,9 @@ async function renderizarReportes(reportes, containerId) {
                         <i data-lucide="message-square"></i> ${r.total_comentarios || 0}
                     </div>
                 </div>
+            </div>
+        `;
+    }).join('');
 
     if (window.lucide) lucide.createIcons();
 }
@@ -718,7 +721,7 @@ async function cargarComentarios(id) {
                             <span class="comment-author">${authorName}</span>
                             <span class="comment-date">${new Date(c.creado_en).toLocaleDateString()}</span>
                         </div>
-                        <p class="comment-text">${contenido}</p>
+                        <p class="comment-text">${escapeHtml(c.contenido)}</p>
                     </div>
                 </div>
             `;

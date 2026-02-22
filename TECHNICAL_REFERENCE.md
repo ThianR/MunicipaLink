@@ -114,6 +114,13 @@ Gestión de incidencias para funcionarios municipales.
 - `createReporte(payload)`: Inserta un nuevo reporte.
 - `uploadEvidencias(reporteId, userId, archivos)`: Sube imágenes al Storage.
 
+### `src/services/MuniGamificationService.js` (Data Access Layer)
+- `getRanking()`: Obtiene el ranking de municipalidades desde `v_ranking_municipalidades` ordenado por `tasa_resolucion` y `calificacion_promedio`.
+- `getComentarios(muniId)`: Lista los comentarios de una municipalidad (join con `perfiles`).
+- `getMiCalificacion(muniId)`: Retorna la calificación (1-5) que el usuario logueado le dio a una municipalidad, o `null` si no calificó.
+- `calificarMuni(muniId, estrellas)`: Upsert en `muni_calificaciones`. Requiere sesión activa.
+- `comentarMuni(muniId, contenido)`: Inserta en `muni_comentarios`. Requiere sesión activa. Mín. 10 caracteres.
+
 ### `src/components/ReportCard.js`
 - `createReportCard(data)`: Crea un elemento DOM clonando `#tpl-report-card`. *Reemplaza la concatenación de strings.*
 
@@ -127,6 +134,30 @@ Gestión de incidencias para funcionarios municipales.
 - `escapeHtml(str)`: **Crítico**. Sanitiza strings para prevenir XSS.
 - `comprimirImagen(file)`: Optimización de imágenes.
 - `parseUbicacion(ubicacion)`: Parsea WKT/GeoJSON a `{lat, lng}`.
+
+---
+
+## 9. RankingModule (`src/modules/ranking.js`)
+Vista del ranking municipal y perfil público de municipalidades.
+
+| Función | Parámetros | Descripción | Validaciones / Notas |
+| :--- | :--- | :--- | :--- |
+| `setupRankingListeners()` | Ninguno | Registra todos los listeners del módulo (view change, clic en tarjeta, modal, comentario, calificación). | Llamar al inicio en `main.js`. |
+| `renderRanking()` | Ninguno | Obtiene datos vía `MuniGamificationService.getRanking()` y renderiza tarjetas. | Llamado automáticamente al activar `data-view="ranking"`. |
+| `initStarButtons()` | Ninguno | Genera los botones de estrella interactivos en el modal. | Llamar al inicio en `main.js` después de `setupRankingListeners`. |
+| `getBadge(tasa, cal)` | `tasa` (Number), `cal` (Number) | Retorna label y clase CSS del badge según desempeño. | Élite (≥80%+4★), Destacada (≥60%+3★), En crecimiento (≥40%), Atención (<40%). |
+
+---
+
+## 10. Base de Datos: Gamificación Municipal (`sql/11_gamificacion_municipal.sql`)
+
+| Objeto | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `muni_calificaciones` | Tabla | Calificaciones (1-5★) por usuario/municipalidad. Constraint `UNIQUE(municipalidad_id, usuario_id)`. |
+| `muni_comentarios` | Tabla | Comentarios públicos sobre municipalidades. Mín. 10 caracteres. |
+| `v_ranking_municipalidades` | Vista | Agrega stats de reportes (pendientes, resueltos, tasa) y calificación promedio. Ordenada por `tasa_resolucion DESC`. |
+
+> **RLS:** Lectura pública. Escritura solo para usuarios autenticados (`auth.uid() = usuario_id`).
 
 ---
 *Fin del Catálogo Técnico.*

@@ -33,6 +33,11 @@ MunicipaLink es una aplicación web que empodera a los ciudadanos para reportar 
 - **Resolución con Evidencia**: Cierre obligatorio de reportes adjuntando fotos de la solución o motivo de rechazo.
 - **Línea de Tiempo**: Visualización de hitos (creado, asignado, resuelto) con cálculo de tiempos para ciudadanos.
 
+### 🏆 Ranking Municipal (Nuevo)
+- **Ranking de Municipalidades**: Clasificación en tiempo real basada en tasa de resolución de reportes y calificaciones ciudadanas.
+- **Perfiles Públicos de Municipalidades**: Cada municipalidad tiene un perfil con estadísticas, sistema de calificación (1-5★) y comentarios abiertos.
+- **Sistema de Badges**: Clasificación por niveles de desempeño (Élite, Destacada, En Crecimiento, Atención Requerida).
+
 ### 📊 Transparencia y Administración
 - **Panel Admin Central**: Control de usuarios (baneo, edición), municipalidades y solicitudes de rol.
 - **Ranking de Impacto**: Priorización automática basada en algoritmos de relevancia comunitaria.
@@ -112,8 +117,9 @@ MunicipaLink/
    ```
 
 3. **Configurar la base de datos**
-   - Accede al panel de Supabase
-    - Ejecuta los archivos en `sql/` en orden correlativo (00_config.sql hasta 09_gestion_municipal.sql).
+   - Accedé al SQL Editor del panel de Supabase
+   - Ejecutá los archivos `sql/` en orden correlativo: `00_config.sql` hasta `11_gamificacion_municipal.sql`
+   - Todos los scripts son idempotentes (seguros de re-ejecutar)
 
 4. **Iniciar el servidor local**
    ```bash
@@ -123,7 +129,7 @@ MunicipaLink/
 
 5. **Acceder a la aplicación**
    ```
-   http://localhost:5173
+   http://localhost:3000
    ```
 
 ---
@@ -183,25 +189,6 @@ MunicipaLink/
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
 
----
-
-### 🛠️ Administración y Control Avanzado
-- **Gestión de Usuarios**: Listado premium con búsqueda, edición de perfiles, baneo lógico y reset de contraseña.
-- **Flujo de Solicitudes de Rol**: Sistema de aprobación/rechazo de roles municipales con:
-    - **Modal Premium V2**: Visualización detallada de evidencias y comentarios.
-    - **Rechazo con Motivo Obligatorio**: Garantiza transparencia y feedback al usuario.
-    - **Resubmisión**: Permite a los usuarios rechazados corregir y reenviar solicitudes.
-- **Control Municipal**: Administración de municipalidades y departamentos asociados.
-- **Dashboard**: Estadísticas en tiempo real sobre la participación y el estado de la comunidad.
-
----
-
-## 🎨 Principios de Diseño
-- **Premium First**: Diseño moderno con gradientes, glassmorphism, onda SVG en modales y animaciones suaves.
-- **BEM Atomizado**: Metodología CSS para máxima mantenibilidad y rendimiento.
-- **Experiencia Inmersiva**: Uso de micro-interacciones y badges de estado con iconografía Lucide.
-
----
 
 ## 🌟 Roadmap
 
@@ -210,13 +197,10 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 - [x] Gestión Municipal con Multi-departamento y Evidencias
 - [x] Navegación GPS e Historial/Timeline visual
 - [x] Mejoras de Seguridad (XSS) y Performance (Infinite Scroll)
-- [ ] Notificaciones push en tiempo real
-- [ ] Exportación de reportes a PDF/Excel
+- [x] Ranking Municipal con calificaciones y comentarios ciudadanos
+- [x] Exportación de reportes a PDF/Excel
 - [ ] Integración con redes sociales
 - [ ] App móvil nativa (React Native / Flutter)
-- [ ] Sistema de recompensas y badges NFT
-- [ ] API pública para desarrolladores
-
 ---
 
 ## 📞 Contacto y Soporte

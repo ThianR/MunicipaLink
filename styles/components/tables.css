@@ -171,8 +171,9 @@
     display: none !important;
 }
 
-/* Mostrar cuando el body tiene clase role-municipal */
-body.role-municipal .municipal-only {
+/* Mostrar cuando el body tiene clase role-municipal o role-admin (para supervisión) */
+body.role-municipal .municipal-only,
+body.role-admin .municipal-only {
     display: flex !important;
 }
 

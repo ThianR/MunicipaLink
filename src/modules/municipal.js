@@ -33,6 +33,17 @@ async function obtenerMunicipalidadUsuario() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return null;
 
+    // Si el usuario es admin, permitimos que vea la municipalidad seleccionada globalmente
+    // esto es útil para pruebas y supervisión.
+    const { data: perfil } = await supabaseClient.from('perfiles').select('rol').eq('id', user.id).maybeSingle();
+    if (perfil?.rol === 'admin') {
+        const muniSelectorMap = document.getElementById('muni-selector-map');
+        if (muniSelectorMap && muniSelectorMap.value) {
+            Logger.info('MunicipalModule: Admin detectado, usando muni del selector global');
+            return muniSelectorMap.value;
+        }
+    }
+
     // Nivel 1: RPC (post-migración SQL)
     try {
         const { data: rpcData, error: rpcError } = await supabaseClient.rpc('obtener_municipalidad_usuario');
@@ -953,7 +964,21 @@ export const MunicipalModule = {
             }
         });
 
-        // 4. Limpiar estado al cerrar sesión
+        // 4. Escuchar cambio de municipalidad global (para admins)
+        document.addEventListener('muni:changed', async (e) => {
+            const user = AuthModule.getUsuarioActual();
+            if (!user) return;
+
+            // Verificamos si es admin para permitir el cambio de contexto municipal
+            const { data: perfil } = await supabaseClient.from('perfiles').select('rol').eq('id', user.id).maybeSingle();
+            if ((perfil?.rol === 'admin' || user.email === 'admin@test.com') && e.detail?.id) {
+                state.municipalidadId = e.detail.id;
+                Logger.info('MunicipalModule: Recargando panel por cambio de muni global (Admin)');
+                await cargarPanelMunicipal();
+            }
+        });
+
+        // 5. Limpiar estado al cerrar sesión
         document.addEventListener('auth:logout', () => {
             state.municipalidadId = null;
             state.municipalidadNombre = null;

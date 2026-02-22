@@ -7,13 +7,14 @@ MunicipaLink es una plataforma de participación ciudadana que permite a los ciu
 
 ### Para Administradores
 -   **Panel de Administración / Municipal**: Permite gestionar usuarios, departamentos y reportes. Los funcionarios municipales gestionan incidencias de su propia municipalidad.
--   **Motor de Base de Datos**: Estructura SQL consolidada e idempotente en `/sql` (archivos 00-09).
+-   **Motor de Base de Datos**: Estructura SQL consolidada e idempotente en `/sql` (archivos `00_config.sql` a `11_gamificacion_municipal.sql`).
 
 ### Nuevas Funcionalidades Clave
 1. **Panel Admin de Control**: Gestión integral de usuarios (baneo, edición, reset de password) y municipalidades.
 2. **Gestión Municipal Pro**: Flujo completo de asignación de múltiples departamentos, priorización interna y resolución con evidencias fotográficas obligatorias.
 3. **Línea de Tiempo y GPS**: Seguimiento visual del progreso del reporte para el ciudadano y navegación GPS para el operario.
 4. **Infinite Scroll**: Carga de reportes optimizada mediante paginación en scroll.
+5. **Ranking Municipal**: Clasifica municipalidades por tasa de resolución de reportes y calificación ciudadana. Perfiles públicos con sistema de ★ y comentarios.
 
 ## Stack Tecnológico
 - **Frontend**: HTML5, CSS3 (Vanilla), JavaScript (ES6 Modules).
@@ -28,27 +29,29 @@ El proyecto sigue una estructura modular para facilitar el mantenimiento:
 ```text
 ├── index.html          # Punto de entrada único (Single Page App style)
 ├── main.js             # Inicialización de la aplicación y orquestación
-├── sql/                # Engine SQL consolidado (00_config.sql a 06_semillas.sql)
+├── sql/                # Engine SQL consolidado (00_config.sql a 11_gamificacion_municipal.sql)
 ├── src/
 │   ├── components/     # Componentes UI reutilizables (ReportCard.js)
-│   ├── modules/        # Controladores de Vistas (auth, reports, map, profile, ui, admin, municipal)
-│   ├── services/       # Capa de Acceso a Datos (ReportsService, supabaseClient)
+│   ├── modules/        # Controladores de Vistas (auth, reports, map, profile, ui, admin, municipal, ranking)
+│   ├── services/       # Capa de Acceso a Datos (ReportsService, MuniGamificationService, supabaseClient)
 │   └── utils/          # Utilidades (helpers, logger, ui, TableRenderer)
 └── styles/             # CSS Modularizado (Metodología BEM)
     ├── base/           # Variables, Reset, Tipografía
     ├── components/     # Botones, Cards, Modales, Gamificación
     ├── layout/         # Estructura del Layout (Header, Sidebar, Navigation)
-    ├── views/          # Estilos específicos de cada vista (Map, Reports, etc.)
+    ├── views/          # Estilos específicos de cada vista (Map, Reports, Ranking, etc.)
     └── utilities/      # Helpers y clases de utilidad
 ```
 
 ## Flujos Principales & Comunicación
-- **Módulos**: Cada archivo en `src/modules/` exporta un objeto con un método `init()`.
+- **Módulos**: Cada archivo en `src/modules/` exporta un objeto con un método `init()` o funciones de setup.
 - **Eventos**: Los módulos se comunican principalmente a través de Eventos Personalizados de JavaScript:
     - `auth:login`, `auth:logout`, `auth:guest`: Cambios de estado de usuario.
     - `ui:view-changed`, `ui:tab-changed`: Cambios en la interfaz.
     - `muni:changed`: Sincronización de municipalidad seleccionada.
+    - `ui:request-view`: Navegación programática a una vista específica.
 - **Vistas**: Las "páginas" son `div` con la clase `.view` dentro de `index.html`. `UIModule.changeView(name)` gestiona la visibilidad.
+- **SQL**: Todos los scripts en `sql/` deben ser **idempotentes** (usar `IF NOT EXISTS`, `CREATE OR REPLACE`, `DROP … IF EXISTS`, o bloques `DO $$ BEGIN … END $$` para políticas RLS).
 
 ## Guía para el Agente IA (REGLAS DE ORO)
 1. **No Duplicar**: Antes de crear una función, consulta `TECHNICAL_REFERENCE.md`.

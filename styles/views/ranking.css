@@ -1,0 +1,472 @@
+/* ============================================
+   RANKING MUNICIPAL - MunicipaLink Premium
+   ============================================ */
+
+/* Contenedor principal del ranking */
+.ranking-view {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-light, #f8fafc);
+}
+
+/* Header de la vista */
+.ranking-header {
+    padding: 1.75rem 2rem 1.25rem;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ranking-header-icon {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ranking-header-icon i {
+    color: white;
+    width: 22px;
+    height: 22px;
+}
+
+.ranking-header-text h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-main, #1e293b);
+    margin: 0;
+}
+
+.ranking-header-text p {
+    font-size: 0.85rem;
+    color: var(--text-muted, #64748b);
+    margin: 0.2rem 0 0;
+}
+
+/* Lista del ranking */
+.ranking-list {
+    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Tarjeta de municipalidad en ranking */
+.ranking-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ranking-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary, #10b981);
+}
+
+/* Posición en el ranking */
+.ranking-card__position {
+    font-size: 1.5rem;
+    font-weight: 900;
+    min-width: 44px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.ranking-card__position--1 {
+    color: #f59e0b;
+}
+
+.ranking-card__position--2 {
+    color: #94a3b8;
+}
+
+.ranking-card__position--3 {
+    color: #b45309;
+}
+
+.ranking-card__position--other {
+    color: #94a3b8;
+    font-size: 1.1rem;
+}
+
+/* Info principal */
+.ranking-card__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ranking-card__name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+    margin: 0 0 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Barra de resolución */
+.ranking-card__resolution {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.resolution-bar {
+    flex: 1;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.resolution-bar__fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #10b981, #059669);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.resolution-bar__fill--low {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.resolution-bar__fill--mid {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.resolution-percentage {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+    min-width: 38px;
+    text-align: right;
+}
+
+/* Estadísticas en pill */
+.ranking-card__stats {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.stat-pill {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: var(--text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.stat-pill i {
+    width: 12px;
+    height: 12px;
+}
+
+.stat-pill--resolved {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.stat-pill--pending {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+/* Calificación (estrellas) */
+.ranking-card__rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    min-width: 64px;
+}
+
+.stars-display {
+    display: flex;
+    gap: 2px;
+}
+
+.stars-display .star {
+    font-size: 0.9rem;
+    color: #e2e8f0;
+}
+
+.stars-display .star--filled {
+    color: #f59e0b;
+}
+
+.rating-count {
+    font-size: 0.7rem;
+    color: var(--text-muted, #64748b);
+}
+
+/* Badge de clasificación */
+.ranking-card__badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0 16px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge--elite {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge--destacada {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.badge--crecimiento {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.badge--atencion {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ===========================
+   MODAL PERFIL DE MUNICIPALIDAD
+   =========================== */
+
+.muni-profile-modal .modal__body {
+    padding: 0;
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+.muni-profile-header {
+    background: linear-gradient(135deg, #0f172a, #1e3a5f);
+    padding: 2rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.muni-profile-avatar {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.muni-profile-avatar i {
+    width: 28px;
+    height: 28px;
+    color: white;
+}
+
+.muni-profile-name {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.muni-profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.muni-stat-box {
+    background: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+.muni-stat-box__value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary, #10b981);
+    margin: 0;
+}
+
+.muni-stat-box__label {
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Sección de calificar */
+.muni-rate-section {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.muni-rate-section h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+    margin: 0 0 0.75rem;
+}
+
+.stars-input {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.stars-input .star-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.6rem;
+    color: #e2e8f0;
+    transition: color 0.15s, transform 0.1s;
+    padding: 0.1rem;
+    line-height: 1;
+}
+
+.stars-input .star-btn:hover,
+.stars-input .star-btn.active {
+    color: #f59e0b;
+    transform: scale(1.15);
+}
+
+/* Sección de comentarios */
+.muni-comments-section {
+    padding: 1.5rem 2rem;
+}
+
+.muni-comments-section h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+    margin: 0 0 1rem;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.comment-form textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.comment-form textarea:focus {
+    border-color: var(--primary, #10b981);
+}
+
+.comment-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.comment-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary, #10b981), #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+}
+
+.comment-body__author {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+}
+
+.comment-body__date {
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+    margin-left: 0.5rem;
+}
+
+.comment-body__text {
+    font-size: 0.85rem;
+    color: var(--text-main, #1e293b);
+    margin: 0.25rem 0 0;
+    line-height: 1.5;
+}
+
+/* Estado vacío */
+.ranking-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted, #64748b);
+}
+
+.ranking-empty i {
+    width: 56px;
+    height: 56px;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .ranking-card {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .muni-profile-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ranking-list {
+        padding: 1rem;
+    }
+}
