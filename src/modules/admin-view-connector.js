@@ -1,5 +1,6 @@
 
 import { UIModule } from './ui.js';
+import { Logger } from '../utils/logger.js';
 
 export function setupAdminConnector() {
     const btnAdminPanel = document.getElementById('btn-admin-panel');
@@ -9,12 +10,12 @@ export function setupAdminConnector() {
         btnAdminPanel.parentNode.replaceChild(newBtn, btnAdminPanel);
 
         newBtn.onclick = () => {
-            console.log('Switching to admin view');
+            Logger.debug('Switching to admin view');
             UIModule.changeView('admin');
         };
-        console.log('Admin connector initialized');
+        Logger.debug('Admin connector initialized');
     } else {
-        console.warn('Admin button not found');
+        Logger.warn('Admin button not found');
     }
 }
 

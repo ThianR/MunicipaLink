@@ -13,7 +13,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Leaflet CSS -->
+    <!-- Leaflet CSS (Loaded Dynamically if needed, but kept here for critical path if map is home) -->
+    <!-- Optimization: Preconnect to CDN -->
+    <link rel="preconnect" href="https://unpkg.com">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <!-- Custom Style - Modular CSS -->
@@ -1617,8 +1619,61 @@
 
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Templates -->
+    <template id="tpl-report-card">
+        <div class="report-card">
+            <div class="report-card__header">
+                 <span class="report-card__id"></span>
+                 <span class="report-card__category"></span>
+                 <span class="status-badge"></span>
+            </div>
+            <p class="report-card__description"></p>
+
+            <div class="report-card__stats">
+                 <div class="report-card__author js-view-profile" title="Ver perfil del ciudadano">
+                    <i data-lucide="user"></i> Ver Ciudadano
+                </div>
+
+                <div class="report-card__priority" title="Prioridad">
+                     <div class="priority-stars"></div>
+                </div>
+
+                <div class="report-card__stat stat-votes" title="Apoyos">
+                    <i data-lucide="thumbs-up"></i> <span></span>
+                </div>
+
+                <div class="report-card__stat stat-comments" title="Comentarios">
+                    <i data-lucide="message-square"></i> <span></span>
+                </div>
+            </div>
+
+            <div class="report-card__meta">
+                <span class="report-card__location"><i data-lucide="map-pin"></i> <span></span></span>
+                <span class="report-card__date"></span>
+            </div>
+        </div>
+    </template>
+
+    <!-- Modal: Confirmación Personalizado -->
+    <div id="modal-confirm" class="modal">
+        <div class="modal__content modal-confirm-content" style="max-width: 400px; text-align: center; border-radius: 20px; padding: 2rem;">
+            <div style="width: 60px; height: 60px; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <i data-lucide="alert-triangle" style="width: 30px; height: 30px; color: #f59e0b;"></i>
+            </div>
+            <h3 id="modal-confirm-title" style="margin-bottom: 0.5rem; font-size: 1.25rem;">¿Estás seguro?</h3>
+            <p id="modal-confirm-message" style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+                Esta acción no se puede deshacer.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="btn-confirm-cancel" class="button button--secondary" style="flex: 1;">Cancelar</button>
+                <button id="btn-confirm-ok" class="button button--primary" style="flex: 1;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Defer loading of non-critical libraries -->
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Main Application Script (Modular) -->

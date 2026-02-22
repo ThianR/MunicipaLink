@@ -2,6 +2,7 @@ import { supabaseClient } from '../services/supabase.js';
 import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { escapeHtml } from '../utils/helpers.js';
 import { Logger } from '../utils/logger.js';
 
 export const ProfileModule = {
@@ -436,10 +437,14 @@ async function abrirPerfilPublico(userId) {
         const stats = await cargarEstadisticasGamificacion(userId, false);
 
         // Render content (HTML generation as in app.js)
+        const safeAlias = escapeHtml(perfil.alias || 'Usuario');
+        const safeRango = escapeHtml(stats.rango || 'Novato');
+        const safeNivel = escapeHtml(stats.nivel || 1);
+
         content.innerHTML = `
             <div class="public-profile-header">
-                 <h3>@${perfil.alias || 'Usuario'}</h3>
-                 <p>${stats.rango || 'Novato'} - Nivel ${stats.nivel || 1}</p>
+                 <h3>@${safeAlias}</h3>
+                 <p>${safeRango} - Nivel ${safeNivel}</p>
                  <button id="btn-follow-public" class="btn-action">${stats.lo_sigo ? 'Dejar de Seguir' : 'Seguir'}</button>
             </div>
             <!-- Stats Grid -->
@@ -532,6 +537,9 @@ async function cargarEstadoSolicitudMunicipal(userId) {
                 }
             }
 
+            const safeRol = escapeHtml(profile.rol.toUpperCase());
+            const safeMuniNombre = muniNombre ? escapeHtml(muniNombre) : '';
+
             statusContainer.innerHTML = `
                 <div class="status-card-verified" style="text-align: center; padding: 3rem 1rem;">
                     <div class="verified-badge-large">
@@ -539,16 +547,16 @@ async function cargarEstadoSolicitudMunicipal(userId) {
                     </div>
                     <h3 style="margin-top: 1.5rem; color: var(--text-main);">Perfil Verificado</h3>
                     <p style="color: var(--text-muted); max-width: 400px; margin: 0.5rem auto 1.5rem;">
-                        Tu cuenta tiene rango de <strong>${profile.rol.toUpperCase()}</strong>. 
+                        Tu cuenta tiene rango de <strong>${safeRol}</strong>.
                         Ya puedes gestionar reportes y departamentos desde tu panel correspondiente.
                     </p>
-                    ${muniNombre ? `
+                    ${safeMuniNombre ? `
                         <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem;
                             background: var(--primary-ultra-light, #ecfdf5); color: var(--primary, #10b981);
                             border-radius: 999px; font-size: 0.875rem; font-weight: 600; margin-bottom: 1.5rem;
                             border: 1px solid var(--primary-light, #a7f3d0);">
                             <i data-lucide="building-2" style="width:16px;height:16px;"></i>
-                            Municipalidad de ${muniNombre}
+                            Municipalidad de ${safeMuniNombre}
                         </div>
                     ` : ''}
                     ${profile.rol === 'admin' ?
@@ -585,7 +593,7 @@ async function cargarEstadoSolicitudMunicipal(userId) {
                             </p>
                             <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; background: rgba(37, 99, 235, 0.1); color: #2563eb; border-radius: 20px; font-size: 0.8125rem; font-weight: 700;">
                                 <span class="pulse-indicator"></span>
-                                ESTADO: ${req.estado.toUpperCase()}
+                                ESTADO: ${escapeHtml(req.estado.toUpperCase())}
                             </div>
                         </div>
                     </div>
@@ -612,7 +620,7 @@ async function cargarEstadoSolicitudMunicipal(userId) {
                             ${req.comentarios_admin ? `
                                 <div style="background: rgba(255,255,255,0.6); padding: 1rem; border-left: 4px solid #DC2626; border-radius: 4px;">
                                     <span style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #7F1D1D; margin-bottom: 0.25rem; font-weight: 600;">Motivo del Rechazo:</span>
-                                    <span style="color: #450A0A; font-weight: 500;">${req.comentarios_admin}</span>
+                                    <span style="color: #450A0A; font-weight: 500;">${escapeHtml(req.comentarios_admin)}</span>
                                 </div>
                             ` : ''}
                         </div>

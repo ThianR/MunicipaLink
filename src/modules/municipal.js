@@ -8,7 +8,7 @@ import { APP_CONFIG, REPORT_STATUS, REPORT_PRIORITY } from '../config.js';
 
 import { Logger } from '../utils/logger.js';
 import { hexToDouble } from '../utils/helpers.js';
-import { mostrarMensaje } from '../utils/ui.js';
+import { mostrarMensaje, TableRenderer } from '../utils/ui.js';
 import { comprimirImagen } from '../utils/helpers.js';
 import { parseUbicacion } from '../utils/location.js';
 import { escapeHtml } from '../utils/helpers.js';
@@ -40,7 +40,9 @@ async function obtenerMunicipalidadUsuario() {
             Logger.info('MunicipalModule: municipalidad_id obtenida via RPC');
             return rpcData;
         }
-    } catch (_) { /* intentional fallthrough */ }
+    } catch (e) {
+        Logger.debug('MunicipalModule: Fallo RPC obtener_municipalidad_usuario', e);
+    }
 
     // Nivel 2: perfiles.municipalidad_id (post-migración SQL con update de trigger)
     try {
@@ -53,7 +55,9 @@ async function obtenerMunicipalidadUsuario() {
             Logger.info('MunicipalModule: municipalidad_id obtenida via perfiles');
             return perfilData.municipalidad_id;
         }
-    } catch (_) { /* intentional fallthrough */ }
+    } catch (e) {
+        Logger.debug('MunicipalModule: Fallo consulta directa perfiles', e);
+    }
 
     // Nivel 3: solicitudes_municipales aprobada (siempre disponible sin migración)
     try {
@@ -69,7 +73,9 @@ async function obtenerMunicipalidadUsuario() {
             Logger.info('MunicipalModule: municipalidad_id obtenida via solicitudes_municipales');
             return solicitud.municipalidad_id;
         }
-    } catch (_) { /* intentional fallthrough */ }
+    } catch (e) {
+        Logger.debug('MunicipalModule: Fallo consulta solicitudes_municipales', e);
+    }
 
     Logger.error('MunicipalModule: No se pudo determinar la municipalidad del usuario en ningún nivel.');
     return null;
@@ -265,19 +271,15 @@ async function toggleEstadoDepartamento(id, estadoActual) {
  * @param {{ estado?: string, prioridad?: string }} filtros
  */
 async function cargarReportes(filtros = {}) {
-    const lista = document.getElementById('municipal-reportes-lista');
-    if (!lista) return;
+    const listId = 'municipal-reportes-lista';
+    if (!document.getElementById(listId)) return;
 
     if (!state.municipalidadId) {
-        lista.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
-            <i data-lucide="alert-circle" style="width:16px;height:16px;margin-right:0.5rem;"></i>
-            No se pudo determinar la municipalidad del usuario.</td></tr>`;
-        if (window.lucide) window.lucide.createIcons();
+        TableRenderer.showError(listId, 6, 'No se pudo determinar la municipalidad del usuario.');
         return;
     }
 
-    lista.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
-        <i data-lucide="loader-2" style="animation: spin 1s linear infinite;"></i> Cargando...</td></tr>`;
+    TableRenderer.showLoading(listId, 6);
 
     // Consulta principal de reportes (sin join a perfiles — FK va a auth.users, no a perfiles)
     let query = supabaseClient
@@ -302,7 +304,7 @@ async function cargarReportes(filtros = {}) {
 
     if (error) {
         Logger.error('MunicipalModule: Error cargando reportes', error);
-        lista.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error al cargar reportes: ${error.message}</td></tr>`;
+        TableRenderer.showError(listId, 6, `Error al cargar reportes: ${error.message}`);
         return;
     }
 
@@ -339,12 +341,12 @@ async function cargarReportes(filtros = {}) {
  * @param {Array} data
  */
 function renderReportes(data) {
-    const lista = document.getElementById('municipal-reportes-lista');
+    const listId = 'municipal-reportes-lista';
+    const lista = document.getElementById(listId);
     if (!lista) return;
 
     if (data.length === 0) {
-        lista.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
-            No hay reportes para esta municipalidad.</td></tr>`;
+        TableRenderer.showEmpty(listId, 6, 'No hay reportes para esta municipalidad.');
         return;
     }
 
@@ -370,7 +372,7 @@ function renderReportes(data) {
         return `<tr>
             <td>
                 <span style="font-weight:600; font-size:0.75rem; color: var(--primary);">${escapeHtml(r.numero_solicitud) || r.id.slice(0, 8)}</span><br>
-                <span style="font-size:0.75rem; color: var(--text-muted);">${fecha}</span>
+                <span style="font-size:0.75rem; color: var(--text-muted);">${escapeHtml(fecha)}</span>
             </td>
             <td style="max-width: 200px; font-size:0.85rem;">${escapeHtml(r.descripcion) || '—'}</td>
             <td>${ciudadano}</td>
@@ -462,7 +464,11 @@ async function abrirDetalleGestion(reporteId) {
     document.getElementById('mgestion-email').textContent = p?.email || '—';
 
     // — Detalles del reporte
-    document.getElementById('mgestion-descripcion').textContent = reporte.descripcion || '—';
+    const desc = document.getElementById('mgestion-descripcion');
+    // Usamos textContent para evitar XSS en descripción, o escapeHtml si se usara innerHTML.
+    // Como es textContent, es seguro, pero verificamos.
+    desc.textContent = reporte.descripcion || '—';
+
     document.getElementById('mgestion-categoria').textContent = reporte.categorias?.nombre || '—';
     document.getElementById('mgestion-fecha-creacion').textContent =
         reporte.creado_en ? new Date(reporte.creado_en).toLocaleString('es-PY') : '—';
@@ -471,12 +477,15 @@ async function abrirDetalleGestion(reporteId) {
     renderDepartamentosCheckboxes(reporte.deptos_asignados, reporte.estado);
 
     // — Prioridad
-    document.getElementById('mgestion-prioridad').value = reporte.prioridad_gestion || 'media';
+    // Validar que el valor es uno de los esperados para evitar XSS en atributos
+    const validPrio = ['baja', 'media', 'alta', 'urgente'].includes(reporte.prioridad_gestion) ? reporte.prioridad_gestion : 'media';
+    document.getElementById('mgestion-prioridad').value = validPrio;
 
     // — Estado actual
     document.getElementById('mgestion-estado').value = reporte.estado;
 
     // — Observación
+    // textContent o value es seguro contra XSS
     document.getElementById('mgestion-observacion').value = reporte.observacion_municipal || '';
 
     // — Fecha primera asignación
@@ -498,7 +507,10 @@ async function abrirDetalleGestion(reporteId) {
         if (reporte.ubicacion) {
             const coords = parseUbicacion(reporte.ubicacion);
             if (coords) {
-                btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`;
+                // Escapar coordenadas aunque sean números por buena práctica al inyectar en href
+                const safeLat = encodeURIComponent(coords.lat);
+                const safeLng = encodeURIComponent(coords.lng);
+                btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${safeLat},${safeLng}`;
                 btnGps.style.display = 'flex';
             }
         }

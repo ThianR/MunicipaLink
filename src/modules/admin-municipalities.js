@@ -1,8 +1,7 @@
 import { supabaseClient } from '../services/supabase.js';
 import { Logger } from '../utils/logger.js';
-import { mostrarMensaje } from '../utils/ui.js';
-import { hexToDouble } from '../utils/helpers.js';
-import { parseUbicacion } from '../utils/location.js';
+import { mostrarMensaje, confirmarAccion, TableRenderer } from '../utils/ui.js';
+import { escapeHtml } from '../utils/helpers.js';
 
 let allMunicipalities = [];
 let currentEditingMuniId = null;
@@ -71,10 +70,10 @@ export function setupMunicipalitiesListeners() {
 }
 
 export async function cargarMunicipalidades() {
-    const listEl = document.getElementById('admin-munis-list');
-    if (!listEl) return;
+    const listId = 'admin-munis-list';
+    if (!document.getElementById(listId)) return;
 
-    listEl.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
+    TableRenderer.showLoading(listId, 3);
 
     try {
         const { data, error } = await supabaseClient
@@ -88,7 +87,7 @@ export async function cargarMunicipalidades() {
 
     } catch (err) {
         Logger.error('Error al cargar munis admin:', err);
-        listEl.innerHTML = '<tr><td colspan="3">Error al cargar datos.</td></tr>';
+        TableRenderer.showError(listId, 3);
     }
 }
 
@@ -104,11 +103,12 @@ export function filtrarMunicipalidades(query) {
 }
 
 function renderMunicipalidades(data) {
-    const listEl = document.getElementById('admin-munis-list');
+    const listId = 'admin-munis-list';
+    const listEl = document.getElementById(listId);
     if (!listEl) return;
 
     if (data.length === 0) {
-        listEl.innerHTML = '<tr><td colspan="3" class="text-muted">No hay municipalidades que coincidan.</td></tr>';
+        TableRenderer.showEmpty(listId, 3, 'No hay municipalidades que coincidan.');
         return;
     }
 
@@ -117,9 +117,13 @@ function renderMunicipalidades(data) {
         const statusText = m.centro ? 'Activa' : 'Pendiente';
         const statusIcon = m.centro ? 'check-circle' : 'clock';
 
+        const nombre = escapeHtml(m.nombre);
+        // JSON seguro para atributo HTML
+        const safeMuniObj = JSON.stringify(m).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+
         return `
             <tr>
-                <td style="font-weight: 700;">${m.nombre}</td>
+                <td style="font-weight: 700;">${nombre}</td>
                 <td>
                     <span class="admin-status-badge ${statusClass}">
                         <i data-lucide="${statusIcon}" style="width: 14px; height: 14px;"></i>
@@ -128,10 +132,10 @@ function renderMunicipalidades(data) {
                 </td>
                 <td>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="button button--secondary btn-sm btn-edit-muni" data-id="${m.id}" data-obj='${JSON.stringify(m)}' title="Editar Muni" style="width: auto;">
+                        <button class="button button--secondary btn-sm btn-edit-muni" data-id="${m.id}" data-obj='${safeMuniObj}' title="Editar Muni" style="width: auto;">
                             <i data-lucide="settings" style="width: 16px; height: 16px;"></i>
                         </button>
-                        <button class="button button--primary btn-sm btn-manage-depts" data-id="${m.id}" data-name="${m.nombre}" title="Gestionar Departamentos" style="width: auto; display: flex; align-items: center; gap: 4px;">
+                        <button class="button button--primary btn-sm btn-manage-depts" data-id="${m.id}" data-name="${nombre}" title="Gestionar Departamentos" style="width: auto; display: flex; align-items: center; gap: 4px;">
                             <i data-lucide="building" style="width: 16px; height: 16px;"></i> <span class="desktop-only">Deptos</span>
                         </button>
                     </div>
@@ -147,7 +151,7 @@ function renderMunicipalidades(data) {
 
     document.querySelectorAll('.btn-edit-muni').forEach(btn => {
         btn.onclick = () => {
-            const muni = JSON.parse(btn.dataset.obj);
+            const muni = JSON.parse(btn.dataset.obj.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
             abrirModalMuni(muni);
         };
     });
@@ -388,8 +392,8 @@ function filtrarDepartamentos(query) {
 }
 
 export async function cargarDepartamentos(muniId) {
-    const listEl = document.getElementById('admin-dept-list');
-    listEl.innerHTML = '<tr><td colspan="3">Cargando departamentos...</td></tr>';
+    const listId = 'admin-dept-list';
+    TableRenderer.showLoading(listId, 3, 'Cargando departamentos...');
 
     try {
         const { data, error } = await supabaseClient
@@ -404,7 +408,7 @@ export async function cargarDepartamentos(muniId) {
 
     } catch (err) {
         Logger.error('Error al cargar departamentos:', err);
-        listEl.innerHTML = '<tr><td colspan="3">Error al cargar datos.</td></tr>';
+        TableRenderer.showError(listId, 3);
     }
 }
 
@@ -422,6 +426,9 @@ function renderDepartamentos(data) {
     listEl.innerHTML = data.map(d => {
         const statusClass = d.estado === 'inactivo' ? 'status-pending' : 'status-active';
         const statusText = d.estado === 'inactivo' ? 'Inactivo' : 'Activo';
+        const nombre = escapeHtml(d.nombre);
+        const contacto = escapeHtml(d.contacto || 'Sin contacto');
+        const safeDeptObj = JSON.stringify(d).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
 
         return `
         <tr>
@@ -458,14 +465,14 @@ function renderDepartamentos(data) {
     // Listeners
     document.querySelectorAll('.btn-edit-dept').forEach(btn => {
         btn.addEventListener('click', () => {
-            const dept = JSON.parse(btn.dataset.obj);
+            const dept = JSON.parse(btn.dataset.obj.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
             cargarDatosEdicion(dept);
         });
     });
 
     document.querySelectorAll('.btn-delete-dept').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (confirm('¿Seguro que deseas eliminar este departamento?')) {
+        btn.addEventListener('click', async () => {
+            if (await confirmarAccion('¿Seguro que deseas eliminar este departamento?', 'Eliminar Departamento')) {
                 eliminarDepartamento(btn.dataset.id);
             }
         });

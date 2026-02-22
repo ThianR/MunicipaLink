@@ -9,6 +9,7 @@ Este documento es la fuente de verdad técnica del proyecto. Detalla cada funci�
 ## [REGLA DE ORO]
 > [!IMPORTANT]
 > **Antes de implementar una nueva función:** Verifica si ya existe en este catálogo. Si modificas una función existente, **actualiza este documento** inmediatamente.
+> **Seguridad:** *Siempre* usa `escapeHtml` al inyectar contenido dinámico en el DOM y `confirmarAccion` para flujos críticos.
 
 ---
 
@@ -27,21 +28,18 @@ Gestiona el estado de autenticación y la identidad del usuario.
 ---
 
 ## 2. ReportsModule (`src/modules/reports.js`)
-Lógica central de reportes, comentarios y votos.
+Lógica central de reportes, comentarios y votos. Utiliza `ReportsService` para acceso a datos.
 
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
-| `init()` | Ninguno | Configura listeners de filtros, búsqueda y eventos UI. | Orquesta la recarga de reportes al cambiar de vista. |
-| `reloadReports()` | Ninguno | Recarga los reportes aplicando filtros y orden actual. | Detecta automáticamente qué pestaña está activa. |
-| `aplicarOrdenamiento(query)` | `query` (Supabase) | Aplica orden por fecha o relevancia a la consulta. | El orden 'impact' usa `relevancia_relativa` (estrellas) como criterio principal. |
-| `enviarReporte(event)` | `event` (Submit) | Procesa el formulario de nuevo reporte y sube evidencias en paralelo. | **Validaciones:** Requiere Login y Municipalidad seleccionada. Optimizado con Promise.all. |
-| `renderizarReportes(data, id)` | `data` (Array), `id` (String) | Genera el HTML de las tarjetas de reporte en el contenedor. | Utiliza `renderStars` y datos de la vista `reportes_final_v1`. |
-| `renderStars(relevance, score)` | `relevance` (0-1), `score` (Number) | Retorna el HTML de estrellas (1-5) según impacto relativo. | Prioriza `relevancia_relativa` (PERCENT_RANK). Fallback a score absoluto. |
+| `init()` | Ninguno | Configura listeners, filtros e Infinite Scroll. | Implementa IntersectionObserver para carga paginada. |
+| `reloadReports()` | Ninguno | Reinicia la paginación y recarga la lista. | Limpia el contenedor antes de cargar la página 0. |
+| `loadNextPage()` | Ninguno | Carga el siguiente lote de reportes vía `ReportsService`. | Gestiona flags `isLoadingMore` y `hasMoreReports`. |
+| `enviarReporte(event)` | `event` (Submit) | Procesa el formulario y sube evidencias. | Delega la creación a `ReportsService.createReporte`. |
+| `renderizarReportes(data, id)` | `data`, `id` | Genera HTML usando `createReportCard` (Template). | **Seguridad:** Usa templates clonados, no strings HTML. |
 | `abrirDetalleReporte(id)` | `id` (String) | Cambia a la vista de detalle y carga datos del reporte. | Inicializa Leaflet, `renderTimeline` y `cargarEvidenciasCierre`. |
-| `renderTimeline(reporte)` | `reporte` (Object) | Genera la línea de tiempo visual (Creación → Asignación → Resolución). | Calcula tiempos transcurridos entre hitos de tiempo. |
-| `cargarEvidenciasCierre(id, e, obs)` | `id, estado, obs` | Muestra fotos de resolución/rechazo y observaciones del funcionario. | Solo se activa si el estado es final. |
-| `interactuar(tipo)` | `tipo` (String) | Gestiona Votos (+/-) y Seguir reporte. Refresca UI inmediatamente. | **Validación:** Requiere Login. Es tipo toggle. |
-| `verPerfilCiudadano(uid)` | Internal (Event Delegation) | Navega a la vista de perfil del ciudadano y carga sus datos. | Redirige a UIModule.changeView('profile') y emite `profile:load-user`. |
+| `renderTimeline(reporte)` | `reporte` (Object) | Genera la línea de tiempo visual. | Calcula tiempos transcurridos entre hitos. |
+| `interactuar(tipo)` | `tipo` (String) | Gestiona Votos (+/-) y Seguir reporte. | **Validación:** Requiere Login. Es tipo toggle. |
 
 ---
 
@@ -51,11 +49,11 @@ Gestión de identidad extendida y gamificación.
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
 | `init()` | Ninguno | Configura listeners de perfil y eventos de auth. | Limpia UI al cerrar sesión. |
-| `cargarPerfil(userId?)` | `userId` (opcional) | Carga los datos del perfil en el formulario y stats. | Si no es el perfil propio, oculta elementos con clase `.private-field`. |
+| `cargarPerfil(userId?)` | `userId` (opcional) | Carga los datos del perfil en el formulario y stats. | Usa `escapeHtml` para renderizar datos de usuario. |
 | `enviarSolicitudMunicipal()` | Ninguno | Procesa y envía solicitudes de rol `municipal` con adjuntos. | Requiere login. Adjunta documento de identidad. |
 | `guardarPerfil(event)` | `event` (Submit) | Actualiza datos en tabla `perfiles` y sube nuevo avatar. | **Validación:** Solo para el usuario dueño del perfil. |
 | `actualizarTrustMeter(perfil)`| `perfil` (Object) | Calcula el % de completitud del perfil (1.0x a 2.0x). | Basado en 7 campos clave (alias, contacto, etc). |
-| `cargarEstadisticasGamificacion(uid, isMe)` | `uid` (String), `isMe` (Bool) | Llama a RPC para traer XP, Rango, Nivel e insignias. | Retorna el objeto de estadísticas completo. |
+| `cargarEstadisticasGamificacion(uid, isMe)` | `uid`, `isMe` | Llama a RPC para traer XP, Rango, Nivel e insignias. | Retorna el objeto de estadísticas completo. |
 
 ---
 
@@ -64,7 +62,7 @@ Integración con mapas geográficos.
 
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
-| `init()` | Ninguno | Inicializa Leaflet, marcador y escucha `muni:changed`. | Llama a `detectarUbicacion` al inicio. |
+| `init()` | Ninguno | Inicializa Leaflet (Lazy Loading), marcador y escucha eventos. | Llama a `detectarUbicacion` al inicio. |
 | `centrarEnMunicipalidad(id)` | `id` (String) | Mueve el mapa al centro de la municipalidad. | Parsea coordenadas desde JSON o WKT (POINT). |
 | `detectarUbicacion(forzar)` | `forzar` (Bool) | Usa Geo-API del navegador para posicionar al usuario. | Busca la muni más cercana automáticamente. |
 
@@ -76,7 +74,7 @@ Orquestador de navegación y estado visual.
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
 | `changeView(name)` | `name` (String) | Cambia entre 'map', 'reports', 'profile', etc. | Dispara `ui:view-changed`. Guarda estado en `localStorage`. |
-| `changeTab(name)` | `name` (String) | Cambia entre 'all-requests', 'my-requests', o pestañas de admin. | Dispara `ui:tab-changed`. |
+| `changeTab(name)` | `name` (String) | Cambia entre 'all-requests', 'my-requests', o pestañas admin. | Dispara `ui:tab-changed`. |
 | `getCurrentView()` | Ninguno | Retorna el nombre de la vista activa. | Útil para recargas condicionales. |
 
 ---
@@ -86,14 +84,12 @@ Gestión centralizada para administradores.
 
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
-| `init()` | Ninguno | Inicializa listeners de búsqueda, pestañas y modales admin. | Solo se carga si el usuario tiene rol `admin`. |
-| `cargarUsuarios()` | Ninguno | Lista usuarios en la tabla premium con filtros de búsqueda. | Obtiene datos de la vista `v_admin_usuarios`. |
-| `cargarSolicitudesRol()` | Ninguno | Obtiene y renderiza la lista de solicitudes de rol municipal. | Filtra por estado y utiliza la tabla `solicitudes_municipales`. |
-| `gestionarSolicitudRol(id, estado, msj)` | `id`, `estado`, `msj` | Aprueba o rechaza una solicitud de rol. | **Nota:** Dispara trigger SQL para cambiar rol en `perfiles`. |
-| `guardarUsuario()` | Ninguno | Actualiza datos (rol, nivel, alias) y estado `activo` (baneo). | Requiere rol `admin`. |
-| `enviarResetPassword()` | Ninguno | Dispara el flujo de recuperación de Supabase para un usuario. | Utiliza `auth.resetPasswordForEmail`. |
-| `cambiarPestanaAdmin(id)` | `id` (String) | Cambia entre Dashboard, Municipalidades y Usuarios. | Gestiona clases `.active` en paneles. |
-| `exportarReportesCSV()` | Ninguno | Descarga el listado filtrado actual en formato CSV. | Pendiente de implementación (ver Roadmap). |
+| `init()` | Ninguno | Inicializa listeners y modales admin. | Solo se carga si el usuario tiene rol `admin`. |
+| `cargarUsuarios()` | Ninguno | Lista usuarios usando `TableRenderer`. | Obtiene datos de la vista `v_admin_usuarios`. |
+| `cargarSolicitudesRol()` | Ninguno | Renderiza solicitudes usando `TableRenderer`. | Filtra por estado y utiliza `solicitudes_municipales`. |
+| `gestionarSolicitudRol(id, est, com, skip)` | `id, est, com, skip` | Aprueba o rechaza solicitud. | `skipConfirmation` permite saltar el modal si ya se validó. |
+| `guardarUsuario()` | Ninguno | Actualiza datos y estado (baneo). | Requiere rol `admin`. |
+| `enviarResetPassword()` | Ninguno | Dispara recuperación de contraseña. | Utiliza `auth.resetPasswordForEmail`. |
 
 ---
 
@@ -102,54 +98,35 @@ Gestión de incidencias para funcionarios municipales.
 
 | Función | Parámetros | Descripción | Validaciones / Notas |
 | :--- | :--- | :--- | :--- |
-| `init()` | Ninguno | Inicializa el panel, carga departamentos y reportes de la muni asignada. | Requiere que el usuario tenga un `municipalidad_id` en su perfil. |
-| `cargarReportes(filtros)` | `filtros` (Object) | Obtiene reportes filtrados por estado y prioridad. | Usa join explícito a `departamentos!departamento_id`. |
-| `abrirDetalleGestion(id)` | `id` (String) | Abre el modal premium para gestionar una solicitud específica. | Siempre re-fetcha datos (sin caché) para garantizar frescura. |
-| `renderDepartamentosCheckboxes(asignados, estado)` | `asignados, estado` | Renderiza la lista filtrable de departamentos. | Bloquea (lock) los ya asignados para evitar edición de historial. |
-| `guardarGestion()` | Ninguno | Aplica cambios de prioridad, estado y asignación de departamentos. | **Validación:** Requiere evidencias si el estado es final. |
-| `subirEvidenciasCierre(id, archivos, tipo)` | `id` (String), `archivos` (FileList), `tipo` (String) | Sube fotos en paralelo al bucket y registra en `evidencias_cierre`. | Comprime antes de subir. Optimizado con Promise.all. |
+| `init()` | Ninguno | Inicializa panel y carga datos. | Requiere `municipalidad_id` en perfil. |
+| `cargarReportes(filtros)` | `filtros` (Object) | Obtiene reportes filtrados. | Usa `TableRenderer` para estados de carga. |
+| `abrirDetalleGestion(id)` | `id` (String) | Abre modal premium. | Renderiza con `escapeHtml`. |
+| `renderDepartamentosCheckboxes(asignados, estado)` | `asignados, estado` | Lista departamentos filtrables. | Bloquea los ya asignados. |
+| `guardarGestion()` | Ninguno | Aplica cambios de prioridad/estado. | **Validación:** Requiere evidencias si es final. |
 
 ---
 
----
+## 8. Servicios y Utilidades (NUEVO)
 
-## 6. Utilidades e Infraestructura
+### `src/services/ReportsService.js` (Data Access Layer)
+- `getReportes({muniId, estado, search, sort, page, pageSize, userId})`: Obtiene lista paginada.
+- `getReporteById(id)`: Obtiene un reporte único.
+- `createReporte(payload)`: Inserta un nuevo reporte.
+- `uploadEvidencias(reporteId, userId, archivos)`: Sube imágenes al Storage.
+
+### `src/components/ReportCard.js`
+- `createReportCard(data)`: Crea un elemento DOM clonando `#tpl-report-card`. *Reemplaza la concatenación de strings.*
 
 ### `src/utils/ui.js`
-- `mostrarMensaje(msg, tipo)`: Toast notifications (success, error, info).
-- `abrirLightbox(url)`: Modal para ver evidencias/imágenes a tamaño completo.
-- `aplicarRol(rol)`: Cambia clases en el `body` para ocultar/mostrar elementos por CSS. Útil para habilitar el botón de Panel Admin.
+- `mostrarMensaje(msg, tipo)`: Toast notifications.
+- `confirmarAccion(mensaje, titulo)`: **Nuevo**. Muestra un modal de confirmación (Promise-based). Reemplaza `window.confirm`.
+- `TableRenderer`: **Nuevo**. Utilidad para renderizar filas de estado en tablas (`showLoading`, `showError`, `showEmpty`).
+- `abrirLightbox(url)`: Modal para ver evidencias.
 
 ### `src/utils/helpers.js`
-- `comprimirImagen(file)`: Retorna Promise con el archivo comprimido (70% calidad, máx 1280px).
-- `formatFecha(isoString)`: Formatea fechas a LocalDateString (es-ES).
-
-### `src/utils/location.js`
-- `parseUbicacion(ubicacion)`: Convierte formatos PostGIS (Hex/WKT) o GeoJSON a `{lat, lng}`.
-
-### 🎨 Arquitectura de Estilos (`/styles`)
-El proyecto ha migrado de un archivo único a un sistema modular basado en **BEM**:
-
-- **Variables (`base/variables.css`)**: Centraliza colores (`--primary`, `--warning`), sombras y espaciados.
-- **Componentes (`components/`)**:
-    - `buttons.css`: Estilos de botones con estados `.active`.
-    - `cards.css`: Tarjetas de reportes y sus elementos BEM.
-    - `gamification.css`: Estilos de niveles, XP y el nuevo perfil de ciudadano circular.
-- **Vistas (`views/`)**: Estilos específicos para cada sección de la app (Mapa, Reportes, Perfil).
-
-### 🗄️ Estructura SQL (`/sql`)
-El motor de base de datos está organizado de forma secuencial e idempotente:
-
-- **`00_config.sql`**: Extensiones y secuencias.
-- **`01_tablas.sql`**: Definición de todas las tablas y sus relaciones.
-- **`02_vistas.sql`**: Vista maestra `reportes_final_v1` con cálculos de impacto.
-- **`03_seguridad.sql`**: Políticas RLS unificadas (RBAC incluido).
-- **`04_funciones.sql`**: Triggers y lógica RPC (gamificación, solicitudes).
-- **`05_permisos.sql`**: Grants base para roles de red.
-- **`06_semillas.sql`**: Datos maestros (categorías iniciales).
-- **`07_solicitudes_rol.sql`**: Sistema de gestión de solicitudes de rol municipal.
-- **`08_vistas_admin.sql`**: Vista `v_admin_usuarios` con cálculos de gamificación para el panel.
-- **`09_gestion_municipal.sql`**: Migración consolidada: Gestión avanzada, Multi-departamento, RLS y Triggers.
+- `escapeHtml(str)`: **Crítico**. Sanitiza strings para prevenir XSS.
+- `comprimirImagen(file)`: Optimización de imágenes.
+- `parseUbicacion(ubicacion)`: Parsea WKT/GeoJSON a `{lat, lng}`.
 
 ---
 *Fin del Catálogo Técnico.*
