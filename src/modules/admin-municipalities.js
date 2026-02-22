@@ -1,6 +1,8 @@
 import { supabaseClient } from '../services/supabase.js';
 import { Logger } from '../utils/logger.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { hexToDouble } from '../utils/helpers.js';
+import { parseUbicacion } from '../utils/location.js';
 
 let allMunicipalities = [];
 let currentEditingMuniId = null;
@@ -59,6 +61,12 @@ export function setupMunicipalitiesListeners() {
         searchInput.oninput = (e) => {
             filtrarDepartamentos(e.target.value);
         };
+    }
+
+    // Botón cancelar edición de departamento
+    const btnCancelDept = document.getElementById('btn-cancel-dept-edit');
+    if (btnCancelDept) {
+        btnCancelDept.onclick = () => resetDeptForm();
     }
 }
 
@@ -171,28 +179,11 @@ export function abrirModalMuni(muni = null) {
                 lng = muni.centro.coordinates[0];
                 lat = muni.centro.coordinates[1];
             } else if (typeof muni.centro === 'string') {
-                // PostGIS Hex (WKB) format
-                if (muni.centro.startsWith('0101')) {
-                    try {
-                        const hasSRID = muni.centro.substring(8, 10) === '20';
-                        const offset = hasSRID ? 18 : 10;
-                        const hexToDouble = (hex) => {
-                            const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                            const view = new DataView(bytes.buffer);
-                            return view.getFloat64(0, true);
-                        };
-                        lng = hexToDouble(muni.centro.substring(offset, offset + 16));
-                        lat = hexToDouble(muni.centro.substring(offset + 16, offset + 32));
-                    } catch (err) {
-                        Logger.error('Error parseando Hex de centro:', err);
-                    }
-                } else {
-                    // POINT(lng lat) format
-                    const match = muni.centro.match(/POINT\(([^ ]+) ([^ ]+)\)/) || muni.centro.match(/\(([^ ]+) ([^ ]+)\)/);
-                    if (match) {
-                        lng = parseFloat(match[1]);
-                        lat = parseFloat(match[2]);
-                    }
+                // Formatos PostGIS Hex (WKB) o WKT
+                const coords = parseUbicacion(muni.centro);
+                if (coords) {
+                    lat = coords.lat;
+                    lng = coords.lng;
                 }
             }
 
@@ -230,38 +221,10 @@ function initMuniMap(muni) {
     let initialLng = defaultLng;
 
     if (muni && muni.centro) {
-        let lat, lng;
-
-        if (typeof muni.centro === 'object' && muni.centro.coordinates) {
-            lng = muni.centro.coordinates[0];
-            lat = muni.centro.coordinates[1];
-        } else if (typeof muni.centro === 'string') {
-            if (muni.centro.startsWith('0101')) {
-                try {
-                    const hasSRID = muni.centro.substring(8, 10) === '20';
-                    const offset = hasSRID ? 18 : 10;
-                    const hexToDouble = (hex) => {
-                        const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                        const view = new DataView(bytes.buffer);
-                        return view.getFloat64(0, true);
-                    };
-                    lng = hexToDouble(muni.centro.substring(offset, offset + 16));
-                    lat = hexToDouble(muni.centro.substring(offset + 16, offset + 32));
-                } catch (err) {
-                    Logger.error('Error parseando Hex:', err);
-                }
-            } else {
-                const match = muni.centro.match(/POINT\(([^ ]+) ([^ ]+)\)/) || muni.centro.match(/\(([^ ]+) ([^ ]+)\)/);
-                if (match) {
-                    lng = parseFloat(match[1]);
-                    lat = parseFloat(match[2]);
-                }
-            }
-        }
-
-        if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-            initialLat = lat;
-            initialLng = lng;
+        const coords = parseUbicacion(muni.centro);
+        if (coords) {
+            initialLat = coords.lat;
+            initialLng = coords.lng;
         }
     }
 
@@ -398,7 +361,7 @@ export function abrirModalDepartamentos(muniId, muniNombre) {
     currentMuniIdForDepts = muniId;
     editingDeptId = null;
     document.getElementById('modal-dept-muni-name').textContent = muniNombre;
-    document.getElementById('btn-submit-dept-text').innerHTML = '<i data-lucide="plus"></i> Agregar';
+    resetDeptForm();
     document.getElementById('modal-admin-departments').classList.add('modal--active');
 
     // Limpiar form
@@ -447,37 +410,50 @@ export async function cargarDepartamentos(muniId) {
 
 function renderDepartamentos(data) {
     const listEl = document.getElementById('admin-dept-list');
+    const countEl = document.getElementById('dept-count');
+
+    if (countEl) countEl.textContent = data.length;
 
     if (data.length === 0) {
-        listEl.innerHTML = '<tr><td colspan="3" class="text-muted">No hay departamentos que coincidan.</td></tr>';
+        listEl.innerHTML = '<tr><td colspan="3" class="text-muted" style="text-align:center; padding: 2rem;">No hay departamentos registrados.</td></tr>';
         return;
     }
 
-    listEl.innerHTML = data.map(d => `
+    listEl.innerHTML = data.map(d => {
+        const statusClass = d.estado === 'inactivo' ? 'status-pending' : 'status-active';
+        const statusText = d.estado === 'inactivo' ? 'Inactivo' : 'Activo';
+
+        return `
         <tr>
-            <td style="padding: 1rem;">
+            <td>
                 <div style="display: flex; flex-direction: column;">
-                    <strong style="font-size: 0.9375rem; color: var(--text-main);">${d.nombre}</strong>
+                    <span style="font-weight: 700; color: var(--text-main); font-size: 0.9375rem;">${d.nombre}</span>
                 </div>
             </td>
-            <td style="padding: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
-                    <i data-lucide="phone" style="width: 14px; height: 14px;"></i>
-                    ${d.contacto || 'Sin contacto'}
+            <td>
+                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.8125rem;">
+                        <i data-lucide="phone" style="width: 12px; height: 12px;"></i>
+                        ${d.contacto || 'Sin contacto'}
+                    </div>
+                    <span class="admin-status-badge ${statusClass}" style="font-size: 0.65rem; padding: 0.1rem 0.4rem; width: fit-content;">
+                        ${statusText}
+                    </span>
                 </div>
             </td>
-            <td style="padding: 1rem;">
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="button button--secondary btn-sm btn-edit-dept" data-id="${d.id}" data-obj='${JSON.stringify(d)}' title="Editar" style="padding: 0.5rem;">
-                        <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
+            <td>
+                <div style="display: flex; gap: 0.375rem; justify-content: flex-end;">
+                    <button class="button button--secondary btn-sm btn-edit-dept" data-id="${d.id}" data-obj='${JSON.stringify(d)}' title="Editar">
+                        <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
                     </button>
-                    <button class="button button--danger btn-sm btn-delete-dept" data-id="${d.id}" title="Eliminar" style="padding: 0.5rem;">
-                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                    <button class="button button--danger btn-sm btn-delete-dept" data-id="${d.id}" title="Eliminar">
+                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                     </button>
                 </div>
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 
     // Listeners
     document.querySelectorAll('.btn-edit-dept').forEach(btn => {
@@ -502,8 +478,33 @@ function cargarDatosEdicion(dept) {
     editingDeptId = dept.id;
     document.getElementById('new-dept-name').value = dept.nombre;
     document.getElementById('new-dept-contact').value = dept.contacto || '';
-    document.getElementById('btn-submit-dept-text').innerHTML = '<i data-lucide="save"></i> Guardar Cambios';
+    if (document.getElementById('new-dept-status')) {
+        document.getElementById('new-dept-status').value = dept.estado || 'activo';
+    }
+    document.getElementById('btn-submit-dept-text').innerHTML = '<i data-lucide="save"></i> Actualizar';
+
+    const btnCancel = document.getElementById('btn-cancel-dept-edit');
+    if (btnCancel) btnCancel.style.display = 'block';
+
     document.getElementById('new-dept-name').focus();
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function resetDeptForm() {
+    editingDeptId = null;
+    const form = document.getElementById('form-add-dept');
+    if (form) form.reset();
+
+    const statusEl = document.getElementById('new-dept-status');
+    if (statusEl) statusEl.value = 'activo';
+
+    const btnSubmit = document.getElementById('btn-submit-dept-text');
+    if (btnSubmit) btnSubmit.innerHTML = '<i data-lucide="plus"></i> Agregar';
+
+    const btnCancel = document.getElementById('btn-cancel-dept-edit');
+    if (btnCancel) btnCancel.style.display = 'none';
+
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export async function guardarDepartamento() {
@@ -511,13 +512,15 @@ export async function guardarDepartamento() {
 
     const nombre = document.getElementById('new-dept-name').value;
     const contacto = document.getElementById('new-dept-contact').value;
+    const estado = document.getElementById('new-dept-status')?.value || 'activo';
 
     if (!nombre) return mostrarMensaje('El nombre es obligatorio', 'error');
 
     const payload = {
         municipalidad_id: currentMuniIdForDepts,
         nombre: nombre,
-        contacto: contacto
+        contacto: contacto,
+        estado: estado
     };
 
     try {
@@ -542,11 +545,7 @@ export async function guardarDepartamento() {
 
         mostrarMensaje(editingDeptId ? 'Departamento actualizado' : 'Departamento creado', 'success');
 
-        // Reset form state matches "New"
-        editingDeptId = null;
-        document.getElementById('btn-submit-dept-text').innerHTML = '<i data-lucide="plus"></i> Agregar';
-        document.getElementById('form-add-dept').reset();
-
+        resetDeptForm();
         cargarDepartamentos(currentMuniIdForDepts);
 
     } catch (err) {

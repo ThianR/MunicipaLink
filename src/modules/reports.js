@@ -1,4 +1,5 @@
 import { supabaseClient } from '../services/supabase.js';
+import { REPORT_STATUS, REPORT_PRIORITY } from '../config.js';
 import { AuthModule } from './auth.js';
 import { UIModule } from './ui.js';
 import { MunicipalityModule } from './municipalities.js'; // Assuming we might need this
@@ -418,12 +419,16 @@ async function renderizarReportes(reportes, containerId) {
         const relevance = r.relevancia_relativa !== undefined ? r.relevancia_relativa : null;
         const starsHtml = renderStars(relevance, r.score_impacto);
 
+        // Buscar configuración de estado centralizada
+        const statusKey = Object.keys(REPORT_STATUS).find(key => REPORT_STATUS[key].label === r.estado) || 'PENDIENTE';
+        const statusCfg = REPORT_STATUS[statusKey];
+
         return `
             <div class="report-card" data-id="${r.id}">
                 <div class="report-card__header">
                      <span class="report-card__id">${r.numero_solicitud || 'S/N'}</span>
                      <span class="report-card__category">${r.categoria_nombre || 'General'}</span>
-                     <span class="status-badge status-badge--${(r.estado || 'pending').toLowerCase().replace(' ', '_')}">${r.estado}</span>
+                     <span class="status-badge status-badge--${statusCfg.class}">${r.estado}</span>
                 </div>
                 <p class="report-card__description">${r.descripcion}</p>
                 
@@ -677,7 +682,7 @@ async function cargarComentarios(id) {
     container.innerHTML = '<p class="loading">Cargando comentarios...</p>';
 
     try {
-        // 1. Obtener comentarios
+        // 1. Obtener comentarios (sin JOIN para evitar errores de relación en cache)
         const { data: comments, error: commError } = await supabaseClient
             .from('comentarios')
             .select('*')
@@ -693,13 +698,13 @@ async function cargarComentarios(id) {
             return;
         }
 
-        // 2. Obtener perfiles de los autores
+        // 2. Obtener perfiles de los autores de forma separada
         const userIds = [...new Set(comments.map(c => c.usuario_id))].filter(Boolean);
         let profilesMap = {};
 
         if (userIds.length > 0) {
             const { data: profiles } = await supabaseClient
-                .from('perfiles_publicos')
+                .from('perfiles')
                 .select('id, nombre_completo, alias, avatar_url')
                 .in('id', userIds);
 
@@ -713,16 +718,15 @@ async function cargarComentarios(id) {
             const p = profilesMap[c.usuario_id] || {};
             const authorName = p.nombre_completo || p.alias || 'Vecino';
             const authorAvatar = p.avatar_url || null;
-            const author = { nombre: authorName, avatar_url: authorAvatar };
 
-            const avatar = author.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.nombre)}&background=random`;
+            const avatar = authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random`;
 
             return `
                 <div class="comment-item">
-                    <img src="${avatar}" class="comment-avatar" alt="${author.nombre}">
+                    <img src="${avatar}" class="comment-avatar" alt="${authorName}">
                     <div class="comment-content">
                         <div class="comment-header">
-                            <span class="comment-author">${author.nombre}</span>
+                            <span class="comment-author">${authorName}</span>
                             <span class="comment-date">${new Date(c.creado_en).toLocaleDateString()}</span>
                         </div>
                         <p class="comment-text">${c.contenido}</p>

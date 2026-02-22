@@ -4,6 +4,7 @@
 // asignar departamentos, definir prioridad, y cerrar con evidencias.
 
 import { supabaseClient } from '../services/supabase.js';
+import { APP_CONFIG, REPORT_STATUS, REPORT_PRIORITY } from '../config.js';
 
 import { Logger } from '../utils/logger.js';
 import { hexToDouble } from '../utils/helpers.js';
@@ -77,6 +78,7 @@ async function obtenerMunicipalidadUsuario() {
 
 /**
  * Carga los departamentos de la municipalidad del usuario.
+ * Solo carga departamentos con estado 'activo' para las asignaciones.
  * Guarda el resultado en state.departamentos.
  */
 async function cargarDepartamentos() {
@@ -85,6 +87,7 @@ async function cargarDepartamentos() {
         .from('departamentos')
         .select('id, nombre')
         .eq('municipalidad_id', state.municipalidadId)
+        .eq('estado', 'activo') // Filtrar solo activos
         .order('nombre');
 
     if (error) {
@@ -92,6 +95,168 @@ async function cargarDepartamentos() {
         return;
     }
     state.departamentos = data || [];
+}
+
+/**
+ * Carga TODOS los departamentos (activos e inactivos) para la pestaña de gestión.
+ */
+async function cargarDepartamentosGestion() {
+    const lista = document.getElementById('muni-departamentos-lista');
+    if (!lista || !state.municipalidadId) return;
+
+    lista.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+        <i data-lucide="loader-2" style="animation: spin 1s linear infinite;"></i> Cargando departamentos...</td></tr>`;
+
+    const { data, error } = await supabaseClient
+        .from('departamentos')
+        .select('*')
+        .eq('municipalidad_id', state.municipalidadId)
+        .order('nombre');
+
+    if (error) {
+        Logger.error('MunicipalModule: Error cargando departamentos gestión', error);
+
+        let msg = `Error al cargar departamentos: ${error.message}`;
+        if (error.code === '42703') {
+            msg = `<strong>Error de Base de Datos:</strong> Falta la columna 'estado' en la tabla 'departamentos'.<br>
+                   <small>Por favor, ejecute el script SQL de actualización.</small>`;
+        }
+
+        lista.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color:red;">${msg}</td></tr>`;
+        return;
+    }
+
+    renderDepartamentosLista(data || []);
+}
+
+function renderDepartamentosLista(data) {
+    const lista = document.getElementById('muni-departamentos-lista');
+    if (!lista) return;
+
+    if (data.length === 0) {
+        lista.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+            No hay departamentos registrados.</td></tr>`;
+        return;
+    }
+
+    lista.innerHTML = data.map(d => {
+        const estClass = d.estado === 'activo' ? 'status-active' : 'status-pending';
+        const estLabel = d.estado === 'activo' ? 'Activo' : 'Inactivo';
+
+        return `<tr>
+            <td>
+                <span style="font-weight:700; color:var(--text-main);">${escapeHtml(d.nombre)}</span>
+            </td>
+            <td style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(d.contacto) || '—'}</td>
+            <td>
+                <span class="admin-status-badge ${estClass}" style="cursor:pointer;" onclick="MunicipalModule.toggleEstadoDept('${d.id}', '${d.estado}')">
+                    <i data-lucide="${d.estado === 'activo' ? 'check-circle' : 'slash'}" style="width: 14px; height: 14px;"></i>
+                    ${estLabel}
+                </span>
+            </td>
+            <td style="text-align:right;">
+                <button class="button button--secondary btn-sm" onclick="MunicipalModule.editarDept('${d.id}')" style="width:auto;">
+                    <i data-lucide="edit-3" style="width:14px;height:14px;"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+/**
+ * Abre el modal para crear o editar un departamento.
+ */
+async function abrirModalDepto(id = null) {
+    const modal = document.getElementById('modal-muni-departamento');
+    const form = document.getElementById('form-muni-dept');
+    const title = document.getElementById('modal-muni-dept-title');
+
+    form.reset();
+    document.getElementById('muni-dept-id').value = id || '';
+    title.innerHTML = id ? '<i data-lucide="edit"></i> Editar Departamento' : '<i data-lucide="plus"></i> Nuevo Departamento';
+
+    if (id) {
+        const { data } = await supabaseClient.from('departamentos').select('*').eq('id', id).single();
+        if (data) {
+            document.getElementById('muni-dept-nombre').value = data.nombre;
+            document.getElementById('muni-dept-contacto').value = data.contacto || '';
+            document.getElementById('muni-dept-estado').value = data.estado || 'activo';
+        }
+    }
+
+    modal.style.display = 'flex';
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function guardarDepartamento(e) {
+    if (e) e.preventDefault();
+
+    const id = document.getElementById('muni-dept-id').value;
+    const nombre = document.getElementById('muni-dept-nombre').value.trim();
+    const contacto = document.getElementById('muni-dept-contacto').value.trim();
+    const estado = document.getElementById('muni-dept-estado').value;
+
+    if (!nombre) return;
+
+    const btn = document.getElementById('btn-muni-dept-guardar');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    const payload = {
+        nombre,
+        contacto: contacto || null,
+        estado,
+        municipalidad_id: state.municipalidadId
+    };
+
+    try {
+        let res;
+        if (id) {
+            res = await supabaseClient.from('departamentos').update(payload).eq('id', id);
+        } else {
+            res = await supabaseClient.from('departamentos').insert([payload]);
+        }
+
+        if (res.error) throw res.error;
+
+        mostrarMensaje(id ? 'Departamento actualizado' : 'Departamento creado', 'success');
+        document.getElementById('modal-muni-departamento').style.display = 'none';
+
+        // Recargar listas
+        await cargarDepartamentos();
+        await cargarDepartamentosGestion();
+
+    } catch (err) {
+        Logger.error('MunicipalModule: Error al guardar departamento', err);
+        mostrarMensaje('Error al guardar: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="save"></i> Guardar Departamento';
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+
+/**
+ * Cambia el estado de un departamento (activo/inactivo).
+ */
+async function toggleEstadoDepartamento(id, estadoActual) {
+    const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
+
+    const { error } = await supabaseClient
+        .from('departamentos')
+        .update({ estado: nuevoEstado })
+        .eq('id', id);
+
+    if (error) {
+        mostrarMensaje('Error al cambiar estado.', 'error');
+        return;
+    }
+
+    mostrarMensaje(`Departamento ${nuevoEstado === 'activo' ? 'activado' : 'desactivado'}`, 'success');
+    await cargarDepartamentos();
+    await cargarDepartamentosGestion();
 }
 
 /**
@@ -183,23 +348,14 @@ function renderReportes(data) {
         return;
     }
 
-    const prioridadConfig = {
-        baja: { color: '#10b981', label: 'Baja' },
-        media: { color: '#f59e0b', label: 'Media' },
-        alta: { color: '#f97316', label: 'Alta' },
-        urgente: { color: '#ef4444', label: 'Urgente' },
-    };
-
-    const estadoConfig = {
-        'Pendiente': { color: '#64748b', icon: 'clock' },
-        'En proceso': { color: '#3b82f6', icon: 'loader-2' },
-        'Resuelto': { color: '#10b981', icon: 'check-circle' },
-        'Rechazado': { color: '#ef4444', icon: 'x-circle' },
-    };
-
     lista.innerHTML = data.map(r => {
-        const prio = prioridadConfig[r.prioridad_gestion] || prioridadConfig.media;
-        const est = estadoConfig[r.estado] || estadoConfig['Pendiente'];
+        // Buscar configuración de estado centralizada
+        const statusKey = Object.keys(REPORT_STATUS).find(key => REPORT_STATUS[key].label === r.estado) || 'PENDIENTE';
+        const est = REPORT_STATUS[statusKey];
+
+        // Buscar configuración de prioridad centralizada
+        const priorityKey = (r.prioridad_gestion || 'media').toUpperCase();
+        const prio = REPORT_PRIORITY[priorityKey] || REPORT_PRIORITY.MEDIA;
 
         const alias = r.perfiles?.alias ? escapeHtml(r.perfiles.alias) : null;
         const nombre = r.perfiles?.nombre_completo ? escapeHtml(r.perfiles.nombre_completo) : null;
@@ -223,12 +379,12 @@ function renderReportes(data) {
                 <span style="display:inline-flex; align-items:center; gap:0.35rem; padding: 0.25rem 0.65rem;
                              background: ${est.color}20; color: ${est.color};
                              border-radius: 999px; font-size: 0.75rem; font-weight: 600;">
-                    <i data-lucide="${est.icon}" style="width:12px;height:12px;"></i>
+                    <i data-lucide="${est.icon || 'circle'}" style="width:12px;height:12px;"></i>
                     ${r.estado}
                 </span>
             </td>
             <td>
-                <span class="priority-badge priority-${r.prioridad_gestion || 'media'}">${prio.label}</span>
+                <span class="priority-badge priority-${r.prioridad_gestion || 'media'}" style="background: ${prio.color}20; color: ${prio.color};">${prio.label}</span>
                 <button class="btn-ver-detalle-municipal button button--outline"
                         data-id="${r.id}"
                         style="margin-top:0.35rem; font-size:0.75rem; padding: 0.25rem 0.75rem; width:100%; display:flex; align-items:center; justify-content:center; gap:0.35rem;">
@@ -289,6 +445,7 @@ async function abrirDetalleGestion(reporteId) {
         .from('reporte_departamentos')
         .select('departamento_id, asignado_en, departamentos(nombre)')
         .eq('reporte_id', reporteId)
+
         .order('asignado_en', { ascending: true });
 
     const reporte = { ...data, perfiles: perfilCiudadano, deptos_asignados: deptosAsignados || [] };
@@ -353,45 +510,6 @@ async function abrirDetalleGestion(reporteId) {
     if (window.lucide) window.lucide.createIcons();
 }
 
-/**
- * Parsea la ubicación (Hex PostGIS o GeoJSON) para obtener Lat/Lng.
- * @param {string|object} ubicacion
- * @returns {{lat: number, lng: number} | null}
- */
-function parseUbicacion(ubicacion) {
-    if (!ubicacion) return null;
-    let lat, lng;
-
-    try {
-        if (typeof ubicacion === 'string') {
-            // Hex WKB format de Supabase/PostGIS
-            if (ubicacion.startsWith('0101')) {
-                const hasSRID = ubicacion.substring(8, 10) === '20';
-                const offset = hasSRID ? 18 : 10;
-                lng = hexToDouble(ubicacion.substring(offset, offset + 16));
-                lat = hexToDouble(ubicacion.substring(offset + 16, offset + 32));
-            } else {
-                // WKT format "POINT(lng lat)"
-                const match = ubicacion.match(/POINT\(([^ ]+) ([^ ]+)\)/) || ubicacion.match(/\(([^ ]+) ([^ ]+)\)/);
-                if (match) {
-                    lng = parseFloat(match[1]);
-                    lat = parseFloat(match[2]);
-                }
-            }
-        } else if (ubicacion.coordinates) {
-            // GeoJSON format
-            lng = ubicacion.coordinates[0];
-            lat = ubicacion.coordinates[1];
-        }
-
-        if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-            return { lat, lng };
-        }
-    } catch (e) {
-        console.error('Error parseando ubicación:', e);
-    }
-    return null;
-}
 
 /**
  * Renderiza los departamentos en el modal como checkboxes.
@@ -621,13 +739,50 @@ function cerrarModalGestion() {
  * Configura todos los listeners del panel municipal.
  */
 function configurarListeners() {
-    // Botón guardar en modal
+    // Botones de pestañas
+    document.querySelectorAll('#view-municipal .tabs__button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            if (!tab) return;
+
+            // Update buttons
+            document.querySelectorAll('#view-municipal .tabs__button').forEach(b =>
+                b.classList.toggle('tabs__button--active', b.dataset.tab === tab));
+
+            // Update content
+            document.querySelectorAll('#view-municipal .tabs__content').forEach(c =>
+                c.classList.toggle('tabs__content--active', c.id === `tab-${tab}`));
+
+            if (tab === 'muni-departamentos') {
+                cargarDepartamentosGestion();
+            } else {
+                cargarReportes();
+            }
+        });
+    });
+
+    // Nueva gestión de departamentos
+    document.getElementById('btn-muni-new-dept')?.addEventListener('click', () => abrirModalDepto());
+    document.getElementById('btn-muni-dept-cerrar')?.addEventListener('click', () => {
+        document.getElementById('modal-muni-departamento').style.display = 'none';
+    });
+    document.getElementById('form-muni-dept')?.addEventListener('submit', guardarDepartamento);
+
+    // Buscador de departamentos
+    document.getElementById('muni-dept-search')?.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('#muni-departamentos-lista tr').forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(term) ? '' : 'none';
+        });
+    });
+
+    // Botón guardar en modal reporte
     document.getElementById('btn-mgestion-guardar')?.addEventListener('click', guardarGestion);
 
-    // Cerrar modal
+    // Cerrar modal reporte
     document.getElementById('btn-mgestion-cerrar')?.addEventListener('click', cerrarModalGestion);
 
-    // Filtro de departamentos en modal (gestión multi-depto)
+    // Filtro de departamentos en modal reporte (gestión multi-depto)
     document.getElementById('mgestion-depto-filtro')?.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         const lista = document.getElementById('mgestion-departamentos-lista');
@@ -711,13 +866,15 @@ function actualizarPreviewEvidencias(archivos) {
  * Inicializa el panel municipal cuando el usuario se loguea con rol 'municipal'.
  */
 async function cargarPanelMunicipal() {
-    // Obtener la municipalidad del usuario
-    state.municipalidadId = await obtenerMunicipalidadUsuario();
+    // Si ya tenemos ID, solo recargamos si es necesario, pero no abortamos si se llama de nuevo
+    const muniId = state.municipalidadId || await obtenerMunicipalidadUsuario();
 
-    if (!state.municipalidadId) {
-        Logger.warn('MunicipalModule: No se pudo obtener municipalidad del usuario.');
+    if (!muniId) {
+        Logger.warn('MunicipalModule: No se pudo obtener la municipalidad. Re-intentando en 2 segundos...');
         return;
     }
+
+    state.municipalidadId = muniId;
 
     // Obtener nombre de la municipalidad para el header
     const { data: muni } = await supabaseClient
@@ -730,6 +887,10 @@ async function cargarPanelMunicipal() {
 
     const titulo = document.getElementById('municipal-panel-titulo');
     if (titulo) titulo.textContent = state.municipalidadNombre;
+
+    // Reset a pestaña reportes al cargar
+    const tabReportes = document.querySelector('#view-municipal .tabs__button[data-tab="muni-reportes"]');
+    if (tabReportes) tabReportes.click();
 
     // Cargar departamentos disponibles
     await cargarDepartamentos();
@@ -746,7 +907,20 @@ export const MunicipalModule = {
         Logger.info('MunicipalModule: inicializando...');
         configurarListeners();
 
-        // Cargar el panel cuando el usuario autenticado sea municipal
+        // 1. Verificar si ya estamos logueados (para casos de recarga de página)
+        const user = AuthModule.getUsuarioActual();
+        if (user) {
+            // Necesitamos verificar el rol directamente si ya estamos logueados
+            supabaseClient.from('perfiles').select('rol').eq('id', user.id).single()
+                .then(({ data }) => {
+                    if (data?.rol === 'municipal') {
+                        Logger.info('MunicipalModule: detectado usuario municipal ya logueado');
+                        cargarPanelMunicipal();
+                    }
+                });
+        }
+
+        // 2. Escuchar evento global de login
         document.addEventListener('auth:login', async (e) => {
             const { rol } = e.detail || {};
             if (rol === 'municipal') {
@@ -754,11 +928,34 @@ export const MunicipalModule = {
             }
         });
 
-        // Recargar datos al navegar a la vista municipal
+        // 3. Recargar datos al navegar a la vista municipal
         document.addEventListener('ui:view-changed', async (e) => {
             if (e.detail?.view === 'municipal' && state.municipalidadId) {
-                await cargarReportes();
+                // Al cambiar de vista, forzamos recarga de la pestaña activa
+                const activeTab = document.querySelector('#view-municipal .tabs__button--active');
+                if (activeTab?.dataset.tab === 'muni-departamentos') {
+                    await cargarDepartamentosGestion();
+                } else {
+                    await cargarReportes();
+                }
             }
         });
-    }
+
+        // 4. Limpiar estado al cerrar sesión
+        document.addEventListener('auth:logout', () => {
+            state.municipalidadId = null;
+            state.municipalidadNombre = null;
+            state.reporteActual = null;
+            state.departamentos = [];
+        });
+    },
+    // Exponer para callbacks inline en HTML
+    editarDept: (id) => {
+        Logger.info('MunicipalModule: editando depto', id);
+        abrirModalDepto(id);
+    },
+    toggleEstadoDept: (id, estado) => toggleEstadoDepartamento(id, estado),
+    gestionar: (id) => abrirDetalleGestion(id)
 };
+
+window.MunicipalModule = MunicipalModule;
