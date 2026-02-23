@@ -40,4 +40,22 @@
 .view--active {
     display: flex !important;
     flex-direction: column;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Guest UI Overlays */
+.guest-welcome-floating {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--primary-light);
 }

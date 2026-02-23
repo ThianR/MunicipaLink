@@ -179,9 +179,11 @@
                     </button>
                 </nav>
 
-                <div id="admin-panel" class="admin-only" style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
-                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">ADMIN PANEL</h3>
-                    <button id="btn-admin-panel" class="button button--action" style="background: #374151;">Gestionar Municipalidades</button>
+                <div id="admin-panel" class="admin-only sidebar__section">
+                    <span class="sidebar__label">ADMIN PANEL</span>
+                    <button id="btn-admin-panel" class="nav__item nav__item--admin">
+                        <i data-lucide="shield"></i> Gestionar Municipalidades
+                    </button>
                 </div>
 
                 <div style="margin-top: auto;">
@@ -282,6 +284,7 @@
                 <!-- Vista Municipal: Gestión de Reportes -->
                 <div id="view-municipal" class="view">
                     <div class="view-header" style="padding:1.5rem 1.5rem 0;">
+                    </div>
 
                     <!-- Navegación por Pestañas -->
                     <div class="tabs" style="padding: 0 1.5rem;">
@@ -393,6 +396,16 @@
                 <div id="view-map" class="view view--active" style="position: relative;">
                     <div id="map"></div>
                     
+                    <!-- Mensaje para Invitados en Mapa -->
+                    <div id="guest-welcome-map" class="guest-welcome-card guest-welcome-floating" style="display: none;">
+                        <div class="guest-msg-content">
+                            <i data-lucide="map-pin" class="guest-msg-icon"></i>
+                            <h3>Explora con una cuenta</h3>
+                            <p>Para reportar problemas directamente en el mapa y seguir incidencias en tiempo real, necesitas iniciar sesión.</p>
+                            <button onclick="location.reload()" class="button button--primary" style="margin-top: 1rem;">Iniciar Sesión</button>
+                        </div>
+                    </div>
+
                     <!-- Floating Map Controls (Mobile/Visual) -->
                     <div class="floating-map-tools">
                         <select id="muni-selector-map" class="muni-selector-compact">
@@ -411,7 +424,8 @@
 
                 <!-- Reports History View -->
                 <div id="view-reports" class="view">
-                    <div class="view-header reports__header">
+
+                    <div class="view-header reports__header" id="reports-header-content">
                         <div class="header-title">
                             <h2>Solicitudes</h2>
                             <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Gestión de reportes.</p>
@@ -594,16 +608,20 @@
         <div class="admin-container">
             <div class="admin-sidebar">
                 <button class="admin-tab-btn active" data-admin-tab="dashboard">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
+                    <div class="admin-tab-icon"><i data-lucide="layout-dashboard"></i></div>
+                    <span>Dashboard</span>
                 </button>
                 <button class="admin-tab-btn" data-admin-tab="municipalities">
-                    <i data-lucide="building-2"></i> Municipalidades
+                    <div class="admin-tab-icon"><i data-lucide="building-2"></i></div>
+                    <span>Municipalidades</span>
                 </button>
                 <button class="admin-tab-btn" data-admin-tab="users">
-                    <i data-lucide="users"></i> Usuarios
+                    <div class="admin-tab-icon"><i data-lucide="users"></i></div>
+                    <span>Usuarios</span>
                 </button>
                 <button class="admin-tab-btn" data-admin-tab="solicitudes">
-                    <i data-lucide="file-check"></i> Solicitudes Rol
+                    <div class="admin-tab-icon"><i data-lucide="file-check"></i></div>
+                    <span>Solicitudes Rol</span>
                 </button>
             </div>
 
@@ -611,17 +629,26 @@
                 <!-- Dashboard Tab -->
                 <div id="admin-tab-dashboard" class="admin-content-pane active">
                     <div class="admin-stats-grid">
-                        <div class="stat-card">
-                            <h3>Usuarios Totales</h3>
-                            <p class="stat-number" id="admin-total-users">0</p>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon"><i data-lucide="users"></i></div>
+                            <div class="admin-stat-info">
+                                <span class="admin-stat-label">Usuarios Totales</span>
+                                <span class="admin-stat-value" id="admin-total-users">0</span>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <h3>Reportes Activos</h3>
-                            <p class="stat-number" id="admin-active-reports">0</p>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon"><i data-lucide="clipboard-list"></i></div>
+                            <div class="admin-stat-info">
+                                <span class="admin-stat-label">Reportes Activos</span>
+                                <span class="admin-stat-value" id="admin-active-reports">0</span>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <h3>Municipalidades</h3>
-                            <p class="stat-number" id="admin-total-munis">0</p>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon"><i data-lucide="building-2"></i></div>
+                            <div class="admin-stat-info">
+                                <span class="admin-stat-label">Municipalidades</span>
+                                <span class="admin-stat-value" id="admin-total-munis">0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -720,6 +747,233 @@
             </div>
         </div>
     </div>
+
+    <!-- View: User Profile -->
+    <div id="view-profile" class="view">
+                    <div class="view-header">
+                        <button id="btn-back-profile" class="btn-back">
+                            <i data-lucide="arrow-left"></i> Volver al Mapa
+                        </button>
+                        <h2><i data-lucide="award"></i> Mi Perfil y Rango</h2>
+                    </div>
+                    
+                    <div class="profile-container">
+                        <div class="profile-sidebar">
+                            <div class="profile-avatar-section">
+                                <div id="profile-avatar-preview" class="avatar-large">
+                                    <i data-lucide="user"></i>
+                                </div>
+                                <input type="file" id="input-avatar" accept="image/*" style="display: none;">
+                                <button type="button" class="btn-guest" onclick="document.getElementById('input-avatar').click()">
+                                    Cambiar Foto
+                                </button>
+                            </div>
+        
+                            <!-- Level Section -->
+                            <div class="level-card">
+                                <div class="level-badge" id="user-badge">🧊</div>
+                                <div class="level-info">
+                                    <h3 id="user-rank">Vecino Novato</h3>
+                                    <span class="level-number">Nivel <span id="user-level-num">1</span></span>
+                                </div>
+                                <div class="level-progress-container">
+                                    <div class="level-progress-bar">
+                                        <div id="level-progress-fill" class="level-progress-fill" style="width: 0%;"></div>
+                                    </div>
+                                    <small id="level-xp-text">0 / 500 XP</small>
+                                </div>
+                                <button id="btn-open-xp-guide" class="btn-xp-guide">
+                                    <i data-lucide="help-circle"></i> ¿Cómo ganar XP?
+                                </button>
+                            </div>
+        
+                            <div class="stats-summary-card">
+                                <div class="stat-item">
+                                    <i data-lucide="clipboard-list" class="stat-icon"></i>
+                                    <span class="stat-value" id="stat-reports">0</span>
+                                    <span class="stat-label">Reportes</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i data-lucide="message-square" class="stat-icon"></i>
+                                    <span class="stat-value" id="stat-comments">0</span>
+                                    <span class="stat-label">comentarios</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i data-lucide="thumbs-up" class="stat-icon"></i>
+                                    <span class="stat-value" id="stat-votes">0</span>
+                                    <span class="stat-label">votos</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i data-lucide="users" class="stat-icon"></i>
+                                    <span class="stat-value" id="stat-followers">0</span>
+                                    <span class="stat-label">seguidores</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i data-lucide="user-plus" class="stat-icon"></i>
+                                    <span class="stat-value" id="stat-following">0</span>
+                                    <span class="stat-label">siguiendo</span>
+                                </div>
+                            </div>
+        
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                <button id="btn-citizen-export-pdf" class="button button--secondary" style="flex: 1; font-size: 0.8rem; padding: 0.6rem;">
+                                    <i data-lucide="file-text"></i> Resumen PDF
+                                </button>
+                                <button id="btn-citizen-export-excel" class="button button--secondary" style="flex: 1; font-size: 0.8rem; padding: 0.6rem;">
+                                    <i data-lucide="file-spreadsheet"></i> Historial Excel
+                                </button>
+                            </div>
+                            
+                            <button id="btn-my-history" class="btn-guest" style="width:100%; margin-top:0.5rem;">
+                                <i data-lucide="history"></i> Mi Historial de Reportes
+                            </button>
+        
+                            <div class="trust-meter-card">
+                                <div class="trust-meter-header">
+                                    <span class="trust-label">Nivel de Impacto</span>
+                                    <span id="trust-multiplier" class="trust-value">1.0x</span>
+                                </div>
+                                <div class="trust-progress-bg">
+                                    <div id="trust-progress-fill" class="trust-progress-fill" style="width: 0%;"></div>
+                                </div>
+                                <p class="trust-hint">Completa tu perfil para que tus reportes tengan hasta el <strong>doble de prioridad</strong>.</p>
+                            </div>
+                        </div>
+        
+                        <div class="profile-main">
+                            <!-- Navegación por Pestañas -->
+                            <div class="profile-tabs-nav">
+                                <button class="profile-tab-btn active" data-profile-tab="personal">
+                                    <i data-lucide="user"></i> Mis Datos
+                                </button>
+                                <button class="profile-tab-btn" data-profile-tab="municipal">
+                                    <i data-lucide="building-2"></i> Solicitud Municipal
+                                </button>
+                            </div>
+        
+                            <!-- Mensaje para Invitados -->
+                            <div id="guest-welcome-message" class="guest-welcome-card" style="display: none;">
+                                <div class="guest-msg-content">
+                                    <i data-lucide="sparkles" class="guest-msg-icon"></i>
+                                    <h3>¡Únete a nuestra comunidad!</h3>
+                                    <p>Estás navegando como <strong>invitado</strong>. Para poder reportar problemas, votar solicitudes y ganar puntos de impacto, necesitas una cuenta.</p>
+                                    <p class="guest-msg-quote">"Pequeñas acciones ciudadanas logran grandes cambios en nuestra ciudad. ¡Registrate hoy y sé parte del cambio!"</p>
+                                    <button onclick="location.reload()" class="button button--primary" style="margin-top: 1.5rem;">
+                                    <i data-lucide="log-in"></i> Ir a Inicio de Sesión
+                            </button>
+                                </div>
+                            </div>
+        
+                            <!-- Pestaña Datos Personales -->
+                            <div id="profile-pane-personal" class="profile-tab-pane active">
+                                <form id="form-profile" class="card-premium">
+                                    <div class="form-grid-premium">
+                                        <div class="form-group">
+                                            <label>Nombre de Usuario (Alias)</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="at-sign"></i>
+                                                <input type="text" name="alias" class="input" placeholder="@usuario">
+                                            </div>
+                                        </div>
+                                        <div class="form-group private-field">
+                                            <label>Nombre Completo</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="user"></i>
+                                                <input type="text" name="nombre_completo" class="input" placeholder="Tu nombre">
+                                            </div>
+                                        </div>
+                                        <div class="form-group private-field">
+                                            <label>Fecha de Nacimiento</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="calendar"></i>
+                                                <input type="date" name="fecha_nacimiento" class="input">
+                                            </div>
+                                            <small id="display-age" class="text-muted" style="margin-top: 0.25rem; display: block;"></small>
+                                        </div>
+                                        <div class="form-group private-field">
+                                            <label>Género</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="user-check"></i>
+                                                <select name="genero" class="input">
+                                                    <option value="">Seleccionar...</option>
+                                                    <option value="Masculino">Masculino</option>
+                                                    <option value="Femenino">Femenino</option>
+                                                    <option value="Otro">Otro</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group private-field">
+                                            <label>Contacto / WhatsApp</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="phone"></i>
+                                                <input type="text" name="contacto" class="input" placeholder="+595 ...">
+                                            </div>
+                                        </div>
+                                        <div class="form-group private-field">
+                                            <label>Dirección Física</label>
+                                            <div class="input-with-icon">
+                                                <i data-lucide="map-pin"></i>
+                                                <input type="text" name="direccion" class="input" placeholder="Barrio, Ciudad...">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-footer">
+                                        <button type="submit" id="btn-save-profile" class="button button--action" style="width: 100%;">Guardar Cambios</button>
+                                    </div>
+                                </form>
+                            </div>
+        
+                            <!-- Pestaña Solicitud Municipal -->
+                            <div id="profile-pane-municipal" class="profile-tab-pane">
+                                <!-- Contenedor de Estado (Pendiente, Aprobado, Rechazado) -->
+                                <div id="municipal-status-container"></div>
+        
+                                <!-- Formulario de Solicitud -->
+                                <div id="municipal-request-form-container">
+                                    <div id="municipal-request-section" class="card-premium" style="border-top: 3px solid var(--primary);">
+                                        <div class="section-header-premium">
+                                            <i data-lucide="building-2"></i>
+                                            <h3>Solicitud de Usuario Municipal</h3>
+                                        </div>
+                                        <p class="text-muted" style="margin-bottom: 1.5rem;">
+                                            Si eres funcionario de una municipalidad, puedes solicitar acceso para gestionar los reportes de tu zona. Necesitarás subir una prueba de tu cargo (identificación o decreto).
+                                        </p>
+                                        
+                                        <form id="form-municipal-request">
+                                            <div class="form-grid-premium">
+                                                <div class="form-group">
+                                                    <label>Municipalidad</label>
+                                                    <div class="input-with-icon">
+                                                        <i data-lucide="map"></i>
+                                                        <select name="municipalidad_id" id="request-muni-selector" class="input" required>
+                                                            <option value="">Seleccionar Municipalidad...</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Documento de Verificación</label>
+                                                    <div class="input-with-icon">
+                                                        <i data-lucide="file-text"></i>
+                                                        <input type="file" id="request-document" name="document" accept="image/*,.pdf" class="input" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group" style="margin-top: 1rem;">
+                                                <label>Comentarios adicionales (Opcional)</label>
+                                                <textarea name="comentarios" class="input" style="min-height: 80px;" placeholder="Explica brevemente tu cargo o área..."></textarea>
+                                            </div>
+                                            <div class="form-footer" style="margin-top: 1.5rem;">
+                                                <button type="submit" id="btn-submit-request" class="button button--primary" style="width: 100%;">
+                                                    <i data-lucide="send"></i> Enviar Solicitud de Rol
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- .profile-main -->
+                    </div>
+                </div>
             </main>
         </div>
 
@@ -752,302 +1006,71 @@
             <i data-lucide="plus"></i>
         </button>
 
-        <!-- View: User Profile -->
-        <div id="view-profile" class="view">
-            <div class="view-header">
-                <button id="btn-back-profile" class="btn-back">
-                    <i data-lucide="arrow-left"></i> Volver al Mapa
-                </button>
-                <h2><i data-lucide="award"></i> Mi Perfil y Rango</h2>
-            </div>
-            
-            <div class="profile-container">
-                <div class="profile-sidebar">
-                    <div class="profile-avatar-section">
-                        <div id="profile-avatar-preview" class="avatar-large">
-                            <i data-lucide="user"></i>
-                        </div>
-                        <input type="file" id="input-avatar" accept="image/*" style="display: none;">
-                        <button type="button" class="btn-guest" onclick="document.getElementById('input-avatar').click()">
-                            Cambiar Foto
-                        </button>
-                    </div>
-
-                    <!-- Level Section -->
-                    <div class="level-card">
-                        <div class="level-badge" id="user-badge">🧊</div>
-                        <div class="level-info">
-                            <h3 id="user-rank">Vecino Novato</h3>
-                            <span class="level-number">Nivel <span id="user-level-num">1</span></span>
-                        </div>
-                        <div class="level-progress-container">
-                            <div class="level-progress-bar">
-                                <div id="level-progress-fill" class="level-progress-fill" style="width: 0%;"></div>
-                            </div>
-                            <small id="level-xp-text">0 / 500 XP</small>
-                        </div>
-                        <button id="btn-open-xp-guide" class="btn-xp-guide">
-                            <i data-lucide="help-circle"></i> ¿Cómo ganar XP?
-                        </button>
-                    </div>
-
-                    <div class="stats-summary-card">
-                        <div class="stat-item">
-                            <i data-lucide="clipboard-list" class="stat-icon"></i>
-                            <span class="stat-value" id="stat-reports">0</span>
-                            <span class="stat-label">Reportes</span>
-                        </div>
-                        <div class="stat-item">
-                            <i data-lucide="message-square" class="stat-icon"></i>
-                            <span class="stat-value" id="stat-comments">0</span>
-                            <span class="stat-label">comentarios</span>
-                        </div>
-                        <div class="stat-item">
-                            <i data-lucide="thumbs-up" class="stat-icon"></i>
-                            <span class="stat-value" id="stat-votes">0</span>
-                            <span class="stat-label">votos</span>
-                        </div>
-                        <div class="stat-item">
-                            <i data-lucide="users" class="stat-icon"></i>
-                            <span class="stat-value" id="stat-followers">0</span>
-                            <span class="stat-label">seguidores</span>
-                        </div>
-                        <div class="stat-item">
-                            <i data-lucide="user-plus" class="stat-icon"></i>
-                            <span class="stat-value" id="stat-following">0</span>
-                            <span class="stat-label">siguiendo</span>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                        <button id="btn-citizen-export-pdf" class="button button--secondary" style="flex: 1; font-size: 0.8rem; padding: 0.6rem;">
-                            <i data-lucide="file-text"></i> Resumen PDF
-                        </button>
-                        <button id="btn-citizen-export-excel" class="button button--secondary" style="flex: 1; font-size: 0.8rem; padding: 0.6rem;">
-                            <i data-lucide="file-spreadsheet"></i> Historial Excel
-                        </button>
-                    </div>
-                    
-                    <button id="btn-my-history" class="btn-guest" style="width:100%; margin-top:0.5rem;">
-                        <i data-lucide="history"></i> Mi Historial de Reportes
-                    </button>
-
-                    <div class="trust-meter-card">
-                        <div class="trust-meter-header">
-                            <span class="trust-label">Nivel de Impacto</span>
-                            <span id="trust-multiplier" class="trust-value">1.0x</span>
-                        </div>
-                        <div class="trust-progress-bg">
-                            <div id="trust-progress-fill" class="trust-progress-fill" style="width: 0%;"></div>
-                        </div>
-                        <p class="trust-hint">Completa tu perfil para que tus reportes tengan hasta el <strong>doble de prioridad</strong>.</p>
-                    </div>
+        <!-- Modals -->
+        <div id="modal-report" class="modal">
+            <div class="modal__content">
+                <div class="modal__header">
+                    <h2>Nuevo Reporte</h2>
+                    <button id="btn-close-modal" class="btn-close">&times;</button>
                 </div>
-
-                <div class="profile-main">
-                    <!-- Navegación por Pestañas -->
-                    <div class="profile-tabs-nav">
-                        <button class="profile-tab-btn active" data-profile-tab="personal">
-                            <i data-lucide="user"></i> Mis Datos
-                        </button>
-                        <button class="profile-tab-btn" data-profile-tab="municipal">
-                            <i data-lucide="building-2"></i> Solicitud Municipal
-                        </button>
-                    </div>
-
-                    <!-- Mensaje para Invitados -->
-                    <div id="guest-welcome-message" class="guest-welcome-card" style="display: none;">
-                        <div class="guest-msg-content">
-                            <i data-lucide="sparkles" class="guest-msg-icon"></i>
-                            <h3>¡Únete a nuestra comunidad!</h3>
-                            <p>Estás navegando como <strong>invitado</strong>. Para poder reportar problemas, votar solicitudes y ganar puntos de impacto, necesitas una cuenta.</p>
-                            <p class="guest-msg-quote">"Pequeñas acciones ciudadanas logran grandes cambios en nuestra ciudad. ¡Registrate hoy y sé parte del cambio!"</p>
-                            <button onclick="location.reload()" class="btn-action" style="margin-top: 1.5rem;">Ir a Inicio de Sesión</button>
+                <form id="form-report" class="card-premium" style="margin: 0;">
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label style="font-size:0.8rem; margin-bottom:0.25rem;">Categoría</label>
+                        <div class="input-with-icon">
+                            <i data-lucide="tag"></i>
+                            <select name="category_id" id="report-category" class="input" required>
+                                <option value="">Seleccionar Categoría</option>
+                            </select>
                         </div>
                     </div>
-
-                    <!-- Pestaña Datos Personales -->
-                    <div id="profile-pane-personal" class="profile-tab-pane active">
-                        <form id="form-profile" class="card-premium">
-                            <div class="form-grid-premium">
-                                <div class="form-group">
-                                    <label>Nombre de Usuario (Alias)</label>
-                                    <div class="input-with-icon">
-                                        <i data-lucide="at-sign"></i>
-                                        <input type="text" name="alias" class="input" placeholder="@usuario">
-                                    </div>
-                                </div>
-                                <div class="form-group private-field">
-                                    <label>Nombre Completo</label>
-                                    <div class="input-with-icon">
-                                        <i data-lucide="user"></i>
-                                        <input type="text" name="nombre_completo" class="input" placeholder="Tu nombre">
-                                    </div>
-                                </div>
-                                <div class="form-group private-field">
-                                    <label>Fecha de Nacimiento</label>
-                                    <div class="input-with-icon">
-                                        <i data-lucide="calendar"></i>
-                                        <input type="date" name="fecha_nacimiento" class="input">
-                                    </div>
-                                    <small id="display-age" class="text-muted" style="margin-top: 0.25rem; display: block;"></small>
-                                </div>
-                                <div class="form-group private-field">
-                                    <label>Género</label>
-                                    <div class="input-with-icon">
-                                        <i data-lucide="user-check"></i>
-                                        <select name="genero" class="input">
-                                            <option value="">Seleccionar...</option>
-                                            <option value="Masculino">Masculino</option>
-                                            <option value="Femenino">Femenino</option>
-                                            <option value="Otro">Otro</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group private-field">
-                                    <label>Contacto / WhatsApp</label>
-                                    <div class="input-with-icon">
-                                        <i data-lucide="phone"></i>
-                                        <input type="text" name="contacto" class="input" placeholder="+595 ...">
-                                    </div>
-                                </div>
-                                <div class="form-group private-field">
-                                    <label>Dirección Física</label>
-                                    <div class="input-with-icon">
-                                        <i data-lucide="map-pin"></i>
-                                        <input type="text" name="direccion" class="input" placeholder="Barrio, Ciudad...">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-footer">
-                                <button type="submit" id="btn-save-profile" class="button button--action" style="width: 100%;">Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Pestaña Solicitud Municipal -->
-                    <div id="profile-pane-municipal" class="profile-tab-pane">
-                        <!-- Contenedor de Estado (Pendiente, Aprobado, Rechazado) -->
-                        <div id="municipal-status-container"></div>
-
-                        <!-- Formulario de Solicitud -->
-                        <div id="municipal-request-form-container">
-                            <div id="municipal-request-section" class="card-premium" style="border-top: 3px solid var(--primary);">
-                                <div class="section-header-premium">
-                                    <i data-lucide="building-2"></i>
-                                    <h3>Solicitud de Usuario Municipal</h3>
-                                </div>
-                                <p class="text-muted" style="margin-bottom: 1.5rem;">
-                                    Si eres funcionario de una municipalidad, puedes solicitar acceso para gestionar los reportes de tu zona. Necesitarás subir una prueba de tu cargo (identificación o decreto).
-                                </p>
-                                
-                                <form id="form-municipal-request">
-                                    <div class="form-grid-premium">
-                                        <div class="form-group">
-                                            <label>Municipalidad</label>
-                                            <div class="input-with-icon">
-                                                <i data-lucide="map"></i>
-                                                <select name="municipalidad_id" id="request-muni-selector" class="input" required>
-                                                    <option value="">Seleccionar Municipalidad...</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Documento de Verificación</label>
-                                            <div class="input-with-icon">
-                                                <i data-lucide="file-text"></i>
-                                                <input type="file" id="request-document" name="document" accept="image/*,.pdf" class="input" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group" style="margin-top: 1rem;">
-                                        <label>Comentarios adicionales (Opcional)</label>
-                                        <textarea name="comentarios" class="input" style="min-height: 80px;" placeholder="Explica brevemente tu cargo o área..."></textarea>
-                                    </div>
-                                    <div class="form-footer" style="margin-top: 1.5rem;">
-                                        <button type="submit" id="btn-submit-request" class="button button--primary" style="width: 100%;">
-                                            <i data-lucide="send"></i> Enviar Solicitud de Rol
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label style="font-size:0.8rem; margin-bottom:0.25rem;">Descripción</label>
+                        <div class="input-with-icon">
+                            <i data-lucide="message-square" style="top: 0.75rem; transform: none;"></i>
+                            <textarea name="description" id="report-description" class="input" style="min-height: 80px; padding-top: 0.75rem !important;" placeholder="Describe el problema aquí..." required></textarea>
                         </div>
                     </div>
-                </div> <!-- .profile-main -->
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label style="font-size:0.8rem; margin-bottom:0.25rem;">Fotos (Máx. 3)</label>
+                        <div class="file-upload-container">
+                            <input type="file" id="report-photos" name="photos" accept="image/*" multiple class="muni-selector">
+                            <small class="text-muted">Hasta 3 archivos · máx. 30MB c/u. También podés tomar fotos con tu cámara.</small>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: flex; gap: 0.75rem; align-items: center; background: #f9fafb; padding: 0.625rem 0.875rem; border-radius: 8px; margin-bottom: 0.75rem;">
+                        <i data-lucide="map-pin" style="color: var(--primary); flex-shrink: 0;"></i>
+                        <span id="report-coords" style="font-size: 0.8rem; color: var(--text-muted);">Capturando ubicación...</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="terms-check" required style="margin-top: 0.2rem; flex-shrink: 0;">
+                        <label for="terms-check" style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.35;">
+                            Acepto los términos y condiciones. Entiendo que subir contenido falso, documentos inválidos o censurables puede resultar en el <strong>baneo permanente</strong> de mi cuenta.
+                        </label>
+                    </div>
+                    <button type="submit" id="btn-submit-report" class="button button--action" style="width: 100%;">Enviar Reporte</button>
+                </form>
             </div>
         </div>
-    </div>
-    </div>
-
-
-    <!-- Modals -->
-    <div id="modal-report" class="modal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2>Nuevo Reporte</h2>
-                <button id="btn-close-modal" class="btn-close">&times;</button>
+    
+        <!-- Modal: Request Password Reset -->
+        <div id="modal-reset-request" class="modal">
+            <div class="modal__content">
+                <div class="modal__header">
+                    <h2>Recuperar Contraseña</h2>
+                    <button id="btn-close-reset-request" class="btn-close">&times;</button>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                    Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+                <form id="form-reset-request">
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="reset-email" class="muni-selector" placeholder="tu@email.com" required>
+                    </div>
+                    <button type="submit" class="btn-action">Enviar Enlace de Recuperación</button>
+                </form>
             </div>
-            <form id="form-report" class="card-premium">
-                <div class="form-group">
-                    <label>Categoría</label>
-                    <div class="input-with-icon">
-                        <i data-lucide="tag"></i>
-                        <select name="category_id" id="report-category" class="input" required>
-                            <option value="">Cargando categorías...</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Descripción</label>
-                    <div class="input-with-icon">
-                        <i data-lucide="message-square" style="top: 0.75rem; transform: none;"></i>
-                        <textarea name="description" id="report-description" class="input" style="min-height: 120px; padding-top: 0.75rem !important;" placeholder="Describe el problema aquí..." required></textarea>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Fotos (Máx. 3)</label>
-                    <div class="file-upload-container">
-                        <input type="file" id="report-photos" name="photos" accept="image/*" multiple class="muni-selector">
-                        <small class="text-muted">Puedes seleccionar múltiples fotos o tomar fotos con tu cámara.</small>
-                        <small class="text-muted">Máximo 3 archivos, cada uno con un tamaño máximo de 30MB.</small>
-                    </div>
-                </div>
-                <div class="form-group" style="display: flex; gap: 1rem; align-items: center; background: #f9fafb; padding: 1rem; border-radius: 8px;">
-                    <i data-lucide="map-pin" style="color: var(--primary);"></i>
-                    <span id="report-coords" style="font-size: 0.875rem; color: var(--text-muted);">Capturando ubicación...</span>
-                </div>
-                
-                <div class="form-group" style="margin-top: 1rem; display: flex; align-items: flex-start; gap: 0.5rem;">
-                    <input type="checkbox" id="terms-check" required style="margin-top: 0.25rem;">
-                    <label for="terms-check" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.3;">
-                        Acepto los términos y condiciones. Entiendo que subir contenido falso, documentos inválidos o censurables puede resultar en el <strong>baneo permanente</strong> de mi cuenta.
-                    </label>
-                </div>
-
-                <button type="submit" id="btn-submit-report" class="button button--action">Enviar Reporte</button>
-            </form>
         </div>
-    </div>
-
-    <!-- Modal: Request Password Reset -->
-    <div id="modal-reset-request" class="modal">
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2>Recuperar Contraseña</h2>
-                <button id="btn-close-reset-request" class="btn-close">&times;</button>
-            </div>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
-            </p>
-            <form id="form-reset-request">
-                <div class="form-group">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="reset-email" class="muni-selector" placeholder="tu@email.com" required>
-                </div>
-                <button type="submit" class="btn-action">Enviar Enlace de Recuperación</button>
-            </form>
-        </div>
-    </div>
 
     </div>
 

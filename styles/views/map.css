@@ -1,8 +1,4 @@
-.view--active {
-    display: flex !important;
-    flex-direction: column;
-}
-
+/* Estilos específicos del Mapa */
 #view-map {
     position: relative;
     flex: 1;

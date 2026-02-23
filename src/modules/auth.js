@@ -188,7 +188,19 @@ async function manejarAuthUsuario(usuario) {
 }
 
 
-function manejarLoginInvitado() {
+async function manejarLoginInvitado() {
+    Logger.info('Entrando como invitado...');
+
+    try {
+        // Cerrar sesión previa en Supabase para evitar conflictos de identidad
+        await supabaseClient.auth.signOut();
+        // Limpiar cualquier residuo de sesión en el storage
+        localStorage.clear();
+        sessionStorage.clear();
+    } catch (error) {
+        Logger.warn('Error al limpiar sesión previa:', error);
+    }
+
     usuarioActual = null;
     aplicarRol('guest');
     actualizarVisualizacionUsuario('Invitado / Anónimo');

@@ -26,9 +26,25 @@ export const MapModule = {
             if (e.detail.view === 'map' && mapa) {
                 setTimeout(() => {
                     mapa.invalidateSize();
-                }, 100);
+                }, 150);
             }
         });
+
+        // Al entrar a la app (login o invitado), la vista del mapa aparece por primera vez.
+        // Leaflet debe recalcular su tamaño porque el contenedor no tenía dimensiones durante la pantalla de login.
+        const forzarInvalidate = () => {
+            setTimeout(() => {
+                if (mapa) {
+                    mapa.invalidateSize();
+                } else {
+                    // Si el mapa aún no se inicializó, volver a intentar
+                    inicializarMapa();
+                    setTimeout(() => { if (mapa) mapa.invalidateSize(); }, 300);
+                }
+            }, 300);
+        };
+        document.addEventListener('auth:login', forzarInvalidate);
+        document.addEventListener('auth:guest', forzarInvalidate);
 
         // Corregir renderizado al redimensionar ventana
         window.addEventListener('resize', () => {
@@ -61,6 +77,12 @@ function inicializarMapa() {
         sessionStorage.setItem('ubicacion_usuario', JSON.stringify({ lat: posicion.lat, lng: posicion.lng }));
         actualizarVisualizacionCoords();
     });
+
+    // Forzar recálculo de dimensiones después del render inicial.
+    // Es necesario porque el mapa se crea mientras el contenedor puede aún no tener
+    // sus dimensiones finales calculadas por el flujo de layout del navegador.
+    setTimeout(() => mapa.invalidateSize(), 200);
+    setTimeout(() => mapa.invalidateSize(), 600);
 }
 
 function actualizarVisualizacionCoords() {

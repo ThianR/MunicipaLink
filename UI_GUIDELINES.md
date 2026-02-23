@@ -49,24 +49,40 @@ Contiene buscadores y botones de acción rápida.
 Para el Panel Admin y vistas de analítica:
 
 ### Grilla de Estadísticas (.admin-stats-grid)
-- **Diseño:** 3 columnas (usuarios, reportes, municipalidades).
-- **Cartas (.stat-card):** Título en gris suave, número grande en color acento.
+Evolución a Tarjetas Premium (.admin-stat-card):
+- **Estructura:** Flex row con un icono destacado (`.admin-stat-icon`) y un bloque de información (`.admin-stat-info`).
+- **Visual:** Sombra suave (`0 4px 6px -1px rgba(0,0,0,0.05)`), bordes redondeados de `16px`, y color de acento según el dato.
 
 ### Mini Estadísticas (.admin-stats-mini)
 Utilizado en la parte superior de las tablas para dar contexto rápido.
 - **Estructura:** Flex row con espaciado uniforme y etiquetas en negrita.
 
-## 4. Modales Premium V2 (Experiencia Inmersiva)
+## 4. Navegación Administrativa Compacta
+
+Para mantener la funcionalidad sin saturar la vista, se han definido dos niveles de navegación administrativa:
+
+### A. Acceso Global (Sidebar Principal)
+- **Sección Compacta:** Uso de `.sidebar__section` y `.sidebar__label` para separar visualmente las herramientas admin sin ocupar espacio excesivo.
+- **Scroll Interno:** El contenedor `.sidebar__nav` debe tener `overflow-y: auto` para asegurar usabilidad en pantallas pequeñas, manteniendo los controles superiores fijos.
+
+### B. Navegación Interna (.admin-sidebar)
+Para vistas con múltiples sub-secciones (Panel Admin):
+- **Tabs con Iconos:** Botones `.admin-tab-btn` que incluyen un `.admin-tab-icon` dedicado.
+- **Estados:** El ítem activo debe usar `var(--primary-light)` para el fondo del icono y una sombra sutil para destacar.
+
+## 5. Modales Premium V2 (Experiencia Inmersiva)
 
 Para modales informativos o de gestión crítica (ej. Detalles de Solicitud), se debe seguir el patrón de "Header Gradiente con Curva":
 
 ### Estructura del Modal
 - **Contenedor:** `.modal__content` con `border-radius: 20px` y `overflow: hidden`.
 - **Encabezado:** Gradiente lineal (`linear-gradient(135deg, var(--primary) 0%, #059669 100%)`) con un separador SVG de onda (`wave`) en la base para transicionar al cuerpo blanco.
+- **Botón de Cierre Interno:** El botón `.btn-close` (✕) debe estar **dentro** del header con `position: absolute`. El header debe tener `position: relative` para contenerlo.
 - **Icono de Cabecera:** Enmarcado en un círculo con fondo semi-transparente (`backdrop-filter: blur(4px)`).
 - **Cuerpo:** Espaciado generoso (`padding: 1.5rem 1.75rem`) con componentes estructurados:
     - **Chips de Información:** Flexbox con iconos y etiquetas en gris suave.
-    - **Áreas de Texto:** Bordes acentuados con el color de la marca (ej. `border-left: 3px solid var(--primary)`).
+    - **Áreas de Texto Estéticas:** Los `textarea` dentro de modales deben usar `width: 100%` para cubrir todo el ancho disponible y mantener la armonía visual.
+    - **Bordes de Acento:** Bordes acentuados con el color de la marca (ej. `border-left: 3px solid var(--primary)`).
 - **Acciones**: Botones con iconos Lucide que ocupen el ancho completo (`flex: 1`).
 
 ### 5. Navegación y Multi-selección

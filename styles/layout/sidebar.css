@@ -9,6 +9,7 @@
     display: flex;
     flex-direction: column;
     padding: var(--spacing-lg);
+    overflow: hidden;
 }
 
 .sidebar__controls {
@@ -17,11 +18,30 @@
     margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-md);
     border-bottom: 1px solid #eee;
+    flex-shrink: 0;
 }
 
 .sidebar__nav {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+}
+
+.sidebar__nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar__nav::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+}
+
+.sidebar__nav::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 /* Responsive - Hide on mobile */
@@ -29,4 +49,47 @@
     .sidebar {
         display: none !important;
     }
+}
+
+/* --- Rediseño Premium Panel Admin --- */
+
+.sidebar__section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.sidebar__label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #94a3b8;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+    padding-left: 0.75rem;
+}
+
+.nav__item--admin {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #475569 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.nav__item--admin:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.nav__item--admin i {
+    color: #64748b;
+}
+
+.nav__item--admin.nav__item--active {
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #2563eb !important;
 }

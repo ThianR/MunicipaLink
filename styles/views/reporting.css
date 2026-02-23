@@ -32,8 +32,8 @@
 .reporting-grid-container .reporting-section,
 body .reporting-section.municipal-only,
 body .reporting-section.admin-only {
-    display: block !important;
-    flex-direction: unset !important;
+    display: block;
+    flex-direction: unset;
     margin-bottom: 2.5rem;
 }
 
