@@ -52,6 +52,47 @@ function cambiarVista(viewName) {
         });
 
         lucide.createIcons();
+
+        // --- Gestión de mensajes para Invitados ---
+        // Se verifican solo las vistas que tienen contenido diferenciado por rol.
+        const isGuest = AuthModule.isGuest();
+
+        // Ocultar todos los mensajes de invitado primero (solo los 3 específicos)
+        ['guest-welcome-message', 'guest-welcome-map', 'guest-welcome-reports'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        // Si el usuario es invitado y está en una vista con mensaje, mostrar el mensaje
+        if (isGuest) {
+            const msgMap = {
+                'profile': 'guest-welcome-message',
+                'map': 'guest-welcome-map',
+                'reports': 'guest-welcome-reports'
+            };
+            const msgId = msgMap[viewName];
+            if (msgId) {
+                const msgEl = document.getElementById(msgId);
+                if (msgEl) msgEl.style.display = 'block';
+
+                // Para Solicitudes: ocultar el contenido real para no confundir al invitado
+                if (viewName === 'reports') {
+                    const headerEl = document.getElementById('reports-header-content');
+                    if (headerEl) headerEl.style.display = 'none';
+                }
+                // Para Perfil: ocultar panel de datos personales
+                if (viewName === 'profile') {
+                    const personalPane = document.getElementById('profile-pane-personal');
+                    if (personalPane) personalPane.style.display = 'none';
+                }
+            }
+        } else {
+            // Usuarios registrados: asegurar que el contenido real sea visible
+            const headerEl = document.getElementById('reports-header-content');
+            if (headerEl) headerEl.style.display = '';
+            const personalPane = document.getElementById('profile-pane-personal');
+            if (personalPane) personalPane.style.display = '';
+        }
     }
 }
 

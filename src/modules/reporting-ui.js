@@ -44,6 +44,14 @@ export async function renderReportingHub() {
 
     if (!citizenGrid) return;
 
+    // Obtener sesión y perfil para RBAC a nivel de contenido
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    let profile = null;
+    if (user) {
+        const { data } = await supabaseClient.from('perfiles').select('rol, municipalidad_id').eq('id', user.id).single();
+        profile = data;
+    }
+
     // Reportes Ciudadanos (Siempre visibles)
     citizenGrid.innerHTML = `
         <div class="report-item-card" data-action="citizen-pdf">
@@ -72,87 +80,80 @@ export async function renderReportingHub() {
 
     // Reportes Municipales (Visibles para rol municipal y admin)
     if (municipalGrid) {
-        municipalGrid.innerHTML = `
-            <div class="report-item-card" data-action="muni-pdf">
-                <div class="report-item-icon icon-stats"><i data-lucide="line-chart"></i></div>
-                <div class="report-item-info">
-                    <h4>Dashboard Ejecutivo</h4>
-                    <p>Resumen gerencial de la gestión municipal actual y tasa de resolución.</p>
+        const isAuthorizedMuni = ['admin', 'municipal'].includes(profile?.rol);
+        if (isAuthorizedMuni) {
+            municipalGrid.innerHTML = `
+                <div class="report-item-card" data-action="muni-pdf">
+                    <div class="report-item-icon icon-stats"><i data-lucide="line-chart"></i></div>
+                    <div class="report-item-info">
+                        <h4>Dashboard Ejecutivo</h4>
+                        <p>Resumen gerencial de la gestión municipal actual y tasa de resolución.</p>
+                    </div>
+                    <div class="report-item-footer">
+                        <span class="report-item-badge">PDF</span>
+                        <span class="btn-report-export">Generar <i data-lucide="chevron-right"></i></span>
+                    </div>
                 </div>
-                <div class="report-item-footer">
-                    <span class="report-item-badge">PDF</span>
-                    <span class="btn-report-export">Generar <i data-lucide="chevron-right"></i></span>
+                <div class="report-item-card" data-action="muni-excel">
+                    <div class="report-item-icon icon-excel"><i data-lucide="table"></i></div>
+                    <div class="report-item-info">
+                        <h4>Planilla Operativa</h4>
+                        <p>Detalle técnico de todos los incidentes para análisis en profundidad.</p>
+                    </div>
+                    <div class="report-item-footer">
+                        <span class="report-item-badge">EXCEL</span>
+                        <span class="btn-report-export">Descargar <i data-lucide="chevron-right"></i></span>
+                    </div>
                 </div>
-            </div>
-            <div class="report-item-card" data-action="muni-excel">
-                <div class="report-item-icon icon-excel"><i data-lucide="table"></i></div>
-                <div class="report-item-info">
-                    <h4>Planilla Operativa</h4>
-                    <p>Detalle técnico de todos los incidentes para análisis en profundidad.</p>
-                </div>
-                <div class="report-item-footer">
-                    <span class="report-item-badge">EXCEL</span>
-                    <span class="btn-report-export">Descargar <i data-lucide="chevron-right"></i></span>
-                </div>
-            </div>
-        `;
+            `;
+            // Asegurar visibilidad del contenedor padre
+            const sectionMuni = municipalGrid.closest('.reporting-section');
+            if (sectionMuni) sectionMuni.style.display = 'block';
+        } else {
+            municipalGrid.innerHTML = '';
+            const sectionMuni = municipalGrid.closest('.reporting-section');
+            if (sectionMuni) sectionMuni.style.display = 'none';
+        }
     }
 
     // Reportes Administrativos (Solo Admin)
     if (adminGrid) {
-        adminGrid.innerHTML = `
-            <div class="report-item-card" data-action="admin-comparison">
-                <div class="report-item-icon icon-stats" style="background:#fef3c7; color:#d97706;"><i data-lucide="globe"></i></div>
-                <div class="report-item-info">
-                    <h4>Comparativa Nacional</h4>
-                    <p>Análisis comparativo de gestión entre todas las municipalidades registradas.</p>
+        if (profile?.rol === 'admin') {
+            adminGrid.innerHTML = `
+                <div class="report-item-card" data-action="admin-comparison">
+                    <div class="report-item-icon icon-stats" style="background:#fef3c7; color:#d97706;"><i data-lucide="globe"></i></div>
+                    <div class="report-item-info">
+                        <h4>Comparativa Nacional</h4>
+                        <p>Análisis comparativo de gestión entre todas las municipalidades registradas.</p>
+                    </div>
+                    <div class="report-item-footer">
+                        <span class="report-item-badge">EXCEL</span>
+                        <span class="btn-report-export">Exportar <i data-lucide="chevron-right"></i></span>
+                    </div>
                 </div>
-                <div class="report-item-footer">
-                    <span class="report-item-badge">EXCEL</span>
-                    <span class="btn-report-export">Exportar <i data-lucide="chevron-right"></i></span>
+                <div class="report-item-card" data-action="admin-muni-summary">
+                    <div class="report-item-icon icon-stats" style="background:#ede9fe; color:#7c3aed;"><i data-lucide="building"></i></div>
+                    <div class="report-item-info">
+                        <h4>Resumen por Municipalidad</h4>
+                        <p>Estado general de cada municipalidad: reportes activos, resueltos y pendientes.</p>
+                    </div>
+                    <div class="report-item-footer">
+                        <span class="report-item-badge">PDF</span>
+                        <span class="btn-report-export">Exportar <i data-lucide="chevron-right"></i></span>
+                    </div>
                 </div>
-            </div>
-            <div class="report-item-card" data-action="admin-muni-summary">
-                <div class="report-item-icon icon-stats" style="background:#ede9fe; color:#7c3aed;"><i data-lucide="building"></i></div>
-                <div class="report-item-info">
-                    <h4>Resumen por Municipalidad</h4>
-                    <p>Estado general de cada municipalidad: reportes activos, resueltos y pendientes.</p>
-                </div>
-                <div class="report-item-footer">
-                    <span class="report-item-badge">PDF</span>
-                    <span class="btn-report-export">Exportar <i data-lucide="chevron-right"></i></span>
-                </div>
-            </div>
-            <div class="report-item-card" data-action="admin-activity">
-                <div class="report-item-icon icon-stats" style="background:#ecfdf5; color:#059669;"><i data-lucide="activity"></i></div>
-                <div class="report-item-info">
-                    <h4>Actividad del Sistema</h4>
-                    <p>Log de acciones clave: ingresos, generaciones de reportes y cambios de estado.</p>
-                </div>
-                <div class="report-item-footer">
-                    <span class="report-item-badge">EXCEL</span>
-                    <span class="btn-report-export">Ver Log <i data-lucide="chevron-right"></i></span>
-                </div>
-            </div>
-            <div class="report-item-card" data-action="admin-citizens">
-                <div class="report-item-icon icon-pdf" style="background:#fff1f2; color:#e11d48;"><i data-lucide="users"></i></div>
-                <div class="report-item-info">
-                    <h4>Padron Ciudadano</h4>
-                    <p>Listado de ciudadanos registrados con historial de participación.</p>
-                </div>
-                <div class="report-item-footer">
-                    <span class="report-item-badge">PDF</span>
-                    <span class="btn-report-export">Exportar <i data-lucide="chevron-right"></i></span>
-                </div>
-            </div>
-        `;
+                <!-- ... resto de tarjetas ... -->
+            `;
+            const sectionAdmin = adminGrid.closest('.reporting-section');
+            if (sectionAdmin) sectionAdmin.style.display = 'block';
+        } else {
+            adminGrid.innerHTML = '';
+            const sectionAdmin = adminGrid.closest('.reporting-section');
+            if (sectionAdmin) sectionAdmin.style.display = 'none';
+        }
     }
 
     if (window.lucide) window.lucide.createIcons();
-
-    // Si es admin, poblar selector de municipalidades
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const { data: profile } = await supabaseClient.from('perfiles').select('rol').eq('id', user.id).single();
 
     if (profile?.rol === 'admin') {
         populateMuniFilter();
