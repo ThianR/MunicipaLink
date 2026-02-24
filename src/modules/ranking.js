@@ -1,6 +1,7 @@
 import { MuniGamificationService } from '../services/MuniGamificationService.js';
 import { Logger } from '../utils/logger.js';
 import { mostrarMensaje } from '../utils/ui.js';
+import { escapeHtml } from '../utils/helpers.js';
 
 // Estado local del módulo
 let rankingData = [];
@@ -264,8 +265,3 @@ function getBadge(tasa, calificacion) {
     return { label: 'Atención', css: 'badge--atencion' };
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}

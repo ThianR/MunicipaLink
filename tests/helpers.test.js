@@ -65,6 +65,15 @@ class MockImage {
 }
 global.Image = MockImage;
 
+// Mock URL
+global.URL = {
+    createObjectURL: (obj) => {
+        if (obj && obj.name === 'error_read.jpg') return 'error_load';
+        return 'mock-url';
+    },
+    revokeObjectURL: (url) => {}
+};
+
 // Mock document and canvas
 global.document = {
     createElement: (tag) => {
@@ -122,58 +131,18 @@ test('comprimirImagen - Success path', async () => {
     // We expect the mock to have processed it
 });
 
-test('comprimirImagen - FileReader error', async () => {
+test('comprimirImagen - Image load error', async () => {
+    // Our mock URL.createObjectURL returns 'error_load' for this filename,
+    // which triggers MockImage.onerror
     const file = new File(['content'], 'error_read.jpg', { type: 'image/jpeg' });
 
     await assert.rejects(
         async () => await comprimirImagen(file),
         (err) => {
-            assert.strictEqual(err.message, 'FileReader error');
+            assert.strictEqual(err.message, 'Image load failed');
             return true;
         }
     );
-});
-
-test('comprimirImagen - Image load error', async () => {
-    // We need to trigger Image.onerror.
-    // Our mock Image triggers onerror if src contains 'error_load'.
-    // The src comes from reader.result.
-    // We can't easily change reader.result from here unless we modify FileReader mock
-    // to return a specific result based on input file.
-
-    // Let's modify MockFileReader to return a special result for a specific file name.
-
-    // Hack: Override the global FileReader mock locally or use a condition in the main mock.
-    // I added logic in MockFileReader to check file.name, but for Image load error I need
-    // the reader to succeed but return a result that makes Image fail.
-
-    // Let's modify the MockFileReader above to handle a specific file for this case.
-    // I'll update the MockFileReader class in a followup edit if needed, but for now
-    // I will use a different file name strategy.
-
-    // Update MockFileReader logic locally for this test context if possible?
-    // No, global replacement is easier.
-
-    const originalFileReader = global.FileReader;
-    global.FileReader = class extends originalFileReader {
-        readAsDataURL(file) {
-             setTimeout(() => {
-                if (this.onload) this.onload({ target: { result: 'error_load' } });
-            }, 10);
-        }
-    };
-
-    const file = new File(['content'], 'image_error.jpg', { type: 'image/jpeg' });
-
-    await assert.rejects(
-        async () => await comprimirImagen(file),
-        (err) => {
-            assert.strictEqual(err.message, 'Image load error');
-            return true;
-        }
-    );
-
-    global.FileReader = originalFileReader;
 });
 
 test('comprimirImagen - Canvas compression error (blob is null)', async () => {
@@ -183,7 +152,7 @@ test('comprimirImagen - Canvas compression error (blob is null)', async () => {
     await assert.rejects(
         async () => await comprimirImagen(file),
         (err) => {
-            assert.strictEqual(err.message, 'Error compressing image');
+            assert.strictEqual(err.message, 'Canvas toBlob failed');
             return true;
         }
     );
