@@ -65,23 +65,73 @@ function setupListeners() {
     if (formAuth) {
         formAuth.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (btnLogin) btnLogin.disabled = true;
-            const { error } = await supabaseClient.auth.signInWithPassword({
-                email: emailAuth.value, password: passwordAuth.value
-            });
-            if (error) mostrarMensaje(error.message, 'error');
-            if (btnLogin) btnLogin.disabled = false;
+            const groupConfirm = document.getElementById('group-confirm-password');
+            const inputConfirm = document.getElementById('auth-confirm-password');
+
+            if (groupConfirm.style.display === 'none') {
+                // Modo LOGIN
+                if (btnLogin) btnLogin.disabled = true;
+                const { error } = await supabaseClient.auth.signInWithPassword({
+                    email: emailAuth.value, password: passwordAuth.value
+                });
+                if (error) mostrarMensaje(error.message, 'error');
+                if (btnLogin) btnLogin.disabled = false;
+            } else {
+                // Modo REGISTRO (reutilizamos el click de btnRegistro si es submit por Enter)
+                btnRegistro.click();
+            }
         });
     }
 
     if (btnRegistro) {
         btnRegistro.addEventListener('click', async () => {
-            if (!emailAuth.value || !passwordAuth.value) return mostrarMensaje('Email/Contraseña requeridos', 'error');
-            btnRegistro.disabled = true;
-            const { error } = await supabaseClient.auth.signUp({ email: emailAuth.value, password: passwordAuth.value });
-            if (error) mostrarMensaje(error.message, 'error');
-            else mostrarMensaje('¡Verifica tu email!', 'success');
-            btnRegistro.disabled = false;
+            const groupConfirm = document.getElementById('group-confirm-password');
+            const btnLogin = document.getElementById('btn-login');
+            const inputConfirm = document.getElementById('auth-confirm-password');
+            const title = document.querySelector('.form-title');
+            const subtitle = document.querySelector('.form-subtitle');
+
+            // Si el campo de confirmación no es visible, estamos cambiando a modo REGISTRO
+            if (groupConfirm.style.display === 'none') {
+                groupConfirm.style.display = 'block';
+                inputConfirm.required = true;
+                btnLogin.textContent = 'Crear Cuenta';
+                btnRegistro.textContent = '¿Ya tienes cuenta? Inicia Sesión';
+                title.textContent = 'Crea tu cuenta';
+                subtitle.textContent = 'Únete a la gestión ciudadana de tu municipio';
+
+                // Poner foco en el input de correo
+                emailAuth.focus();
+            } else {
+                // Si ya es visible, procedemos con el registro con validación
+                if (!emailAuth.value || !passwordAuth.value || !inputConfirm.value) {
+                    return mostrarMensaje('Todos los campos son requeridos', 'error');
+                }
+
+                if (passwordAuth.value !== inputConfirm.value) {
+                    return mostrarMensaje('Las contraseñas no coinciden', 'error');
+                }
+
+                btnRegistro.disabled = true;
+                const { error } = await supabaseClient.auth.signUp({
+                    email: emailAuth.value,
+                    password: passwordAuth.value
+                });
+
+                if (error) {
+                    mostrarMensaje(error.message, 'error');
+                } else {
+                    mostrarMensaje('¡Registro exitoso! Verifica tu email', 'success');
+                    // Volver a modo login
+                    groupConfirm.style.display = 'none';
+                    inputConfirm.required = false;
+                    btnLogin.textContent = 'Iniciar Sesión';
+                    btnRegistro.textContent = '¿No tienes cuenta? Regístrate';
+                    title.textContent = 'Bienvenido';
+                    subtitle.textContent = 'Inicia sesión para continuar con tus gestiones';
+                }
+                btnRegistro.disabled = false;
+            }
         });
     }
 
