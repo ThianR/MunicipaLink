@@ -92,6 +92,10 @@
                             <label class="input-label">Contraseña</label>
                             <input type="password" id="auth-password" placeholder="********" required class="input">
                         </div>
+                        <div class="form-group" id="group-confirm-password" style="display: none;">
+                            <label class="input-label">Confirmar Contraseña</label>
+                            <input type="password" id="auth-confirm-password" placeholder="********" class="input">
+                        </div>
                         <div class="auth-actions">
                             <button type="submit" id="btn-login" class="button button--primary">Iniciar Sesión</button>
                             <button type="button" id="btn-signup" class="button button--secondary">¿No tienes cuenta? Regístrate</button>
@@ -102,9 +106,9 @@
                         ¿Olvidaste tu contraseña?
                     </button>
 
-                    <div class="divider" rendered="false"><span>o continuar con</span></div>
+                    <div class="divider" style="display: none;"><span>o continuar con</span></div>
 
-                    <div class="social-login" rendered="false">
+                    <div class="social-login" style="display: none;">
                         <button id="btn-login-google" class="button button--google">
                             <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" alt="G">
                             Google
