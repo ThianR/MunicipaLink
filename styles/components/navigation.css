@@ -25,9 +25,11 @@
     color: var(--text-main);
 }
 
-.nav__item--active {
+.nav__item--active,
+.nav__item.active {
     background: var(--primary-light);
     color: var(--primary);
+    font-weight: 700;
 }
 
 .nav__item i {
