@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="assets/bannerGit.png" alt="MunicipaLink Banner" />
+</div>
+
 # 🏛️ MunicipaLink
 
 **Plataforma de Participación Ciudadana para la Transparencia Municipal**
