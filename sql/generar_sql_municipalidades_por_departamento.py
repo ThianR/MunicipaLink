@@ -4,7 +4,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from urllib.request import urlopen
-
+# comando para correr el script: python generar_sql_municipalidades_por_departamento.py salida_sql
 DATASET_URL = 'https://www.datos.gov.py/sites/default/files/DISTRITOS_PY_CNPV2022.geojson'
 OUT_DIR = Path('municipalidades_sql_por_departamento')
 
