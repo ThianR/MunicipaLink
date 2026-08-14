@@ -13,3 +13,5 @@ app.old.js
 TEST_CREDENTIALS.md
 # Scripts temporales de migración
 scripts/run-migration.mjs
+# Archivos de salida SQL
+sql/salida_sql/*

@@ -3,10 +3,13 @@ import { supabaseClient } from '../services/supabase.js';
 import { hexToDouble } from '../utils/helpers.js';
 import { mostrarMensaje } from '../utils/ui.js';
 import { MunicipalityModule } from './municipalities.js';
+import { ReportsService } from '../services/ReportsService.js';
 
 let mapa = null;
 let marcadorActual = null;
 let ubicacionUsuario = APP_CONFIG.DEFAULT_LOCATION;
+let heatLayer = null;
+let isHeatmapVisible = false;
 
 export const MapModule = {
     init: () => {
@@ -78,11 +81,26 @@ function inicializarMapa() {
         actualizarVisualizacionCoords();
     });
 
+    // Nueva funcionalidad: Mover marcador con doble click
+    mapa.on('dblclick', function (evento) {
+        if (marcadorActual) {
+            const posicion = evento.latlng;
+            marcadorActual.setLatLng(posicion);
+            ubicacionUsuario = [posicion.lat, posicion.lng];
+            sessionStorage.setItem('ubicacion_usuario', JSON.stringify({ lat: posicion.lat, lng: posicion.lng }));
+            actualizarVisualizacionCoords();
+        }
+    });
+
     // Forzar recálculo de dimensiones después del render inicial.
     // Es necesario porque el mapa se crea mientras el contenedor puede aún no tener
     // sus dimensiones finales calculadas por el flujo de layout del navegador.
     setTimeout(() => mapa.invalidateSize(), 200);
-    setTimeout(() => mapa.invalidateSize(), 600);
+    setTimeout(() => {
+        mapa.invalidateSize();
+        // Cargar mapa de calor por defecto si no ha sido desactivado
+        toggleHeatmap();
+    }, 600);
 }
 
 function actualizarVisualizacionCoords() {
@@ -193,11 +211,95 @@ function aplicarActualizacionUbicacion(esCacheada) {
     }
 }
 
+async function toggleHeatmap() {
+    if (!mapa) return;
+    
+    if (isHeatmapVisible) {
+        if (heatLayer) {
+            mapa.removeLayer(heatLayer);
+        }
+        isHeatmapVisible = false;
+        document.querySelectorAll('#btn-toggle-heatmap, #btn-toggle-heatmap-sidebar').forEach(btn => btn.classList.remove('active', 'button--active'));
+        return;
+    }
+
+    document.querySelectorAll('#btn-toggle-heatmap, #btn-toggle-heatmap-sidebar').forEach(btn => btn.classList.add('active', 'button--active'));
+
+    try {
+        const muniId = MunicipalityModule.getSeleccionado() || null;
+        // Obtener reportes para la municipalidad actual (o globales si es null)
+        const { data } = await ReportsService.getReportes({ muniId, pageSize: 2000 });
+        
+        if (data && data.length > 0) {
+            const heatPoints = [];
+            data.forEach(r => {
+                if (r.ubicacion) {
+                    let lat, lng;
+                    if (typeof r.ubicacion === 'string') {
+                        if (r.ubicacion.startsWith('0101')) {
+                            try {
+                                const hasSRID = r.ubicacion.substring(8, 10) === '20';
+                                const offset = hasSRID ? 18 : 10;
+                                lng = hexToDouble(r.ubicacion.substring(offset, offset + 16));
+                                lat = hexToDouble(r.ubicacion.substring(offset + 16, offset + 32));
+                            } catch (err) {}
+                        } else {
+                            const match = r.ubicacion.match(/POINT\(([^ ]+) ([^ ]+)\)/) || r.ubicacion.match(/\(([^ ]+) ([^ ]+)\)/);
+                            if (match) {
+                                lng = parseFloat(match[1]);
+                                lat = parseFloat(match[2]);
+                            }
+                        }
+                    } else if (r.ubicacion.coordinates) {
+                        lng = r.ubicacion.coordinates[0];
+                        lat = r.ubicacion.coordinates[1];
+                    }
+                    
+                    if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+                        const intensity = 0.4 + Math.min(0.6, ((r.total_votos || 0) + (r.total_comentarios || 0)) * 0.1);
+                        heatPoints.push([lat, lng, intensity]);
+                    }
+                }
+            });
+
+            if (typeof L.heatLayer !== 'undefined') {
+                if (heatLayer) {
+                    mapa.removeLayer(heatLayer);
+                }
+                heatLayer = L.heatLayer(heatPoints, {
+                    radius: 25,
+                    blur: 15,
+                    maxZoom: 15,
+                    max: 1.0,
+                    gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
+                }).addTo(mapa);
+                isHeatmapVisible = true;
+            } else {
+                mostrarMensaje('El plugin de mapa de calor no está disponible', 'error');
+                document.querySelectorAll('#btn-toggle-heatmap, #btn-toggle-heatmap-sidebar').forEach(btn => btn.classList.remove('active', 'button--active'));
+            }
+        } else {
+            mostrarMensaje('No hay suficientes reportes para el mapa de calor', 'info');
+            document.querySelectorAll('#btn-toggle-heatmap, #btn-toggle-heatmap-sidebar').forEach(btn => btn.classList.remove('active', 'button--active'));
+            isHeatmapVisible = false;
+        }
+    } catch (error) {
+        console.error('Error al generar mapa de calor:', error);
+        mostrarMensaje('Error al generar mapa de calor', 'error');
+        document.querySelectorAll('#btn-toggle-heatmap, #btn-toggle-heatmap-sidebar').forEach(btn => btn.classList.remove('active', 'button--active'));
+    }
+}
+
 function setupListeners() {
     const btnRecenter = document.getElementById('btn-recenter');
     const btnLocate = document.getElementById('btn-locate');
     const btnRecenterMap = document.getElementById('btn-recenter-map');
     const btnLocateMap = document.getElementById('btn-locate-map');
+    const btnToggleHeatmap = document.getElementById('btn-toggle-heatmap');
+    const btnToggleHeatmapSidebar = document.getElementById('btn-toggle-heatmap-sidebar');
+
+    if (btnToggleHeatmap) btnToggleHeatmap.addEventListener('click', toggleHeatmap);
+    if (btnToggleHeatmapSidebar) btnToggleHeatmapSidebar.addEventListener('click', toggleHeatmap);
 
     if (btnRecenter) btnRecenter.addEventListener('click', () => {
         const muniId = MunicipalityModule.getSeleccionado();

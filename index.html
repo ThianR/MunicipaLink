@@ -151,6 +151,9 @@
                     <button id="btn-locate" class="button--map-tool" title="Mi Ubicación">
                         <i data-lucide="navigation"></i>
                     </button>
+                    <button id="btn-toggle-heatmap-sidebar" class="button--map-tool" title="Mapa de Calor">
+                        <i data-lucide="flame"></i>
+                    </button>
                 </div>
 
                 <section>
@@ -421,6 +424,9 @@
                             </button>
                             <button id="btn-locate-map" class="btn-map-float" title="Mi Ubicación">
                                 <i data-lucide="navigation"></i>
+                            </button>
+                            <button id="btn-toggle-heatmap" class="btn-map-float" title="Mapa de Calor">
+                                <i data-lucide="flame"></i>
                             </button>
                         </div>
                     </div>
@@ -1879,6 +1885,7 @@
     <!-- Scripts -->
     <!-- Defer loading of non-critical libraries -->
     <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script defer src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Main Application Script (Modular) -->
